@@ -1,0 +1,17 @@
+{
+	"folders": [
+		{
+			"path": "."
+		},
+		{
+			"path": "../AZGW_research"
+		},
+		{
+			"path": "../../.."
+		},
+		{
+			"path": "../../Data/GRACE"
+		}
+	],
+	"settings": {}
+}
