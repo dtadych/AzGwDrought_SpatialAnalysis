@@ -13,5 +13,7 @@
 			"path": "../../Data/GRACE"
 		}
 	],
-	"settings": {}
+	"settings": {
+		"python.pythonPath": "/Users/condongroup/opt/miniconda3/envs/AZGWSpatial/bin/python"
+	}
 }
