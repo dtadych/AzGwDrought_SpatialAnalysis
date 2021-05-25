@@ -4,6 +4,7 @@
 # - Create columns in each respective database specifying its origin
 # - Find column they have in common
 # - Merge based on that column
+# - Make GWSI wells the overriding database and fill in the gaps with Wells55
 # %%
 import os
 import pandas as pd
@@ -47,13 +48,14 @@ print(filepath)
 wl_data2 = pd.read_csv(filepath)
 pd.options.display.float_format = '{:.2f}'.format
 print(wl_data2.info())
-
+#%%
 # Now read in the shapefiles for both
 shapedir = '../MergedData/Shapefiles'
+#wellfilename = "Well_Registry__Wells55_.shp"
 wellfilename = "Well_Registry__Wells55_.shp"
 Wellfp = os.path.join(shapedir, wellfilename)
 wells55shape = gp.read_file(Wellfp)
-# %%
+
 GWSI_fn = "GWSI_SITES.shp"
 Wellfp = os.path.join(shapedir, GWSI_fn)
 GWSIshape = gp.read_file(Wellfp)
@@ -93,41 +95,22 @@ plt.legend()
 #gwsi_gdf = gp.GeoDataFrame(gwsi_df)
 #gwsi_gdf.info()
 
-# %% Check the plot again
-fig, ax = plt.subplots()
-gwsi_gdf.plot(ax = ax, label="GWSI")
-wells55_gdf.plot(ax = ax, label="Wells55")
-ax.set_title("Matching data with Geometries")
-plt.legend()
+# %% Making copies of the databases so I don't overright the originals
+gwsi_gdf = GWSIshape
+wells55_gdf = wells55shape
 
 # %% ---- Adding Database Source Columns to both ----
 wells55_gdf["Original_DB"] = 'Wells55'
 gwsi_gdf["Original_DB"] = 'GWSI'
 wells55_gdf.head()
+# %%
 gwsi_gdf.head()
 
 # %% ---- Merging Both databases ----
 
-# %%  - Old news -
-# Merge basin codes and water levels by wellid into new datatable called wl_data2
-#wl_data2 = wl_data.merge(basin_data, left_on='wellid', right_on='wellid')
-#print(wl_data2.info())
+# Merge wells55 'REGISTRY_I' with GWSI 'REG_ID'
 # %%
-# Merge GWSI so it has cadastral ID
-#GWSIshape['SITE_ID'] = pd.to_numeric(GWSIshape['SITE_ID'])
-#GWSI_merged = GWSIshape.merge(pump_wl, left_on='SITE_ID', right_on ='wellid')
-
-# After comparing both columns, the cadastral ID's are in different formats
-# %%
-# Merge wells55 REGISTRY_I with GWSI SITE_WELL_REG_ID which is column 48
-gwsi_gdf["SITE_WELL_REG_ID"] = gwsi_gdf["SITE_WELL_REG_ID"].astype(float, errors='raise')
-gwsi_gdf.info()
-
-# %%
-wells55_gdf["REGISTRY_I_x"] = wells55_gdf["REGISTRY_I_x"].astype(float, errors='raise')
-wells55_gdf.info()
-# %%
-Wells55_GWSI_MasterDB = wells55_gdf.merge(gwsi_gdf, left_on="REGISTRY_I_x", right_on="SITE_WELL_REG_ID")
+Wells55_GWSI_MasterDB = wells55_gdf.merge(gwsi_gdf, left_on="REGISTRY_I", right_on="REG_ID")
 print(Wells55_GWSI_MasterDB.info())
 # %%
 # Now plot the new master db
