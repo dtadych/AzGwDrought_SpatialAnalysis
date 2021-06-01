@@ -114,7 +114,10 @@ gwsi_gdf.head()
 #  - and here regarding default options for merge
 #    https://stackabuse.com/how-to-merge-dataframes-in-pandas/#mergedataframesusingmerge
 # %%
-Wells55_GWSI_MasterDB = wells55_gdf.merge(gwsi_gdf, suffixes=['_wells55','_gwsi'], how="outer", left_on="REGISTRY_I", right_on="REG_ID")
+#Wells55_GWSI_MasterDB = wells55_gdf.merge(gwsi_gdf, suffixes=['_wells55','_gwsi'], how="outer", left_on="REGISTRY_I", right_on="REG_ID")
+Wells55_GWSI_MasterDB = wells55_gdf.merge(gwsi_gdf, suffixes=['_wells55','_gwsi'], how="outer", 
+                                          left_on=["REGISTRY_I", 'WELLTYPE', 'WELL_DEPTH', 'geometry', 'Original_DB'],
+                                          right_on=["REG_ID", 'WELL_TYPE', 'WELL_DEPTH', 'geometry', 'Original_DB'])
 print(Wells55_GWSI_MasterDB.info())
 
 #%%
