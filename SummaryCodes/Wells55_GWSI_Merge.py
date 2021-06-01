@@ -109,9 +109,18 @@ gwsi_gdf.head()
 # %% ---- Merging Both databases ----
 
 # Merge wells55 'REGISTRY_I' with GWSI 'REG_ID'
+# need to use how = left
+#  - more info here https://www.datasciencemadesimple.com/join-merge-data-frames-pandas-python/
+#  - and here regarding default options for merge
+#    https://stackabuse.com/how-to-merge-dataframes-in-pandas/#mergedataframesusingmerge
 # %%
-Wells55_GWSI_MasterDB = wells55_gdf.merge(gwsi_gdf, left_on="REGISTRY_I", right_on="REG_ID")
+Wells55_GWSI_MasterDB = wells55_gdf.merge(gwsi_gdf, suffixes=['_wells55','_gwsi'], how="outer", left_on="REGISTRY_I", right_on="REG_ID")
 print(Wells55_GWSI_MasterDB.info())
+
+#%%
+# Now we need to start combining columns
+
+
 # %%
 # Now plot the new master db
 fig, ax = plt.subplots()
