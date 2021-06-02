@@ -120,14 +120,18 @@ Wells55_GWSI_MasterDB = wells55_gdf.merge(gwsi_gdf, suffixes=['_wells55','_gwsi'
                                           right_on=["REG_ID", 'WELL_TYPE', 'WELL_DEPTH', 'geometry', 'Original_DB'])
 print(Wells55_GWSI_MasterDB.info())
 
-#%%
-# Now we need to start combining columns
-
-
 # %%
 # Now plot the new master db
 fig, ax = plt.subplots()
-gwsi_gdf.plot(ax = ax, label="GWSI")
-wells55_gdf.plot(ax = ax, label="Wells55")
+#gwsi_gdf.plot(ax = ax, label="GWSI")
+#wells55_gdf.plot(ax = ax, label="Wells55")
+Wells55_GWSI_MasterDB.plot(ax=ax, label="Master Database")
 ax.set_title("Check the merged database")
 plt.legend()
+plt.savefig('../MergedData/Output_files/{0}.png'.format(type), bbox_inches='tight')
+
+# %%
+# Export all the ish
+Wells55_GWSI_MasterDB.to_file("Master_ADWR_Database.shp")
+Wells55_GWSI_MasterDB.to_csv('../MergedData/Output_files/Master_ADWR_database.csv')
+# %%
