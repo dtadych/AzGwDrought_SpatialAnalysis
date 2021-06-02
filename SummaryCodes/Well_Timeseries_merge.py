@@ -11,6 +11,7 @@
 #             Would need to potentially multiply pumping amounts with how long it has been installed
 #             Check with Laura
 # - Make the columns well ID's and the rows dates
+# - for Wells55 water level and elevation, need to make rows the install date and columns REGISTRY_I
 # - Merge based on well ID's
 # %%
 import os
