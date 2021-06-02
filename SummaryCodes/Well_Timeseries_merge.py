@@ -5,6 +5,13 @@
 # - Find column they have in common
 # - Merge based on that column
 # - Make GWSI wells the overriding database and fill in the gaps with Wells55
+
+# - Make 3 Timeseries databases: WL, Water Elevation, and Pumping
+#     * Note: Pumping might not be available in Wells55
+#             Would need to potentially multiply pumping amounts with how long it has been installed
+#             Check with Laura
+# - Make the columns well ID's and the rows dates
+# - Merge based on well ID's
 # %%
 import os
 import pandas as pd
