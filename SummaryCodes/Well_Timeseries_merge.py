@@ -36,7 +36,7 @@ print(filepath)
 wells55 = pd.read_csv(filepath)
 pd.options.display.float_format = '{:.2f}'.format
 print(wells55.info())
-# %%
+
 # Read in pump_wl 
 # This is a combined file with pump data & depth to water
 filename = 'Pump_wl.csv'
@@ -47,7 +47,6 @@ pump_wl = pd.read_csv(filepath)
 pd.options.display.float_format = '{:.2f}'.format
 print(pump_wl.info())
 
-# %%
 # Read in GWSI merged water level data
 filename = 'wl_data2.csv'
 filepath = os.path.join(datapath, filename)
@@ -56,6 +55,25 @@ print(filepath)
 wl_data2 = pd.read_csv(filepath)
 pd.options.display.float_format = '{:.2f}'.format
 print(wl_data2.info())
+
+#%%
+# Read in GWSI merged water level data
+filename = 'Pump_Data_Full.csv'
+filepath = os.path.join(datapath, filename)
+print(filepath)
+
+pump_data_all = pd.read_csv(filepath)
+pd.options.display.float_format = '{:.2f}'.format
+print(wl_data2.info())
+
+#%% ---- Making Pivot Tables of databases with Date as the index ---
+
+# Create a pivot table of AF Pumped by well id and year
+# This combines all common well ids and averages all observations by year
+pivot1 = pd.pivot_table(pump_data_all, index=['wellid','YEAR'], values='AF Pumped')
+
+
+
 #%%
 # Now read in the shapefiles for both
 shapedir = '../MergedData/Shapefiles'
