@@ -47,7 +47,7 @@ pump_wl = pd.read_csv(filepath)
 pd.options.display.float_format = '{:.2f}'.format
 print(pump_wl.info())
 
-# Read in GWSI merged water level data
+# Read in GWSI collated water level data
 filename = 'wl_data2.csv'
 filepath = os.path.join(datapath, filename)
 print(filepath)
@@ -57,7 +57,7 @@ pd.options.display.float_format = '{:.2f}'.format
 print(wl_data2.info())
 
 #%%
-# Read in GWSI merged water level data
+# Read in GWSI collated pumping data
 filename = 'Pump_Data_Full.csv'
 filepath = os.path.join(datapath, filename)
 print(filepath)
@@ -66,13 +66,37 @@ pump_data_all = pd.read_csv(filepath)
 pd.options.display.float_format = '{:.2f}'.format
 print(wl_data2.info())
 
-#%% ---- Making Pivot Tables of databases with Date as the index ---
+#%% ---- Making dataframes with Date as the index ---
+# Make dataframes with Columns for GWSI and Wells55, respectively
+# Following this method: https://stackoverflow.com/questions/32215024/merging-time-series-data-by-timestamp-using-numpy-pandas
+# Confirmed through the variables list that "depth" in wldata2 and "WATER_LEVE" are both depth to water below land surface in feet
 
-# Create a pivot table of AF Pumped by well id and year
-# This combines all common well ids and averages all observations by year
-pivot1 = pd.pivot_table(pump_data_all, index=['wellid','YEAR'], values='AF Pumped')
+gwsi_wl = wl_data2[["date","SITE_WELL_REG_ID","depth"]].copy()
+gwsi_wl.info()
 
+wells55_wl = wells55[["INSTALLED", "REGISTRY_I", "WATER_LEVE"]].copy()
+wells55_wl.info()
 
+gwsi_wl.set_index("date", inplace=True)
+wells55_wl.set_index("INSTALLED", inplace=True)
+
+# Changing to the index to datetime values
+gwsi_wl.index = pd.to_datetime(gwsi_wl.index)
+wells55_wl.index = pd.to_datetime(wells55_wl.index)
+
+# Need to add an original database column
+wells55_wl["Original_DB"] = 'Wells55'
+gwsi_wl["Original_DB"] = 'GWSI'
+wells55_wl.head()
+
+#%%
+#combo = gwsi_wl.join(wells55_wl, how='outer')
+#combo
+
+combo = wells55_wl.merge(gwsi_wl, suffixes=['_wells55','_gwsi'], how="outer", 
+                                          left_on=["REGISTRY_I", "INSTALLED", 'Original_DB'],
+                                          right_on=["SITE_WELL_REG_ID", 'date', 'Original_DB'])
+combo.info()
 
 #%%
 # Now read in the shapefiles for both
