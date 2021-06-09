@@ -40,9 +40,6 @@ GWSIshape.plot(ax = ax, label="GWSI")
 wells55shape.plot(ax = ax, label="Wells55")
 ax.set_title("GWSI and Wells55 Preliminary Plot")
 plt.legend()
-# %%
-# === Merging geodatabases and shapefiles ===
-#  - according to stack overflow https://gis.stackexchange.com/questions/349244/merging-a-geodataframe-and-pandas-dataframe-based-on-a-column
 
 # %% Making copies of the databases so I don't overright the originals
 gwsi_gdf = GWSIshape

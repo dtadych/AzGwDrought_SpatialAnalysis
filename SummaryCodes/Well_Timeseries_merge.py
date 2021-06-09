@@ -77,13 +77,14 @@ gwsi_wl.info()
 wells55_wl = wells55[["INSTALLED", "REGISTRY_I", "WATER_LEVE"]].copy()
 wells55_wl.info()
 
+#%%Don't do this for a hot second
 gwsi_wl.set_index("date", inplace=True)
 wells55_wl.set_index("INSTALLED", inplace=True)
 
 # Changing to the index to datetime values
 gwsi_wl.index = pd.to_datetime(gwsi_wl.index)
 wells55_wl.index = pd.to_datetime(wells55_wl.index)
-
+# %%
 # Need to add an original database column
 wells55_wl["Original_DB"] = 'Wells55'
 gwsi_wl["Original_DB"] = 'GWSI'
@@ -93,96 +94,10 @@ wells55_wl.head()
 #combo = gwsi_wl.join(wells55_wl, how='outer')
 #combo
 
-combo = wells55_wl.merge(gwsi_wl, suffixes=['_wells55','_gwsi'], how="outer", 
-                                          left_on=["REGISTRY_I", "INSTALLED", 'Original_DB'],
-                                          right_on=["SITE_WELL_REG_ID", 'date', 'Original_DB'])
+combo = wells55_wl.merge(gwsi_wl, suffixes=['_wells55','_gwsi'], how="outer" 
+                                          ,left_on=["REGISTRY_I", 'INSTALLED', 'Original_DB'],
+                                          right_on=["SITE_WELL_REG_ID", 'date', 'Original_DB']
+                                          )
 combo.info()
 
-#%%
-# Now read in the shapefiles for both
-shapedir = '../MergedData/Shapefiles'
-#wellfilename = "Well_Registry__Wells55_.shp"
-wellfilename = "Well_Registry__Wells55_.shp"
-Wellfp = os.path.join(shapedir, wellfilename)
-wells55shape = gp.read_file(Wellfp)
-
-GWSI_fn = "GWSI_SITES.shp"
-Wellfp = os.path.join(shapedir, GWSI_fn)
-GWSIshape = gp.read_file(Wellfp)
-# %%
-GWSIshape.info()
-# %%
-wells55shape.info()
-# %% Check that they're in the same coordinate system
-print(GWSIshape.crs, wells55shape.crs)
-
-# %%
-# Preliminary Plot to check shapefiles
-fig, ax = plt.subplots()
-GWSIshape.plot(ax = ax, label="GWSI")
-wells55shape.plot(ax = ax, label="Wells55")
-ax.set_title("GWSI and Wells55 Preliminary Plot")
-plt.legend()
-# === Merging geodatabases and shapefiles ===
-#  - according to stack overflow https://gis.stackexchange.com/questions/349244/merging-a-geodataframe-and-pandas-dataframe-based-on-a-column
-
-# reformatting registry ID's
-#wells55shape['REGISTRY_I'] = wells55shape['REGISTRY_I'].astype(int, errors = 'raise')
-#wells55_df = wells55shape.merge(wells55, on='REGISTRY_I', how = 'left')
-#wells55_gdf = gp.GeoDataFrame(wells55_df)
-#wells55_gdf.info()
-# %% This is not necessary for this database
-# Rename wellid in pumpwl to SITE_ID
-#pump_wl = pump_wl.rename(columns = {'wellid':'SITE_ID'}, errors = "raise")
-
-# Convert types 
-#pump_wl['SITE_ID'] = pump_wl['SITE_ID'].astype(object, errors = 'raise')
-#pump_wl.info()
-
-# Merge shape with database
-#gwsi_df = GWSIshape.merge(pump_wl, on="SITE_ID", how = 'left')
-#gwsi_gdf = gp.GeoDataFrame(gwsi_df)
-#gwsi_gdf.info()
-
-# %% Making copies of the databases so I don't overright the originals
-gwsi_gdf = GWSIshape
-wells55_gdf = wells55shape
-
-# %% ---- Adding Database Source Columns to both ----
-wells55_gdf["Original_DB"] = 'Wells55'
-gwsi_gdf["Original_DB"] = 'GWSI'
-wells55_gdf.head()
-# %%
-gwsi_gdf.head()
-
-# %% ---- Merging Both databases ----
-
-# Merge wells55 'REGISTRY_I' with GWSI 'REG_ID'
-# need to use how = left
-#  - more info here https://www.datasciencemadesimple.com/join-merge-data-frames-pandas-python/
-#  - and here regarding default options for merge
-#    https://stackabuse.com/how-to-merge-dataframes-in-pandas/#mergedataframesusingmerge
-# %%
-#Wells55_GWSI_MasterDB = wells55_gdf.merge(gwsi_gdf, suffixes=['_wells55','_gwsi'], how="outer", left_on="REGISTRY_I", right_on="REG_ID")
-Wells55_GWSI_MasterDB = wells55_gdf.merge(gwsi_gdf, suffixes=['_wells55','_gwsi'], how="outer", 
-                                          left_on=["REGISTRY_I", 'WELLTYPE', 'WELL_DEPTH', 'geometry', 'Original_DB'],
-                                          right_on=["REG_ID", 'WELL_TYPE', 'WELL_DEPTH', 'geometry', 'Original_DB'])
-                                          right_on=["REG_ID", 'WELL_TYPE', 'WELL_DEPTH', 'geometry', 'Original_DB'])
-print(Wells55_GWSI_MasterDB.info())
-
-# %%
-# Now plot the new master db
-fig, ax = plt.subplots()
-#gwsi_gdf.plot(ax = ax, label="GWSI")
-#wells55_gdf.plot(ax = ax, label="Wells55")
-Wells55_GWSI_MasterDB.plot(ax=ax, label="Master Database")
-ax.set_title("Check the merged database")
-plt.legend()
-plt.savefig('../MergedData/Output_files/{0}.png'.format(type), bbox_inches='tight')
-
-# %%
-# Export all the ish
-Wells55_GWSI_MasterDB.to_file("Master_ADWR_Database.shp")
-Wells55_GWSI_MasterDB.to_csv('../MergedData/Output_files/Master_ADWR_database.csv')
-# %%
-Wells55_GWSI_MasterDB.to_csv('../MergedData/Output_files/Master_ADWR_database.csv')
+# %% Merge based on the combine function?
