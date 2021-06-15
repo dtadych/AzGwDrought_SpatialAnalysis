@@ -90,14 +90,27 @@ wells55_wl["Original_DB"] = 'Wells55'
 gwsi_wl["Original_DB"] = 'GWSI'
 wells55_wl.head()
 
+# %%
+wells55_wl.rename(columns = {'INSTALLED':'date','WATER_LEVE':'depth'}, inplace=True)
+gwsi_wl.rename(columns={'SITE_WELL_REG_ID':'REGISTRY_I'}, inplace=True)
+
 #%%
 #combo = gwsi_wl.join(wells55_wl, how='outer')
 #combo
 
 combo = wells55_wl.merge(gwsi_wl, suffixes=['_wells55','_gwsi'], how="outer" 
-                                          ,left_on=["REGISTRY_I", 'INSTALLED', 'Original_DB'],
-                                          right_on=["SITE_WELL_REG_ID", 'date', 'Original_DB']
+                                          ,on=["REGISTRY_I", 'date', 'Original_DB', 'depth']
                                           )
 combo.info()
 
-# %% Merge based on the combine function?
+# %% Set date as index to conver to datetime
+combo.set_index("date", inplace=True)
+combo.index = pd.to_datetime(combo.index)
+combo.info()
+# %%
+WL_TS_DB = pd.pivot_table(combo, index=["REGISTRY_I"], columns="date", values="depth")
+# %%
+WL_TS_DB.head()
+# %%
+WL_TS_DB
+# %%
