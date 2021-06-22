@@ -80,3 +80,6 @@ plt.savefig('../MergedData/Output_files/{0}.png'.format(type), bbox_inches='tigh
 # Export all the ish
 Wells55_GWSI_MasterDB.to_file("Master_ADWR_Database.shp")
 Wells55_GWSI_MasterDB.to_csv('../MergedData/Output_files/Master_ADWR_database.csv')
+# %%
+Wells55_GWSI_MasterDB.to_file('../MergedData/Output_files/Master_ADWR_database.shp')
+# %%

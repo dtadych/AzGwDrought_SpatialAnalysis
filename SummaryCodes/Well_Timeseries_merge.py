@@ -29,7 +29,7 @@ import geopandas as gp
 # This is a file with water levels from ADWR which has been joined with another ADWR file with variables
 filename = 'Wells55.csv'
 datapath = '../MergedData'
-outputpath = '../MergedData/Output_files'
+outputpath = '../MergedData/Output_files/'
 filepath = os.path.join(datapath, filename)
 print(filepath)
 
@@ -78,12 +78,12 @@ wells55_wl = wells55[["INSTALLED", "REGISTRY_I", "WATER_LEVE"]].copy()
 wells55_wl.info()
 
 #%%Don't do this for a hot second
-gwsi_wl.set_index("date", inplace=True)
-wells55_wl.set_index("INSTALLED", inplace=True)
+#gwsi_wl.set_index("date", inplace=True)
+#wells55_wl.set_index("INSTALLED", inplace=True)
 
 # Changing to the index to datetime values
-gwsi_wl.index = pd.to_datetime(gwsi_wl.index)
-wells55_wl.index = pd.to_datetime(wells55_wl.index)
+#gwsi_wl.index = pd.to_datetime(gwsi_wl.index)
+#wells55_wl.index = pd.to_datetime(wells55_wl.index)
 # %%
 # Need to add an original database column
 wells55_wl["Original_DB"] = 'Wells55'
@@ -111,6 +111,35 @@ combo.info()
 WL_TS_DB = pd.pivot_table(combo, index=["REGISTRY_I"], columns="date", values="depth")
 # %%
 WL_TS_DB.head()
+
 # %%
-WL_TS_DB
+# Export data into a csv
+#WL_TS_DB.to_csv(outputpath + 'Wells55_GWSI_WLTS_DB.csv')
+
+# %% --- Summarizing the data by date now ---
+# Extract the year from the date column and create a new column year
+combo['year'] = pd.DatetimeIndex(combo.index).year
+combo['month'] = pd.DatetimeIndex(combo.index).month
+combo.head()
+
+# %%
+wl_data_regID_Year2 = combo.resample('Y').mean()
+wl_data_regID_Year2.head()
+# %%
+WL_TS_DB_year = pd.pivot_table(wl_data_regID_Year2, index=["REGISTRY_I"], columns="year", values="depth")
+#%%
+WL_TS_DB_year.head()
+# %%
+print(WL_TS_DB_year[1980])
+# %%
+print(WL_TS_DB_year[2020])
+
+# %%
+WL_TS_DB_1980 = WL_TS_DB_year[1980]
+WL_TS_DB_2020 = WL_TS_DB_year[2020]
+
+# %% Exporting data
+WL_TS_DB_1980.to_csv(outputpath + 'comboDB_WL_1980.csv')
+WL_TS_DB_2020.to_csv(outputpath + 'comboDB_WL_2020.csv')
+
 # %%
