@@ -114,7 +114,7 @@ WL_TS_DB.head()
 
 # %%
 # Export data into a csv
-#WL_TS_DB.to_csv(outputpath + 'Wells55_GWSI_WLTS_DB.csv')
+WL_TS_DB.to_csv(outputpath + 'Wells55_GWSI_WLTS_DB.csv')
 
 # %% --- Summarizing the data by date now ---
 # Extract the year from the date column and create a new column year
@@ -127,16 +127,18 @@ combo.head()
 #wl_data_regID_Year2.describe()
 # %%
 WL_TS_DB_year = pd.pivot_table(combo, index=["REGISTRY_I"], columns=["year"], values=["depth"], dropna=False, aggfunc=np.mean)
-#%%
-WL_TS_DB_year.info()
 # %%
 print(WL_TS_DB_year.iloc[:,115])
 # %%
 print(WL_TS_DB_year.iloc[:,155])
 
 # %%
-WL_TS_DB_1980 = WL_TS_DB_year.iloc[:,115]
-WL_TS_DB_2020 = WL_TS_DB_year.iloc[:,155]
+WL_TS_DB_1980 = pd.DataFrame(WL_TS_DB_year.iloc[:,115])
+WL_TS_DB_2020 = pd.DataFrame(WL_TS_DB_year.iloc[:,155])
+WL_TS_DB_1980.index.name = None
+WL_TS_DB_2020.index.name = None
+WL_TS_DB_1980.columns = ["depth"]
+WL_TS_DB_2020.columns = ["depth"]
 
 # %% Exporting data
 WL_TS_DB_1980.to_csv(outputpath + 'comboDB_WL_1980.csv')
