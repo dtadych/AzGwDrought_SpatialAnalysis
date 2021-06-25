@@ -123,23 +123,33 @@ combo['month'] = pd.DatetimeIndex(combo.index).month
 combo.head()
 
 # %%
-wl_data_regID_Year2 = combo.resample('Y').mean()
-wl_data_regID_Year2.head()
+#wl_data_regID_Year2 = combo.resample('Y').mean()
+#wl_data_regID_Year2.describe()
 # %%
-WL_TS_DB_year = pd.pivot_table(wl_data_regID_Year2, index=["REGISTRY_I"], columns="year", values="depth")
+WL_TS_DB_year = pd.pivot_table(combo, index=["REGISTRY_I"], columns=["year"], values=["depth"], dropna=False, aggfunc=np.mean)
 #%%
-WL_TS_DB_year.head()
+WL_TS_DB_year.info()
 # %%
-print(WL_TS_DB_year[1980])
+print(WL_TS_DB_year.iloc[:,115])
 # %%
-print(WL_TS_DB_year[2020])
+print(WL_TS_DB_year.iloc[:,155])
 
 # %%
-WL_TS_DB_1980 = WL_TS_DB_year[1980]
-WL_TS_DB_2020 = WL_TS_DB_year[2020]
+WL_TS_DB_1980 = WL_TS_DB_year.iloc[:,115]
+WL_TS_DB_2020 = WL_TS_DB_year.iloc[:,155]
 
 # %% Exporting data
 WL_TS_DB_1980.to_csv(outputpath + 'comboDB_WL_1980.csv')
 WL_TS_DB_2020.to_csv(outputpath + 'comboDB_WL_2020.csv')
 
+# %% count
+print(WL_TS_DB_year[1970].count())
+# %%  Seeing if things work
+fig, ax = plt.subplots()
+ax.plot(WL_TS_DB_year.iloc[:,155])
+ax.set(title='WL in 1980', xlabel='Registry ID', ylabel='Water Level (feet)')
+ax.grid()
+plt.show
+# %%
+WL_TS_DB_year.info()
 # %%
