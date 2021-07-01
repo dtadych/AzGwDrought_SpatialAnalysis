@@ -155,3 +155,16 @@ plt.show
 # %%
 WL_TS_DB_year.info()
 # %%
+# Summarize by Monthly now
+combo_monthly2 = combo
+combo_monthly2.reset_index(inplace=True)
+combo_monthly2.date = combo.date.dt.strftime('%Y-%m')
+combo_monthly2.info()
+# %%
+WL_TS_DB_month = pd.pivot_table(combo_monthly2, index=["REGISTRY_I"], columns=["date"], values=["depth"], dropna=False, aggfunc='mean')
+WL_TS_DB_month.info()
+# %%
+# Export both yearly summary data and monthly into csv
+WL_TS_DB_year.to_csv(outputpath + 'Wells55_GWSI_WLTS_DB_annual.csv')
+WL_TS_DB_month.to_csv(outputpath + 'Wells55_GWSI_WLTS_DB_monthly.csv')
+# %%
