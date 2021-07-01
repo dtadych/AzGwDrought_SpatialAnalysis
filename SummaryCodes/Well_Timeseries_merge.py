@@ -77,13 +77,6 @@ gwsi_wl.info()
 wells55_wl = wells55[["INSTALLED", "REGISTRY_I", "WATER_LEVE"]].copy()
 wells55_wl.info()
 
-#%%Don't do this for a hot second
-#gwsi_wl.set_index("date", inplace=True)
-#wells55_wl.set_index("INSTALLED", inplace=True)
-
-# Changing to the index to datetime values
-#gwsi_wl.index = pd.to_datetime(gwsi_wl.index)
-#wells55_wl.index = pd.to_datetime(wells55_wl.index)
 # %%
 # Need to add an original database column
 wells55_wl["Original_DB"] = 'Wells55'
@@ -119,12 +112,8 @@ WL_TS_DB.to_csv(outputpath + 'Wells55_GWSI_WLTS_DB.csv')
 # %% --- Summarizing the data by date now ---
 # Extract the year from the date column and create a new column year
 combo['year'] = pd.DatetimeIndex(combo.index).year
-combo['month'] = pd.DatetimeIndex(combo.index).month
 combo.head()
 
-# %%
-#wl_data_regID_Year2 = combo.resample('Y').mean()
-#wl_data_regID_Year2.describe()
 # %%
 WL_TS_DB_year = pd.pivot_table(combo, index=["REGISTRY_I"], columns=["year"], values=["depth"], dropna=False, aggfunc=np.mean)
 # %%
@@ -144,8 +133,6 @@ WL_TS_DB_2020.columns = ["depth"]
 WL_TS_DB_1980.to_csv(outputpath + 'comboDB_WL_1980.csv')
 WL_TS_DB_2020.to_csv(outputpath + 'comboDB_WL_2020.csv')
 
-# %% count
-print(WL_TS_DB_year[1970].count())
 # %%  Seeing if things work
 fig, ax = plt.subplots()
 ax.plot(WL_TS_DB_year.iloc[:,155])
