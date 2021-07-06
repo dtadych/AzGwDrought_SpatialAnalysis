@@ -13,6 +13,9 @@
 # - Make the columns well ID's and the rows dates
 # - for Wells55 water level and elevation, need to make rows the install date and columns REGISTRY_I
 # - Merge based on well ID's
+
+# Status as of 7/5/2021:
+# - Made water level (depth to water below land surface in feet) timeseries databases
 # %%
 import os
 import pandas as pd
@@ -20,6 +23,7 @@ import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
 import datetime
+from pandas.tseries.offsets import BYearBegin
 import seaborn as sns
 import geopandas as gp
 
@@ -109,7 +113,7 @@ WL_TS_DB.head()
 # Export data into a csv
 WL_TS_DB.to_csv(outputpath + 'Wells55_GWSI_WLTS_DB.csv')
 
-# %% --- Summarizing the data by date now ---
+# %% --- Summarizing the data by date ---
 # Extract the year from the date column and create a new column year
 combo['year'] = pd.DatetimeIndex(combo.index).year
 combo.head()
@@ -129,10 +133,12 @@ WL_TS_DB_2020.index.name = None
 WL_TS_DB_1980.columns = ["depth"]
 WL_TS_DB_2020.columns = ["depth"]
 
+#%%
+WL_TS_DB_year.index.name = None
+WL_TS_DB_year.head()
 # %% Exporting data
 WL_TS_DB_1980.to_csv(outputpath + 'comboDB_WL_1980.csv')
 WL_TS_DB_2020.to_csv(outputpath + 'comboDB_WL_2020.csv')
-
 # %%  Seeing if things work
 fig, ax = plt.subplots()
 ax.plot(WL_TS_DB_year.iloc[:,155])
@@ -150,8 +156,154 @@ combo_monthly2.info()
 # %%
 WL_TS_DB_month = pd.pivot_table(combo_monthly2, index=["REGISTRY_I"], columns=["date"], values=["depth"], dropna=False, aggfunc='mean')
 WL_TS_DB_month.info()
+WL_TS_DB_month.index.name = None
+WL_TS_DB_month.head()
 # %%
 # Export both yearly summary data and monthly into csv
 WL_TS_DB_year.to_csv(outputpath + 'Wells55_GWSI_WLTS_DB_annual.csv')
+# %%
 WL_TS_DB_month.to_csv(outputpath + 'Wells55_GWSI_WLTS_DB_monthly.csv')
+# %%
+# Making a for loop for years
+# Going to re-read in the combined database so we can get rid of that first row
+filename = 'Wells55_GWSI_WLTS_DB_annual.csv'
+filepath = os.path.join(outputpath, filename)
+print(filepath)
+
+annual_db = pd.read_csv(filepath, header=1, index_col=0)
+pd.options.display.float_format = '{:.2f}'.format
+annual_db.head()
+
+# %%
+columns = annual_db.columns.values.tolist()
+print(columns)
+
+# %%
+for i in columns:
+    WL_TS = 'WL_TS_DB_' + i
+    print(WL_TS)
+    f = pd.DataFrame(annual_db[i])
+    f.index.name = None
+    f.columns = ["depth"]
+    print(f.describe())
+#    print(outputpath + 'YearlyTS/' + WL_TS + '.csv')
+    f.to_csv(outputpath + 'YearlyTS/' + WL_TS + '.csv')
+
+# %%
+# Making a for loop for months
+# Going to re-read in the combined database so we can get rid of that first row
+filename = 'Wells55_GWSI_WLTS_DB_monthly.csv'
+filepath = os.path.join(outputpath, filename)
+print(filepath)
+
+monthly_db = pd.read_csv(filepath, header=1, index_col=0)
+pd.options.display.float_format = '{:.2f}'.format
+monthly_db.head()
+
+# %%
+columns = monthly_db.columns.values.tolist()
+print(columns)
+
+# %% Testing before the for loop
+i = '2007-05'
+WL_TS = 'WL_TS_DB_' + i
+print(WL_TS)
+f = pd.DataFrame(monthly_db[i])
+f.index.name = None
+f.columns = ["depth"]
+print(f.describe())
+print(outputpath + 'MonthlyTS/' + WL_TS + '.csv')
+
+
+# %%
+for i in columns:
+    WL_TS = 'WL_TS_DB_' + i
+    print(WL_TS)
+    f = pd.DataFrame(monthly_db[i])
+    f.index.name = None
+    f.columns = ["depth"]
+    print(f.describe())
+#    print(outputpath + 'MonthlyTS/' + WL_TS + '.csv')
+    f.to_csv(outputpath + 'MonthlyTS/' + WL_TS + '.csv')
+
+# %%
+# ---- Summarizing the data by number of measurements ----
+
+LEN_TS_DB_year = pd.pivot_table(combo, index=["REGISTRY_I"], columns=["year"], values=["depth"], dropna=False, aggfunc=len)
+LEN_TS_DB_year.index.name = None
+LEN_TS_DB_year.head()
+
+# %%
+LEN_TS_DB_month = pd.pivot_table(combo_monthly2, index=["REGISTRY_I"], columns=["date"], values=["depth"], dropna=False, aggfunc=len)
+LEN_TS_DB_month.index.name = None
+LEN_TS_DB_month.head()
+# %%
+# Export both yearly summary data and monthly into csv
+LEN_TS_DB_year.to_csv(outputpath + 'Wells55_GWSI_LEN_TS_DB_annual.csv')
+# %%
+LEN_TS_DB_month.to_csv(outputpath + 'Wells55_GWSI_LEN_TS_DB_monthly.csv')
+# %%
+# Making a for loop for years
+# Going to re-read in the combined database so we can get rid of that first row
+filename = 'Wells55_GWSI_LEN_TS_DB_annual.csv'
+filepath = os.path.join(outputpath, filename)
+print(filepath)
+
+annual_db = pd.read_csv(filepath, header=1, index_col=0)
+pd.options.display.float_format = '{:.2f}'.format
+annual_db.describe()
+
+# %%
+columns = annual_db.columns.values.tolist()
+print(columns)
+
+# %%
+for i in columns:
+    LEN_TS = 'LEN_TS_DB_' + i
+    print(LEN_TS)
+    f = pd.DataFrame(annual_db[i])
+    f.index.name = None
+    f.columns = ["depth"]
+    print(f.describe())
+#    print(outputpath + 'YearlyTS/' + LEN_TS + '.csv')
+    f.to_csv(outputpath + 'YearlyTS/' + LEN_TS + '.csv')
+
+# %%
+# Making a for loop for months
+# Going to re-read in the combined database so we can get rid of that first row
+filename = 'Wells55_GWSI_LEN_TS_DB_monthly.csv'
+filepath = os.path.join(outputpath, filename)
+print(filepath)
+
+monthly_db = pd.read_csv(filepath, header=1, index_col=0)
+pd.options.display.float_format = '{:.2f}'.format
+monthly_db.head()
+
+# %%
+columns = monthly_db.columns.values.tolist()
+print(columns)
+
+# %% Testing before the for loop
+i = '2007-05'
+LEN_TS = 'LEN_TS_DB_' + i
+print(LEN_TS)
+f = pd.DataFrame(monthly_db[i])
+f.index.name = None
+f.columns = ["depth"]
+print(f.describe())
+print(outputpath + 'MonthlyTS/' + LEN_TS + '.csv')
+
+
+# %%
+for i in columns:
+    LEN_TS = 'LEN_TS_DB_' + i
+    print(LEN_TS)
+    f = pd.DataFrame(monthly_db[i])
+    f.index.name = None
+    f.columns = ["depth"]
+    print(f.describe())
+#    print(outputpath + 'MonthlyTS/' + LEN_TS + '.csv')
+    f.to_csv(outputpath + 'MonthlyTS/' + LEN_TS + '.csv')
+
+
 # %%
