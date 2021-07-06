@@ -73,4 +73,21 @@ ID_short = ID[["OBJECTID_1", "IRR_NAME", "SHAPEAREA", "SHAPELEN", "geometry"]]
 georegdb = gpd.sjoin(masterdb, ID_short, how="left")
 georegdb = georegdb.drop(['index_right', 'OBJECTID_1', 'SHAPEAREA', 'SHAPELEN'], axis=1)
 georegdb.head()
-# %%
+# %% Need to make a list of columns that are not NaN in IRR_NAME
+Irrgeodb = georegdb[georegdb['IRR_NAME'].notnull()]
+IrrRegIDlist = list(Irrgeodb["REGISTRY_I"])
+# %% Read in the annual timeseries database
+filename = 'Wells55_GWSI_WLTS_DB_annual.csv'
+filepath = os.path.join(outputpath, filename)
+print(filepath)
+
+annual_db = pd.read_csv(filepath, header=1, index_col=0)
+pd.options.display.float_format = '{:.2f}'.format
+annual_db.head()
+# %% Making a sub annual timeseries dataframe based soley on values from our list
+for i in IrrRegIDlist:
+    IrrTS = annual_db.loc[[i]].append()
+
+IrrTS.info()
+# %% Get the average for all the columns
+df.mean(axis = 0)
