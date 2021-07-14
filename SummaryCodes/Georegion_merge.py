@@ -134,67 +134,15 @@ print(filepath)
 GEOREG = gp.read_file(filepath)
 # %%
 GEOREG.rename(columns={'GEO_Region':'GEO_REG_CAT','GEO_Regi_1':'GEO_REG_NAME'}, inplace=True)
-# %%
-AZCounties.info()
-fig, ax = plt.subplots()
-AZCounties.plot(ax = ax)
-# %%
+# %% Adding third column of counties and territories for large statistics
 GEOREG['Counties_Territories'] = County_terr['NAME']
+# %% Getting rid of the unnecessary columns
+GEOREG = GEOREG[['GEO_REG_CAT','GEO_REG_NAME','geometry','Counties_Territories']]
 GEOREG.info()
-
 # %%
 fig, ax = plt.subplots()
 GEOREG.plot(ax = ax)
 #%%
-newlist
-# %%
-StartShape = newlist[0]
-fig, ax = plt.subplots()
-StartShape.plot(ax = ax)
-StartShape.info()
-
-#%%
-Nextshape = newlist[2]
-Combinedshape = Nextshape.merge(StartShape, how='outer', on=['geometry', 'GEO_Region_Cat', 'GEO_Region_Name'])
-fig, ax = plt.subplots()
-Combinedshape.plot(ax = ax)
-Combinedshape.info()
-#%%
-Combinedshape = newlist[2].merge(Combinedshape, how='outer', on=['geometry', 'GEO_Region_Cat', 'GEO_Region_Name'])
-fig, ax = plt.subplots()
-StartShape.plot(ax = ax)
-Combinedshape.info()
-#%%
-for i in newlist:
-    print(i.info())
-    Combinedshape = i.merge(StartShape, how='outer', on=['geometry', 'GEO_Region_Cat', 'GEO_Region_Name'])
-    #print(Combinedshape.unique())
-
-Combinedshape.info()
-#%%
-fig, ax = plt.subplots()
-Combinedshape.plot(ax = ax)
-
-#%%
-#Wells55_GWSI_MasterDB = wells55_gdf.merge(gwsi_gdf, suffixes=['_wells55','_gwsi'], how="outer", left_on="REGISTRY_I", right_on="REG_ID")
-Wells55_GWSI_MasterDB = wells55_gdf.merge(gwsi_gdf, suffixes=['_wells55','_gwsi'], how="outer", on=['']
-                                          left_on=["REGISTRY_I", 'WELLTYPE', 'WELL_DEPTH', 'geometry', 'Original_DB'],
-                                          right_on=["REG_ID", 'WELL_TYPE', 'WELL_DEPTH', 'geometry', 'Original_DB'])
-print(Wells55_GWSI_MasterDB.info())
+GEOREG.to_file('../MergedData/Output_files/Georegions_3col.shp')
 
 # %%
-# Now plot the new master db
-fig, ax = plt.subplots()
-#gwsi_gdf.plot(ax = ax, label="GWSI")
-#wells55_gdf.plot(ax = ax, label="Wells55")
-Wells55_GWSI_MasterDB.plot(ax=ax, label="Master Database")
-ax.set_title("Check the merged database")
-plt.legend()
-plt.savefig('../MergedData/Output_files/{0}.png'.format(type), bbox_inches='tight')
-
-# %%
-# Export all the ish
-Wells55_GWSI_MasterDB.to_file("Master_ADWR_Database.shp")
-Wells55_GWSI_MasterDB.to_csv('../MergedData/Output_files/Master_ADWR_database.csv')
-# %%
-Wells55_GWSI_MasterDB.to_file('../MergedData/Output_files/Master_ADWR_database.shp')
