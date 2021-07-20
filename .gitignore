@@ -1,3 +1,8 @@
 # Need to ingore the .csv's and database files
 *.csv
 *.dbf
+*.cpg
+*.prj
+*.qpj
+*.shp
+*.shx
