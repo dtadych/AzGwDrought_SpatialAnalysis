@@ -126,7 +126,7 @@ for x, y in Shortnames.items():
     y.plot(ax=ax,label=x)
     y.to_file(x+".shp")
 
-# %% Anything I do to combine these from here isn't fucking working so I'm going to union in qgis and then go from there
+# %% Anything I do to combine these from here isn't working so I'm going to union in qgis and then go from there
 # QGIS worked!  Reading in the new shapefile
 filename = "GEOREGIONS.shp"
 filepath = os.path.join(datapath, filename)
@@ -135,9 +135,17 @@ GEOREG = gp.read_file(filepath)
 # %%
 GEOREG.rename(columns={'GEO_Region':'GEO_REG_CAT','GEO_Regi_1':'GEO_REG_NAME'}, inplace=True)
 # %% Adding third column of counties and territories for large statistics
-GEOREG['Counties_Territories'] = County_terr['NAME']
+County_terr.rename(columns={'NAME':'Counties_Territories'}, inplace=True)
+County_terr.info()
+
+# %%
+georegtest = gp.sjoin(GEOREG, County_terr, how='left')
+georegtest.info()
 # %% Getting rid of the unnecessary columns
 GEOREG = GEOREG[['GEO_REG_CAT','GEO_REG_NAME','geometry','Counties_Territories']]
+#%%
+GEOREG['GEO_REG_CAT'].unique()
+# %%
 GEOREG.info()
 # %%
 fig, ax = plt.subplots()
@@ -145,4 +153,6 @@ GEOREG.plot(ax = ax)
 #%%
 GEOREG.to_file('../MergedData/Output_files/Georegions_3col.shp')
 
+# %%
+GEOREG[(GEOREG.GEO_REG_CAT == "StateReg")].head()
 # %%
