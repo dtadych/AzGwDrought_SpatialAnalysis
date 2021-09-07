@@ -92,5 +92,26 @@ combo = annual_db2.merge(reg_list, how="outer")
 combo.info()
 
 # This worked!!
+# %% set index to Combo_ID
+combo.set_index('Combo_ID', inplace=True)
 
 # %% Now for plotting the timeseries
+cat_wl = combo.groupby(['AHS_Region']).mean()
+cat_wl
+
+# %%
+cat_wl2 = cat_wl.transpose()
+
+# %% Going to export all these as CSV's
+cat_wl.to_csv('../MergedData/Output_files/AHS_Categories_WL.csv')
+combo.to_csv('../MergedData/Output_files/AHS_WaterLevels.csv')
+
+#%%
+cat_wl2.to_csv('../MergedData/Output_files/AHS_WaterLevels_transposedforgraphing.csv')
+#%% Plotting
+fig, ax = plt.subplots()
+ax.plot(cat_wl2, label=['Regulated - CAP', 'Reglated CAP and Other SW', 'Regulated - No SW', 'Reservations', 'Unregulated - Colorado River', 'Unregulated, No SW', 'Unregulated - Other SW'])
+ax.set(title='Average Water Levels since 1853', xlabel='Year', ylabel='Water Level')
+ax.legend()
+
+# %%
