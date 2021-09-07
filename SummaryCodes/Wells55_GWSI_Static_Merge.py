@@ -59,13 +59,19 @@ gwsi_gdf.head()
 #  - more info here https://www.datasciencemadesimple.com/join-merge-data-frames-pandas-python/
 #  - and here regarding default options for merge
 #    https://stackabuse.com/how-to-merge-dataframes-in-pandas/#mergedataframesusingmerge
+
+# %% Changing REG_ID in GWSI to REGISTRY_I
+gwsi_gdf.rename(columns={'REG_ID':'REGISTRY_I'}, inplace=True)
 # %%
 #Wells55_GWSI_MasterDB = wells55_gdf.merge(gwsi_gdf, suffixes=['_wells55','_gwsi'], how="outer", left_on="REGISTRY_I", right_on="REG_ID")
 Wells55_GWSI_MasterDB = wells55_gdf.merge(gwsi_gdf, suffixes=['_wells55','_gwsi'], how="outer", 
                                           left_on=["REGISTRY_I", 'WELLTYPE', 'WELL_DEPTH', 'geometry', 'Original_DB'],
-                                          right_on=["REG_ID", 'WELL_TYPE', 'WELL_DEPTH', 'geometry', 'Original_DB'])
+                                          right_on=["REGISTRY_I", 'WELL_TYPE', 'WELL_DEPTH', 'geometry', 'Original_DB'])
 print(Wells55_GWSI_MasterDB.info())
 
+# %% combine registry ID and Site ID so in timeseries graphs every well has an ID
+Wells55_GWSI_MasterDB['Combo_ID'] = Wells55_GWSI_MasterDB.REGISTRY_I.combine_first(Wells55_GWSI_MasterDB.SITE_ID)
+Wells55_GWSI_MasterDB.info()
 # %%
 # Now plot the new master db
 fig, ax = plt.subplots()
@@ -76,10 +82,13 @@ ax.set_title("Check the merged database")
 plt.legend()
 plt.savefig('../MergedData/Output_files/{0}.png'.format(type), bbox_inches='tight')
 
+# %% Adding a column to combine registry ID's
+
+
 # %%
 # Export all the ish
-Wells55_GWSI_MasterDB.to_file("Master_ADWR_Database.shp")
-Wells55_GWSI_MasterDB.to_csv('../MergedData/Output_files/Master_ADWR_database.csv')
+Wells55_GWSI_MasterDB.to_file("Master_ADWR_Database_v2.shp")
+Wells55_GWSI_MasterDB.to_csv('../MergedData/Output_files/Master_ADWR_database_v2.csv')
 # %%
-Wells55_GWSI_MasterDB.to_file('../MergedData/Output_files/Master_ADWR_database.shp')
+Wells55_GWSI_MasterDB.to_file('../MergedData/Output_files/Master_ADWR_database_v2.shp')
 # %%
