@@ -32,7 +32,7 @@ import earthpy as et
 
 # Wells55_GWSI_MasterDB.to_file('../MergedData/Output_files/Master_ADWR_database.shp')
 
-filename = 'Master_ADWR_database.shp'
+filename = 'Master_ADWR_database_v2.shp'
 datapath = '../MergedData'
 outputpath = '../MergedData/Output_files/'
 filepath = os.path.join(outputpath, filename)
@@ -42,52 +42,55 @@ masterdb = gp.read_file(filepath)
 pd.options.display.float_format = '{:.2f}'.format
 print(masterdb.info())
 # %%
-# Reading in the shapefiles
-AIHdir = "/Users/danielletadych/Documents/PhD_Materials/PhD_Materials/Mapping/"
-shpdir = "/Users/danielletadych/Documents/PhD_Materials/PhD_Materials/Mapping/DataDivisions"
-# Regulated
-AIH_fn = "AZ_AIHomelands.shp"
-Irrig_Dist_fn = "Irrigation_District_FixedGeometries.shp"
-StateReg_fn = "State_Regulated_NonAI.shp"
+# Reading in the shapefile
+# GEOREG.to_file('../MergedData/Output_files/Georegions_3col.shp')
+filename = "Georegions_fixed.shp"
+filepath = os.path.join(outputpath, filename)
+georeg = gp.read_file(filepath)
 
-AIHfp = os.path.join(AIHdir, AIH_fn)
-IDfp = os.path.join(shpdir, Irrig_Dist_fn)
-State = os.path.join(shpdir, StateReg_fn)
-
-AIH = gp.read_file(AIHfp)
-ID = gp.read_file(IDfp)
-Statereg = gp.read_file(State)
-# %%
-AIH.head()
-# %%
-Statereg.info()
-# %%
-ID.head()
-# %%
-# ---- Now joining the spatial dataframes to the master database ----
-# Using Spatial join based on this webpage: https://geopandas.org/gallery/spatial_joins.html
-
-ID_short = ID[["OBJECTID_1", "IRR_NAME", "SHAPEAREA", "SHAPELEN", "geometry"]]
-
-# %%
-georegdb = gpd.sjoin(masterdb, ID_short, how="left")
-georegdb = georegdb.drop(['index_right', 'OBJECTID_1', 'SHAPEAREA', 'SHAPELEN'], axis=1)
-georegdb.head()
-# %% Need to make a list of columns that are not NaN in IRR_NAME
-Irrgeodb = georegdb[georegdb['IRR_NAME'].notnull()]
-IrrRegIDlist = list(Irrgeodb["REGISTRY_I"])
-# %% Read in the annual timeseries database
+#%%
+# Read in the annual time series database
 filename = 'Wells55_GWSI_WLTS_DB_annual.csv'
 filepath = os.path.join(outputpath, filename)
 print(filepath)
-
-annual_db = pd.read_csv(filepath, header=1, index_col=0)
-pd.options.display.float_format = '{:.2f}'.format
+# %%
+annual_db = pd.read_csv(filepath, header=0, index_col=0)
+#pd.options.display.float_format = '{:.2f}'.format
+annual_db.index.astype('int64')
+#%%
 annual_db.head()
-# %% Making a sub annual timeseries dataframe based soley on values from our list
-for i in IrrRegIDlist:
-    IrrTS = annual_db.loc[[i]].append()
 
-IrrTS.info()
-# %% Get the average for all the columns
-df.mean(axis = 0)
+# %% Overlay georegions onto the static database
+# Going to use sjoin based off this website: https://geopandas.org/docs/user_guide/mergingdata.html
+static_geo = gp.sjoin(masterdb, georeg, how="inner", op='intersects')
+static_geo.head()
+
+# %% Create a dataframe of AHS_Region and Well ID's
+reg_list = static_geo[['Combo_ID', 'AHS_Region']]
+reg_list
+
+# %% Converting Combo_ID to float
+reg_list['Combo_ID'] = reg_list['Combo_ID'].astype(int, errors = 'raise')
+
+# %% set indext to REGISTRY_I
+reg_list.set_index('Combo_ID', inplace=True)
+reg_list
+
+# %%
+annual_db2 = annual_db.reset_index(inplace=True)
+annual_db2 = annual_db.rename(columns = {'year':'Combo_ID'})
+annual_db2.head()
+
+# %%
+#annual_db2.REGISTRY_I.astype('int64')
+reg_list.reset_index(inplace=True)
+
+# %%
+reg_list.head()
+# %% Add list to the annual database
+combo = annual_db2.merge(reg_list, how="outer")
+combo.info()
+
+# This worked!!
+
+# %% Now for plotting the timeseries
