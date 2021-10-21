@@ -45,6 +45,10 @@ plt.legend()
 gwsi_gdf = GWSIshape
 wells55_gdf = wells55shape
 
+#%%
+wells55_gdf = wells55_gdf[wells55_gdf['DLIC_NUM'].notna()]
+wells55_gdf.info()
+
 # %% ---- Adding Database Source Columns to both ----
 wells55_gdf["Original_DB"] = 'Wells55'
 gwsi_gdf["Original_DB"] = 'GWSI'
@@ -82,13 +86,9 @@ ax.set_title("Check the merged database")
 plt.legend()
 plt.savefig('../MergedData/Output_files/{0}.png'.format(type), bbox_inches='tight')
 
-# %% Adding a column to combine registry ID's
-
-
 # %%
 # Export all the ish
-Wells55_GWSI_MasterDB.to_file("Master_ADWR_Database_v2.shp")
-Wells55_GWSI_MasterDB.to_csv('../MergedData/Output_files/Master_ADWR_database_v2.csv')
-# %%
-Wells55_GWSI_MasterDB.to_file('../MergedData/Output_files/Master_ADWR_database_v2.shp')
+#Wells55_GWSI_MasterDB.to_file("Master_ADWR_Database_v3.shp")
+Wells55_GWSI_MasterDB.to_csv('../MergedData/Output_files/Master_ADWR_database_v3.csv')
+Wells55_GWSI_MasterDB.to_file('../MergedData/Output_files/Master_ADWR_database_v3.shp')
 # %%

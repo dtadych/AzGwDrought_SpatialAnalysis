@@ -26,12 +26,13 @@ from shapely.geometry import box
 import geopandas as gp
 
 
+
 # %%
 # Load in the master database
 
 # Wells55_GWSI_MasterDB.to_file('../MergedData/Output_files/Master_ADWR_database.shp')
 
-filename = 'Master_ADWR_database_v2.shp'
+filename = 'Master_ADWR_database_v3.shp'
 datapath = '../MergedData'
 outputpath = '../MergedData/Output_files/'
 filepath = os.path.join(outputpath, filename)
@@ -58,6 +59,25 @@ annual_db = pd.read_csv(filepath, header=0, index_col=0)
 annual_db.index.astype('int64')
 #%%
 annual_db.head()
+
+# %% Exclude wells in static database that do not have a drilling record
+# https://www.geeksforgeeks.org/how-to-drop-rows-in-dataframe-by-conditions-on-column-values/
+wells55 = masterdb[(masterdb['Original_D'] == 'Wells55') & (masterdb['DLIC_NUM'].isna())].index
+
+#%%
+df.drop(index_names, inplace = True)
+
+# %%
+masterdb2 = masterdb
+#%% 
+masterdb2 = masterdb2.drop(wells55, inplace = True)
+masterdb2.info()
+# %%
+subset = masterdb2[(masterdb2['DLIC_NUM'].dropna()) & (masterdb2['Original_D'] == 'Wells55')]
+subset.info()
+# %%
+masterdb2 = masterdb2[masterdb2['DLIC_NUM'] != None]
+masterdb2.info()
 
 # %% Overlay georegions onto the static database
 # Going to use sjoin based off this website: https://geopandas.org/docs/user_guide/mergingdata.html
