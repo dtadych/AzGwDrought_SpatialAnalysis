@@ -11,7 +11,6 @@
 # - import master database and shape files
 # - Create columns of the different management options
 # - Create an if statement of if a well falls within a certain region, then it can equal the name of the shape it falls under
-
 # %%
 import os
 from geopandas.tools.sjoin import sjoin
@@ -25,7 +24,7 @@ import numpy as np
 import pandas as pd
 from shapely.geometry import box
 import geopandas as gp
-import earthpy as et
+
 
 # %%
 # Load in the master database
