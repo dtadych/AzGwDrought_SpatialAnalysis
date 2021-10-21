@@ -45,16 +45,22 @@ plt.legend()
 gwsi_gdf = GWSIshape
 wells55_gdf = wells55shape
 
-#%%
-wells55_gdf = wells55_gdf[wells55_gdf['DLIC_NUM'].notna()]
-wells55_gdf.info()
+# This was to filter by driller license number but that's dumb
+#wells55_gdf = wells55_gdf[wells55_gdf['DLIC_NUM'].notna()]
+#wells55_gdf.info()
 
-# %% ---- Adding Database Source Columns to both ----
+# ---- Adding Database Source Columns to both ----
 wells55_gdf["Original_DB"] = 'Wells55'
 gwsi_gdf["Original_DB"] = 'GWSI'
 wells55_gdf.head()
 # %%
 gwsi_gdf.head()
+
+# %% Fixing the date so that 1/1/70 in Wells55 is replaced with NAN
+# https://stackoverflow.com/questions/29247712/how-to-replace-a-value-in-pandas-with-nan
+wells55_gdf['INSTALLED'] = wells55_gdf['INSTALLED'].replace(['1970-01-01'], np.NaN)
+wells55_gdf['INSTALLED'].unique()
+
 
 # %% ---- Merging Both databases ----
 
@@ -66,6 +72,9 @@ gwsi_gdf.head()
 
 # %% Changing REG_ID in GWSI to REGISTRY_I
 gwsi_gdf.rename(columns={'REG_ID':'REGISTRY_I'}, inplace=True)
+
+# -- Stop here if you want to filter the wells55 database for specific uses
+# -- skip to line 98
 # %%
 #Wells55_GWSI_MasterDB = wells55_gdf.merge(gwsi_gdf, suffixes=['_wells55','_gwsi'], how="outer", left_on="REGISTRY_I", right_on="REG_ID")
 Wells55_GWSI_MasterDB = wells55_gdf.merge(gwsi_gdf, suffixes=['_wells55','_gwsi'], how="outer", 
@@ -89,6 +98,10 @@ plt.savefig('../MergedData/Output_files/{0}.png'.format(type), bbox_inches='tigh
 # %%
 # Export all the ish
 #Wells55_GWSI_MasterDB.to_file("Master_ADWR_Database_v3.shp")
-Wells55_GWSI_MasterDB.to_csv('../MergedData/Output_files/Master_ADWR_database_v3.csv')
-Wells55_GWSI_MasterDB.to_file('../MergedData/Output_files/Master_ADWR_database_v3.shp')
+Wells55_GWSI_MasterDB.to_csv('../MergedData/Output_files/Master_ADWR_database_datesfixed.csv')
+Wells55_GWSI_MasterDB.to_file('../MergedData/Output_files/Master_ADWR_database_datesfixed.shp')
 # %%
+# --- Filter wells55 and make new MasterDB
+# First, deleting the cancelled wells
+wells55_nocanc = wells55_gdf[wells55_gdf.WELL_CANCE != 'Y']
+wells55_nocanc.info()
