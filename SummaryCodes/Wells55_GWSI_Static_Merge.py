@@ -97,7 +97,6 @@ plt.savefig('../MergedData/Output_files/{0}.png'.format(type), bbox_inches='tigh
 
 # %%
 # Export all the ish
-#Wells55_GWSI_MasterDB.to_file("Master_ADWR_Database_v3.shp")
 Wells55_GWSI_MasterDB.to_csv('../MergedData/Output_files/Master_ADWR_database_datesfixed.csv')
 Wells55_GWSI_MasterDB.to_file('../MergedData/Output_files/Master_ADWR_database_datesfixed.shp')
 # %%
@@ -105,3 +104,47 @@ Wells55_GWSI_MasterDB.to_file('../MergedData/Output_files/Master_ADWR_database_d
 # First, deleting the cancelled wells
 wells55_nocanc = wells55_gdf[wells55_gdf.WELL_CANCE != 'Y']
 wells55_nocanc.info()
+
+#%%
+# No classified mineral or exploratory wells
+wells55_nomin = wells55_nocanc[wells55_nocanc.WELL_TYPE_ != 'OTHER']
+wells55_nomin.info()
+
+# %% Now filter by drill log exisence (not just filed) so we can see which water wells are actually a thing
+#wells55_water = wells55_nomin
+#wells55_water['DRILL_LOG'] = wells55_water['DRILL_LOG'].replace(None, np.NaN)
+#%%
+wells55_water = wells55_nomin[wells55_nomin['DRILL_LOG'].notna()]
+wells55_water.info()
+
+#df = df[df['EPS'].notna()]
+
+# %% Export both the non-cancelled wells and the water wells
+#  First the non-cancelled wells
+Wells55_GWSI_MasterDB = wells55_nocanc.merge(gwsi_gdf, suffixes=['_wells55','_gwsi'], how="outer", 
+                                          left_on=["REGISTRY_I", 'WELLTYPE', 'WELL_DEPTH', 'geometry', 'Original_DB'],
+                                          right_on=["REGISTRY_I", 'WELL_TYPE', 'WELL_DEPTH', 'geometry', 'Original_DB'])
+print(Wells55_GWSI_MasterDB.info())
+
+# combine registry ID and Site ID so in timeseries graphs every well has an ID
+Wells55_GWSI_MasterDB['Combo_ID'] = Wells55_GWSI_MasterDB.REGISTRY_I.combine_first(Wells55_GWSI_MasterDB.SITE_ID)
+Wells55_GWSI_MasterDB.info()
+# Export all the ish
+Wells55_GWSI_MasterDB.to_csv('../MergedData/Output_files/Master_ADWR_database_nocancelled.csv')
+Wells55_GWSI_MasterDB.to_file('../MergedData/Output_files/Master_ADWR_database_nocancelled.shp')
+
+#  Only water wells
+
+Wells55_GWSI_MasterDB = wells55_water.merge(gwsi_gdf, suffixes=['_wells55','_gwsi'], how="outer", 
+                                          left_on=["REGISTRY_I", 'WELLTYPE', 'WELL_DEPTH', 'geometry', 'Original_DB'],
+                                          right_on=["REGISTRY_I", 'WELL_TYPE', 'WELL_DEPTH', 'geometry', 'Original_DB'])
+print(Wells55_GWSI_MasterDB.info())
+
+# combine registry ID and Site ID so in timeseries graphs every well has an ID
+Wells55_GWSI_MasterDB['Combo_ID'] = Wells55_GWSI_MasterDB.REGISTRY_I.combine_first(Wells55_GWSI_MasterDB.SITE_ID)
+Wells55_GWSI_MasterDB.info()
+# Export all the ish
+Wells55_GWSI_MasterDB.to_csv('../MergedData/Output_files/Master_ADWR_database_water.csv')
+Wells55_GWSI_MasterDB.to_file('../MergedData/Output_files/Master_ADWR_database_water.shp')
+
+# %%

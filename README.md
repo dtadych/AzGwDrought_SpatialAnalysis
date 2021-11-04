@@ -14,7 +14,7 @@ Folders:
   2. Scripts:
       - Wells55_GWSI_Static_Merge: This script combines the GWSI database and the Wells55 database.
           - In order for this script to work, in the
-      - Georegion_merge.py: This script is used to combine separate shapefiles into one shapefile in order to overlay on top of the master database.  There is a step in QGIS in order to complete the merged
+      - Georegion_merge.py: This script is used to combine separate shapefiles into one shapefile in order to overlay on top of the master database.  There is a step in QGIS in order to complete the merge
       - Spatial_Analysis.py: this code is used to overlay the georegion shapefile, read in the timeseries database, and create averaged timeseries water level databases based on the region
           - In order for this to work, in the Output_files folder there needs to be
             1. Master_ADWR_Database_v# (created from Wells55_GWSI_Static_Merge)
