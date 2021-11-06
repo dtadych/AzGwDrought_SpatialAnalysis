@@ -18,7 +18,7 @@ import matplotlib
 import matplotlib.pyplot as plt
 import matplotlib.lines as mlines
 from matplotlib.colors import ListedColormap
-import datetime
+import datetime as dt
 import seaborn as sns
 import numpy as np
 import pandas as pd
@@ -29,10 +29,7 @@ import geopandas as gp
 
 # %%
 # Load in the master database
-
-# Wells55_GWSI_MasterDB.to_file('../MergedData/Output_files/Master_ADWR_database.shp')
-
-filename = 'Master_ADWR_database_v3.shp'
+filename = 'Master_ADWR_database_nocancelled.shp'
 datapath = '../MergedData'
 outputpath = '../MergedData/Output_files/'
 filepath = os.path.join(outputpath, filename)
@@ -53,31 +50,30 @@ georeg = gp.read_file(filepath)
 filename = 'Wells55_GWSI_WLTS_DB_annual.csv'
 filepath = os.path.join(outputpath, filename)
 print(filepath)
-# %%
-annual_db = pd.read_csv(filepath, header=0, index_col=0)
+annual_db = pd.read_csv(filepath, header=1, index_col=0)
 #pd.options.display.float_format = '{:.2f}'.format
 annual_db.index.astype('int64')
-#%%
 annual_db.head()
 
-# %% Exclude wells in static database that do not have a drilling record
-# https://www.geeksforgeeks.org/how-to-drop-rows-in-dataframe-by-conditions-on-column-values/
-wells55 = masterdb[(masterdb['Original_D'] == 'Wells55') & (masterdb['DLIC_NUM'].isna())].index
+#%%
+# Read in the monthly water level time series database
+filename = 'Wells55_GWSI_WLTS_DB_monthly.csv'
+filepath = os.path.join(outputpath, filename)
+print(filepath)
+monthly_db = pd.read_csv(filepath, header=1, index_col=0)
+#pd.options.display.float_format = '{:.2f}'.format
+#monthly_db.index.astype('int64')
+monthly_db.head()
 
 #%%
-df.drop(index_names, inplace = True)
-
-# %%
-masterdb2 = masterdb
-#%% 
-masterdb2 = masterdb2.drop(wells55, inplace = True)
-masterdb2.info()
-# %%
-subset = masterdb2[(masterdb2['DLIC_NUM'].dropna()) & (masterdb2['Original_D'] == 'Wells55')]
-subset.info()
-# %%
-masterdb2 = masterdb2[masterdb2['DLIC_NUM'] != None]
-masterdb2.info()
+# Read in the monthly Number of measurements database
+filename = 'Wells55_GWSI_LEN_TS_DB_monthly.csv'
+filepath = os.path.join(outputpath, filename)
+print(filepath)
+lenmonthly_db = pd.read_csv(filepath, header=1, index_col=0)
+#pd.options.display.float_format = '{:.2f}'.format
+#monthly_db.index.astype('int64')
+lenmonthly_db.head()
 
 # %% Overlay georegions onto the static database
 # Going to use sjoin based off this website: https://geopandas.org/docs/user_guide/mergingdata.html
@@ -103,9 +99,23 @@ annual_db2.head()
 # %%
 #annual_db2.REGISTRY_I.astype('int64')
 reg_list.reset_index(inplace=True)
+reg_list.head()
+
+# %% Start filtering the timeseries database to only include November - March
+monthly_db2 = monthly_db.transpose()
+monthly_db2.head()
 
 # %%
-reg_list.head()
+monthly_db2.index = pd.to_datetime(monthly_db2.index)
+
+# %%
+monthly_db2['month'] = monthly_db2.index.month
+
+# %%
+monthly_db2['month'] = monthly_db2['month'].astype(int)
+# %%
+monthly_test = monthly_db2.loc[(monthly_db2['month'] >= 11) & (monthly_db2['month'] <= 3)]
+
 # %% Add list to the annual database
 combo = annual_db2.merge(reg_list, how="outer")
 combo.info()
