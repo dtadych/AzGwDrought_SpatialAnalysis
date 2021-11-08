@@ -110,11 +110,14 @@ monthly_db2.index = pd.to_datetime(monthly_db2.index)
 
 # %%
 monthly_db2['month'] = monthly_db2.index.month
-
+print(monthly_db2['month'])
 # %%
-monthly_db2['month'] = monthly_db2['month'].astype(int)
+#monthly_db2['month'] = monthly_db2['month'].astype(int)
+#monthly_db2['month'].describe()
 # %%
-monthly_test = monthly_db2.loc[(monthly_db2['month'] >= 11) & (monthly_db2['month'] <= 3)]
+monthly_test = monthly_db2[(monthly_db2['month'] <= 3) +
+                            (monthly_db2['month'] >= 11)]
+print(monthly_test)
 
 # %% Add list to the annual database
 combo = annual_db2.merge(reg_list, how="outer")
