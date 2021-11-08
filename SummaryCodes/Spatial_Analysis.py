@@ -66,14 +66,14 @@ monthly_db = pd.read_csv(filepath, header=1, index_col=0)
 monthly_db.head()
 
 #%%
-# Read in the monthly Number of measurements database
-filename = 'Wells55_GWSI_LEN_TS_DB_monthly.csv'
+# Read in the yearly Number of measurements database
+filename = 'Wells55_GWSI_LEN_TS_DB_annual.csv'
 filepath = os.path.join(outputpath, filename)
 print(filepath)
-lenmonthly_db = pd.read_csv(filepath, header=1, index_col=0)
+lenannual_db = pd.read_csv(filepath, header=1, index_col=0)
 #pd.options.display.float_format = '{:.2f}'.format
 #monthly_db.index.astype('int64')
-lenmonthly_db.head()
+lenannual_db.head()
 
 # %% Overlay georegions onto the static database
 # Going to use sjoin based off this website: https://geopandas.org/docs/user_guide/mergingdata.html
@@ -119,6 +119,22 @@ monthly_test = monthly_db2[(monthly_db2['month'] <= 3) +
                             (monthly_db2['month'] >= 11)]
 print(monthly_test)
 
+# %% 
+# Pull out measurements less than 3 in len DB
+lenannual_db['sum'] = lenannual_db.sum(axis=1)
+print(lenannual_db['sum'])
+
+# %%
+len_db = lenannual_db['sum']
+len_db
+
+# %%
+len_db = len_db[len_db >=3 ]
+len_db
+
+# %%
+len_list = len_db.index
+len_list
 # %% Add list to the annual database
 combo = annual_db2.merge(reg_list, how="outer")
 combo.info()
