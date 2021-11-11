@@ -92,17 +92,24 @@ reg_list.set_index('Combo_ID', inplace=True)
 reg_list
 
 # %%
-annual_db2 = annual_db.reset_index(inplace=True)
-annual_db2 = annual_db.rename(columns = {'year':'Combo_ID'})
-annual_db2.head()
-
-# %%
 #annual_db2.REGISTRY_I.astype('int64')
 reg_list.reset_index(inplace=True)
 reg_list.head()
 
+# %%
+#annual_db2 = annual_db.reset_index(inplace=True)
+#annual_db2 = annual_db.rename(columns = {'year':'Combo_ID'})
+#annual_db2.head()
+
+# %% Switching to monthly
+monthly_db2 = monthly_db
+# %%
+monthly_db2 = monthly_db2.rename(columns = {'date':'Combo_ID'})
+monthly_db2.head()
+
 # %% Start filtering the timeseries database to only include November - March
-monthly_db2 = monthly_db.transpose()
+monthly_db2.set_index('Combo_ID', inplace=True)
+monthly_db2 = monthly_db2.transpose()
 monthly_db2.head()
 
 # %%
@@ -111,16 +118,27 @@ monthly_db2.index = pd.to_datetime(monthly_db2.index)
 # %%
 monthly_db2['month'] = monthly_db2.index.month
 print(monthly_db2['month'])
-# %%
-#monthly_db2['month'] = monthly_db2['month'].astype(int)
-#monthly_db2['month'].describe()
-# %%
-monthly_test = monthly_db2[(monthly_db2['month'] <= 3) +
-                            (monthly_db2['month'] >= 11)]
-print(monthly_test)
 
+# %%
+monthly_db2 = monthly_db2[(monthly_db2['month'] <= 3) +
+                            (monthly_db2['month'] >= 11)]
+print(monthly_db2)
+
+# Need to delete the month column before 
+del monthly_db2['month']
+monthly_db2.head()
+# %% Reformatting so we can add AHS regions and merge with other lists
+monthly_db2 = monthly_db2.transpose()
+monthly_db2.head()
+# %%
+monthly_db3 = monthly_db2.reset_index()
+monthly_db3.head()
+
+# %%
+monthly_db3['Combo_ID'] = monthly_db3['Combo_ID'].astype(int, errors = 'raise')
+monthly_db3['Combo_ID'].head()
 # %% 
-# Pull out measurements less than 3 in len DB
+# Pull out measurements less than 3 in the annual len DB
 lenannual_db['sum'] = lenannual_db.sum(axis=1)
 print(lenannual_db['sum'])
 
@@ -129,17 +147,34 @@ len_db = lenannual_db['sum']
 len_db
 
 # %%
-len_db = len_db[len_db >=3 ]
+len_db = len_db[len_db >= 3]
 len_db
 
 # %%
-len_list = len_db.index
-len_list
-# %% Add list to the annual database
-combo = annual_db2.merge(reg_list, how="outer")
-combo.info()
+len_db2 = len_db.reset_index()
+len_db2.info()
+
+# %%
+len_db2 = len_db2.rename(columns = {'year':'Combo_ID'})
+len_db2.info()
+# %%
+len_db2['Combo_ID'] = len_db2['Combo_ID'].astype(int, errors = 'raise')
+len_db2.info()
+
+# %% Gotta delete the sum column now
+del len_db2['sum']
+len_db2.info()
+
+# %% Add list of AHS region ID's to the monthly database
+combo = pd.merge(monthly_db3,reg_list,how='inner',on='Combo_ID')
+combo2 = combo.drop_duplicates()
+combo2.info()
 
 # This worked!!
+# %% Now need to combine len_db 
+combo2 = combo.merge(len_db2, how='inner')
+combo2
+
 # %% set index to Combo_ID
 combo.set_index('Combo_ID', inplace=True)
 
