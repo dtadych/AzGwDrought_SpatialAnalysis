@@ -167,34 +167,82 @@ len_db2.info()
 
 # %% Add list of AHS region ID's to the monthly database
 combo = pd.merge(monthly_db3,reg_list,how='inner',on='Combo_ID')
-combo2 = combo.drop_duplicates()
-combo2.info()
+#combo2 = combo.drop_duplicates()
+combo.info()
 
 # This worked!!
+# %%
+len_db2 = len_db2.reset_index()
+len_db2
 # %% Now need to combine len_db 
-combo2 = combo.merge(len_db2, how='inner')
+combo2 = combo.merge(len_db2, how='inner', on='Combo_ID')
+#combo3 = pd.merge(combo2,len_db2,how='inner',left_index=True, right_index=True)
+combo2.info()
 combo2
-
-# %% set index to Combo_ID
-combo.set_index('Combo_ID', inplace=True)
 
 # %% Now for plotting the timeseries
 cat_wl = combo.groupby(['AHS_Region']).mean()
 cat_wl
 
+# %% Delete Combo ID column
+del cat_wl['Combo_ID']
+cat_wl
+
 # %%
 cat_wl2 = cat_wl.transpose()
+cat_wl2
+
+# %%
+cat_wl2.info()
+
+# %% Narrow to only period of analysis
+startyear = 1970
+endyear = 2020
+# %%
+cat_wl2.index = pd.to_datetime(cat_wl2.index)
+cat_wl2['year'] = cat_wl2.index.year
+cat_wl2
+
+# %%
+cat_wl2 = cat_wl2[(cat_wl2['year'] >= startyear) +
+                            (cat_wl2['year'] >= endyear)]
+
+print(cat_wl2)
+#%%
+del cat_wl2['year']
+cat_wl2.head()
+
+# %% --- Now fun Stats ---
+# First get means
+wl_mean = cat_wl2.mean()
+wl_mean
+
+# %% Subtracting the mean from the values to get anomalies
+wl_anomalies = cat_wl2 - wl_mean
+wl_anomalies
 
 # %% Going to export all these as CSV's
-cat_wl.to_csv('../MergedData/Output_files/AHS_Categories_WL.csv')
-combo.to_csv('../MergedData/Output_files/AHS_WaterLevels.csv')
+wl_anomalies.to_csv('../MergedData/Output_files/AGU_Categories_WLanomalies.csv')
+combo2.to_csv('../MergedData/Output_files/AGU_WaterLevels.csv')
 
 #%%
-cat_wl2.to_csv('../MergedData/Output_files/AHS_WaterLevels_transposedforgraphing.csv')
-#%% Plotting
+cat_wl2.to_csv('../MergedData/Output_files/AGU_WaterLevels_transposedforgraphing.csv')
+#%% Plotting the regulated regions
 fig, ax = plt.subplots()
-ax.plot(cat_wl2, label=['Regulated - CAP', 'Reglated CAP and Other SW', 'Regulated - No SW', 'Reservations', 'Unregulated - Colorado River', 'Unregulated, No SW', 'Unregulated - Other SW'])
-ax.set(title='Average Water Levels since 1853', xlabel='Year', ylabel='Water Level')
+ax.plot(wl_anomalies['Reg_CAP'], label = 'Colorado River')
+ax.plot(wl_anomalies['Reg_CAP_Other'], label = 'Colorado River & Other SW', color='green')
+ax.plot(wl_anomalies['Reg_NoSW'], label = 'No SW', color = 'orange')
+ax.set(title='Regulated Water Level Anomalies since 1970', xlabel='Date', ylabel='Water Level Anomaly')
+plt.ylim(-300,300)
+ax.legend()
+
+# %% Plotting the unregulated regions
+fig, ax = plt.subplots()
+ax.plot(wl_anomalies['Unreg_CoR'], label = 'Colorado River')
+ax.plot(wl_anomalies['Unreg_Other'], label = 'Colorado River & Other SW', color='green')
+ax.plot(wl_anomalies['Unreg_NoSW'], label = 'No SW', color = 'orange')
+ax.set(title='Unregulated Water Level Anomalies since 1970', xlabel='Date', ylabel='Water Level Anomaly')
+plt.ylim(-300,300)
 ax.legend()
 
 # %%

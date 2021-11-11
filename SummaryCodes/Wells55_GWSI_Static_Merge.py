@@ -73,7 +73,7 @@ wells55_gdf['INSTALLED'].unique()
 # %% Changing REG_ID in GWSI to REGISTRY_I
 gwsi_gdf.rename(columns={'REG_ID':'REGISTRY_I'}, inplace=True)
 
-# %%
+# %% combine registry ID and Site ID so in timeseries graphs every well has an ID
 gwsi_gdf['Combo_ID'] = gwsi_gdf.REGISTRY_I.combine_first(gwsi_gdf.SITE_ID)
 gwsi_gdf.info()
 
@@ -91,12 +91,9 @@ Wells55_GWSI_MasterDB = pd.merge(gwsi_gdf, wells55_gdf, suffixes=['_gwsi','_well
                                           on=['OBJECTID','Combo_ID',"REGISTRY_I", 'WELL_DEPTH', 'geometry', 'Original_DB'])
 print(Wells55_GWSI_MasterDB.info())
 
-# %% Looking for fucking duplicates
+# %% Looking for flaming duplicates
 print(Wells55_GWSI_MasterDB[Wells55_GWSI_MasterDB['Combo_ID'].duplicated()])
 
-# %% combine registry ID and Site ID so in timeseries graphs every well has an ID
-Wells55_GWSI_MasterDB['Combo_ID'] = Wells55_GWSI_MasterDB.REGISTRY_I.combine_first(Wells55_GWSI_MasterDB.SITE_ID)
-Wells55_GWSI_MasterDB.info()
 # %%
 test = Wells55_GWSI_MasterDB.groupby(['Combo_ID']).first()
 test.info()
@@ -146,30 +143,30 @@ wells55_water.info()
 
 # %% Export both the non-cancelled wells and the water wells
 #  First the non-cancelled wells
-Wells55_GWSI_MasterDB = wells55_nocanc.merge(gwsi_gdf, suffixes=['_wells55','_gwsi'], how="outer", 
-                                          left_on=["REGISTRY_I", 'WELLTYPE', 'WELL_DEPTH', 'geometry', 'Original_DB'],
-                                          right_on=["REGISTRY_I", 'WELL_TYPE', 'WELL_DEPTH', 'geometry', 'Original_DB'])
+Wells55_GWSI_MasterDB = pd.merge(gwsi_gdf, wells55_nocanc, suffixes=['_gwsi','_wells55'], how="outer", 
+                                          on=['OBJECTID','Combo_ID',"REGISTRY_I", 'WELL_DEPTH', 'geometry', 'Original_DB'])
+
+print(Wells55_GWSI_MasterDB.info())
+#%%
+Wells55_GWSI_MasterDB = Wells55_GWSI_MasterDB.groupby(['Combo_ID']).first()
 print(Wells55_GWSI_MasterDB.info())
 
-# combine registry ID and Site ID so in timeseries graphs every well has an ID
-Wells55_GWSI_MasterDB['Combo_ID'] = Wells55_GWSI_MasterDB.REGISTRY_I.combine_first(Wells55_GWSI_MasterDB.SITE_ID)
-Wells55_GWSI_MasterDB.info()
-# Export all the ish
+# %%
 Wells55_GWSI_MasterDB.to_csv('../MergedData/Output_files/Master_ADWR_database_nocancelled.csv')
 Wells55_GWSI_MasterDB.to_file('../MergedData/Output_files/Master_ADWR_database_nocancelled.shp')
 
+# %%
 #  Only water wells
+Wells55_GWSI_MasterDB = pd.merge(gwsi_gdf, wells55_water, suffixes=['_gwsi','_wells55'], how="outer", 
+                                          on=['OBJECTID','Combo_ID',"REGISTRY_I", 'WELL_DEPTH', 'geometry', 'Original_DB'])
 
-Wells55_GWSI_MasterDB = wells55_water.merge(gwsi_gdf, suffixes=['_wells55','_gwsi'], how="outer", 
-                                          left_on=["REGISTRY_I", 'WELLTYPE', 'WELL_DEPTH', 'geometry', 'Original_DB'],
-                                          right_on=["REGISTRY_I", 'WELL_TYPE', 'WELL_DEPTH', 'geometry', 'Original_DB'])
 print(Wells55_GWSI_MasterDB.info())
 
-# combine registry ID and Site ID so in timeseries graphs every well has an ID
-Wells55_GWSI_MasterDB['Combo_ID'] = Wells55_GWSI_MasterDB.REGISTRY_I.combine_first(Wells55_GWSI_MasterDB.SITE_ID)
-Wells55_GWSI_MasterDB.info()
-# Export all the ish
+# %%
+Wells55_GWSI_MasterDB = Wells55_GWSI_MasterDB.groupby(['Combo_ID']).first()
+print(Wells55_GWSI_MasterDB.info())
+
+# %%
 Wells55_GWSI_MasterDB.to_csv('../MergedData/Output_files/Master_ADWR_database_water.csv')
 Wells55_GWSI_MasterDB.to_file('../MergedData/Output_files/Master_ADWR_database_water.shp')
-
 # %%
