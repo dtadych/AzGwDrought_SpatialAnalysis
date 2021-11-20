@@ -51,7 +51,6 @@ filename = 'Wells55_GWSI_WLTS_DB_annual.csv'
 filepath = os.path.join(outputpath, filename)
 print(filepath)
 annual_db = pd.read_csv(filepath, header=1, index_col=0)
-#pd.options.display.float_format = '{:.2f}'.format
 annual_db.index.astype('int64')
 annual_db.head()
 
@@ -61,8 +60,6 @@ filename = 'Wells55_GWSI_WLTS_DB_monthly.csv'
 filepath = os.path.join(outputpath, filename)
 print(filepath)
 monthly_db = pd.read_csv(filepath, header=1, index_col=0)
-#pd.options.display.float_format = '{:.2f}'.format
-#monthly_db.index.astype('int64')
 monthly_db.head()
 
 #%%
@@ -71,8 +68,13 @@ filename = 'Wells55_GWSI_LEN_TS_DB_annual.csv'
 filepath = os.path.join(outputpath, filename)
 print(filepath)
 lenannual_db = pd.read_csv(filepath, header=1, index_col=0)
-#pd.options.display.float_format = '{:.2f}'.format
-#monthly_db.index.astype('int64')
+lenannual_db.head()
+
+# %% Read in modified wells CSV
+filename = 'Wells55_GWSI_LEN_TS_DB_annual.csv'
+filepath = os.path.join(outputpath, filename)
+print(filepath)
+lenannual_db = pd.read_csv(filepath, header=1, index_col=0)
 lenannual_db.head()
 
 # %% Overlay georegions onto the static database
@@ -181,7 +183,7 @@ combo2.info()
 combo2
 
 # %% Now for plotting the timeseries
-cat_wl = combo.groupby(['AHS_Region']).mean()
+cat_wl = combo2.groupby(['AHS_Region']).mean()
 cat_wl
 
 # %% Delete Combo ID column
@@ -200,6 +202,7 @@ startyear = 1970
 endyear = 2020
 # %%
 cat_wl2.index = pd.to_datetime(cat_wl2.index)
+# %%
 cat_wl2['year'] = cat_wl2.index.year
 cat_wl2
 
@@ -208,25 +211,33 @@ cat_wl2 = cat_wl2[(cat_wl2['year'] >= startyear) +
                             (cat_wl2['year'] >= endyear)]
 
 print(cat_wl2)
+
+# %% Making a pivot table so its by year
+cat_wl3 = pd.pivot_table(cat_wl2, index='year', aggfunc=np.mean)
+
+#WL_TS_DB_year = pd.pivot_table(combo, index=["REGISTRY_I"], columns=["year"], values=["depth"], dropna=False, aggfunc=np.mean)
+cat_wl3
+
 #%%
-del cat_wl2['year']
-cat_wl2.head()
+#del cat_wl2['year']
+#cat_wl2.head()
 
 # %% --- Now fun Stats ---
 # First get means
-wl_mean = cat_wl2.mean()
+wl_mean = cat_wl3.mean()
 wl_mean
 
 # %% Subtracting the mean from the values to get anomalies
-wl_anomalies = cat_wl2 - wl_mean
+wl_anomalies = cat_wl3 - wl_mean
 wl_anomalies
 
 # %% Going to export all these as CSV's
-wl_anomalies.to_csv('../MergedData/Output_files/AGU_Categories_WLanomalies.csv')
-combo2.to_csv('../MergedData/Output_files/AGU_WaterLevels.csv')
+wl_anomalies.to_csv('../MergedData/Output_files/AGU_Categories_WLanomalies_yearly_filteredbylen.csv')
+# %%
+combo2.to_csv('../MergedData/Output_files/AGU_WaterLevels_yearly.csv')
 
 #%%
-cat_wl2.to_csv('../MergedData/Output_files/AGU_WaterLevels_transposedforgraphing.csv')
+cat_wl3.to_csv('../MergedData/Output_files/AGU_WaterLevels_transposedforgraphing_fitleredbyyear.csv')
 #%% Plotting the regulated regions
 fig, ax = plt.subplots()
 ax.plot(wl_anomalies['Reg_CAP'], label = 'Colorado River')
@@ -245,4 +256,5 @@ ax.set(title='Unregulated Water Level Anomalies since 1970', xlabel='Date', ylab
 plt.ylim(-300,300)
 ax.legend()
 
-# %%
+# %% Would like to now do an analysis of modified wells over time
+
