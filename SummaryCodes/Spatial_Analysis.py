@@ -71,11 +71,11 @@ lenannual_db = pd.read_csv(filepath, header=1, index_col=0)
 lenannual_db.head()
 
 # %% Read in modified wells CSV
-filename = 'Wells55_GWSI_LEN_TS_DB_annual.csv'
+filename = 'Deepened_Mod_Wells.csv'
 filepath = os.path.join(outputpath, filename)
 print(filepath)
-lenannual_db = pd.read_csv(filepath, header=1, index_col=0)
-lenannual_db.head()
+dmod_wells = pd.read_csv(filepath, header=0, index_col=0)
+dmod_wells.head()
 
 # %% Overlay georegions onto the static database
 # Going to use sjoin based off this website: https://geopandas.org/docs/user_guide/mergingdata.html
