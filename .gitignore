@@ -1,5 +1,7 @@
 # Need to ingore the .csv's and database files
 
+*.csv
+*.xlsx
 *.dbf
 *.cpg
 *.prj
