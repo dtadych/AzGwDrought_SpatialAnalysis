@@ -41,7 +41,7 @@ print(masterdb.info())
 # %%
 # Reading in the shapefile
 # GEOREG.to_file('../MergedData/Output_files/Georegions_3col.shp')
-filename = "Georegions_fixed.shp"
+filename = "Georegions_AGU.shp"
 filepath = os.path.join(outputpath, filename)
 georeg = gp.read_file(filepath)
 
@@ -105,6 +105,10 @@ reg_list.head()
 
 # %% Switching to monthly
 monthly_db2 = monthly_db
+
+# %%
+monthly_db2 = monthly_db2.reset_index()
+monthly_db2.head()
 # %%
 monthly_db2 = monthly_db2.rename(columns = {'date':'Combo_ID'})
 monthly_db2.head()
@@ -172,6 +176,10 @@ combo = pd.merge(monthly_db3,reg_list,how='inner',on='Combo_ID')
 #combo2 = combo.drop_duplicates()
 combo.info()
 
+# %% If not doing the less than three yearly measurments deal, 
+# Skip those lines and instead run this.  Otherwise, comment out
+combo2 = combo
+
 # This worked!!
 # %%
 len_db2 = len_db2.reset_index()
@@ -234,7 +242,7 @@ wl_anomalies
 # %% Going to export all these as CSV's
 wl_anomalies.to_csv('../MergedData/Output_files/AGU_Categories_WLanomalies_yearly_filteredbylen.csv')
 # %%
-combo2.to_csv('../MergedData/Output_files/AGU_WaterLevels_yearly.csv')
+#combo2.to_csv('../MergedData/Output_files/AGU_WaterLevels_yearly.csv')
 
 #%%
 cat_wl3.to_csv('../MergedData/Output_files/AGU_WaterLevels_transposedforgraphing_fitleredbyyear.csv')
