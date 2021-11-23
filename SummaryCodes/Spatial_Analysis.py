@@ -18,7 +18,7 @@ import matplotlib
 import matplotlib.pyplot as plt
 import matplotlib.lines as mlines
 from matplotlib.colors import ListedColormap
-import datetime
+import datetime as dt
 import seaborn as sns
 import numpy as np
 import pandas as pd
@@ -29,10 +29,7 @@ import geopandas as gp
 
 # %%
 # Load in the master database
-
-# Wells55_GWSI_MasterDB.to_file('../MergedData/Output_files/Master_ADWR_database.shp')
-
-filename = 'Master_ADWR_database_v3.shp'
+filename = 'Master_ADWR_database_nocancelled.shp'
 datapath = '../MergedData'
 outputpath = '../MergedData/Output_files/'
 filepath = os.path.join(outputpath, filename)
@@ -53,31 +50,32 @@ georeg = gp.read_file(filepath)
 filename = 'Wells55_GWSI_WLTS_DB_annual.csv'
 filepath = os.path.join(outputpath, filename)
 print(filepath)
-# %%
-annual_db = pd.read_csv(filepath, header=0, index_col=0)
-#pd.options.display.float_format = '{:.2f}'.format
+annual_db = pd.read_csv(filepath, header=1, index_col=0)
 annual_db.index.astype('int64')
-#%%
 annual_db.head()
 
-# %% Exclude wells in static database that do not have a drilling record
-# https://www.geeksforgeeks.org/how-to-drop-rows-in-dataframe-by-conditions-on-column-values/
-wells55 = masterdb[(masterdb['Original_D'] == 'Wells55') & (masterdb['DLIC_NUM'].isna())].index
+#%%
+# Read in the monthly water level time series database
+filename = 'Wells55_GWSI_WLTS_DB_monthly.csv'
+filepath = os.path.join(outputpath, filename)
+print(filepath)
+monthly_db = pd.read_csv(filepath, header=1, index_col=0)
+monthly_db.head()
 
 #%%
-df.drop(index_names, inplace = True)
+# Read in the yearly Number of measurements database
+filename = 'Wells55_GWSI_LEN_TS_DB_annual.csv'
+filepath = os.path.join(outputpath, filename)
+print(filepath)
+lenannual_db = pd.read_csv(filepath, header=1, index_col=0)
+lenannual_db.head()
 
-# %%
-masterdb2 = masterdb
-#%% 
-masterdb2 = masterdb2.drop(wells55, inplace = True)
-masterdb2.info()
-# %%
-subset = masterdb2[(masterdb2['DLIC_NUM'].dropna()) & (masterdb2['Original_D'] == 'Wells55')]
-subset.info()
-# %%
-masterdb2 = masterdb2[masterdb2['DLIC_NUM'] != None]
-masterdb2.info()
+# %% Read in modified wells CSV
+filename = 'Deepened_Mod_Wells.csv'
+filepath = os.path.join(outputpath, filename)
+print(filepath)
+dmod_wells = pd.read_csv(filepath, header=0, index_col=0)
+dmod_wells.head()
 
 # %% Overlay georegions onto the static database
 # Going to use sjoin based off this website: https://geopandas.org/docs/user_guide/mergingdata.html
@@ -96,41 +94,167 @@ reg_list.set_index('Combo_ID', inplace=True)
 reg_list
 
 # %%
-annual_db2 = annual_db.reset_index(inplace=True)
-annual_db2 = annual_db.rename(columns = {'year':'Combo_ID'})
-annual_db2.head()
-
-# %%
 #annual_db2.REGISTRY_I.astype('int64')
 reg_list.reset_index(inplace=True)
+reg_list.head()
 
 # %%
-reg_list.head()
-# %% Add list to the annual database
-combo = annual_db2.merge(reg_list, how="outer")
+#annual_db2 = annual_db.reset_index(inplace=True)
+#annual_db2 = annual_db.rename(columns = {'year':'Combo_ID'})
+#annual_db2.head()
+
+# %% Switching to monthly
+monthly_db2 = monthly_db
+# %%
+monthly_db2 = monthly_db2.rename(columns = {'date':'Combo_ID'})
+monthly_db2.head()
+
+# %% Start filtering the timeseries database to only include November - March
+monthly_db2.set_index('Combo_ID', inplace=True)
+monthly_db2 = monthly_db2.transpose()
+monthly_db2.head()
+
+# %%
+monthly_db2.index = pd.to_datetime(monthly_db2.index)
+
+# %%
+monthly_db2['month'] = monthly_db2.index.month
+print(monthly_db2['month'])
+
+# %%
+monthly_db2 = monthly_db2[(monthly_db2['month'] <= 3) +
+                            (monthly_db2['month'] >= 11)]
+print(monthly_db2)
+
+# Need to delete the month column before 
+del monthly_db2['month']
+monthly_db2.head()
+# %% Reformatting so we can add AHS regions and merge with other lists
+monthly_db2 = monthly_db2.transpose()
+monthly_db2.head()
+# %%
+monthly_db3 = monthly_db2.reset_index()
+monthly_db3.head()
+
+# %%
+monthly_db3['Combo_ID'] = monthly_db3['Combo_ID'].astype(int, errors = 'raise')
+monthly_db3['Combo_ID'].head()
+# %% 
+# Pull out measurements less than 3 in the annual len DB
+lenannual_db['sum'] = lenannual_db.sum(axis=1)
+print(lenannual_db['sum'])
+
+# %%
+len_db = lenannual_db['sum']
+len_db
+
+# %%
+len_db = len_db[len_db >= 3]
+len_db
+
+# %%
+len_db2 = len_db.reset_index()
+len_db2.info()
+
+# %%
+len_db2 = len_db2.rename(columns = {'year':'Combo_ID'})
+len_db2.info()
+# %%
+len_db2['Combo_ID'] = len_db2['Combo_ID'].astype(int, errors = 'raise')
+len_db2.info()
+
+# %% Gotta delete the sum column now
+del len_db2['sum']
+len_db2.info()
+
+# %% Add list of AHS region ID's to the monthly database
+combo = pd.merge(monthly_db3,reg_list,how='inner',on='Combo_ID')
+#combo2 = combo.drop_duplicates()
 combo.info()
 
 # This worked!!
-# %% set index to Combo_ID
-combo.set_index('Combo_ID', inplace=True)
+# %%
+len_db2 = len_db2.reset_index()
+len_db2
+# %% Now need to combine len_db 
+combo2 = combo.merge(len_db2, how='inner', on='Combo_ID')
+#combo3 = pd.merge(combo2,len_db2,how='inner',left_index=True, right_index=True)
+combo2.info()
+combo2
 
 # %% Now for plotting the timeseries
-cat_wl = combo.groupby(['AHS_Region']).mean()
+cat_wl = combo2.groupby(['AHS_Region']).mean()
+cat_wl
+
+# %% Delete Combo ID column
+del cat_wl['Combo_ID']
 cat_wl
 
 # %%
 cat_wl2 = cat_wl.transpose()
-
-# %% Going to export all these as CSV's
-cat_wl.to_csv('../MergedData/Output_files/AHS_Categories_WL.csv')
-combo.to_csv('../MergedData/Output_files/AHS_WaterLevels.csv')
-
-#%%
-cat_wl2.to_csv('../MergedData/Output_files/AHS_WaterLevels_transposedforgraphing.csv')
-#%% Plotting
-fig, ax = plt.subplots()
-ax.plot(cat_wl2, label=['Regulated - CAP', 'Reglated CAP and Other SW', 'Regulated - No SW', 'Reservations', 'Unregulated - Colorado River', 'Unregulated, No SW', 'Unregulated - Other SW'])
-ax.set(title='Average Water Levels since 1853', xlabel='Year', ylabel='Water Level')
-ax.legend()
+cat_wl2
 
 # %%
+cat_wl2.info()
+
+# %% Narrow to only period of analysis
+startyear = 1970
+endyear = 2020
+# %%
+cat_wl2.index = pd.to_datetime(cat_wl2.index)
+# %%
+cat_wl2['year'] = cat_wl2.index.year
+cat_wl2
+
+# %%
+cat_wl2 = cat_wl2[(cat_wl2['year'] >= startyear) +
+                            (cat_wl2['year'] >= endyear)]
+
+print(cat_wl2)
+
+# %% Making a pivot table so its by year
+cat_wl3 = pd.pivot_table(cat_wl2, index='year', aggfunc=np.mean)
+
+#WL_TS_DB_year = pd.pivot_table(combo, index=["REGISTRY_I"], columns=["year"], values=["depth"], dropna=False, aggfunc=np.mean)
+cat_wl3
+
+#%%
+#del cat_wl2['year']
+#cat_wl2.head()
+
+# %% --- Now fun Stats ---
+# First get means
+wl_mean = cat_wl3.mean()
+wl_mean
+
+# %% Subtracting the mean from the values to get anomalies
+wl_anomalies = cat_wl3 - wl_mean
+wl_anomalies
+
+# %% Going to export all these as CSV's
+wl_anomalies.to_csv('../MergedData/Output_files/AGU_Categories_WLanomalies_yearly_filteredbylen.csv')
+# %%
+combo2.to_csv('../MergedData/Output_files/AGU_WaterLevels_yearly.csv')
+
+#%%
+cat_wl3.to_csv('../MergedData/Output_files/AGU_WaterLevels_transposedforgraphing_fitleredbyyear.csv')
+#%% Plotting the regulated regions
+fig, ax = plt.subplots()
+ax.plot(wl_anomalies['Reg_CAP'], label = 'Colorado River')
+ax.plot(wl_anomalies['Reg_CAP_Other'], label = 'Colorado River & Other SW', color='green')
+ax.plot(wl_anomalies['Reg_NoSW'], label = 'No SW', color = 'orange')
+ax.set(title='Regulated Water Level Anomalies since 1970', xlabel='Date', ylabel='Water Level Anomaly')
+plt.ylim(-300,300)
+ax.legend()
+
+# %% Plotting the unregulated regions
+fig, ax = plt.subplots()
+ax.plot(wl_anomalies['Unreg_CoR'], label = 'Colorado River')
+ax.plot(wl_anomalies['Unreg_Other'], label = 'Colorado River & Other SW', color='green')
+ax.plot(wl_anomalies['Unreg_NoSW'], label = 'No SW', color = 'orange')
+ax.set(title='Unregulated Water Level Anomalies since 1970', xlabel='Date', ylabel='Water Level Anomaly')
+plt.ylim(-300,300)
+ax.legend()
+
+# %% Would like to now do an analysis of modified wells over time
+
