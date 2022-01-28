@@ -1,6 +1,6 @@
 # === GRACE Spatial Analysis Script ===
 # written by Danielle Tadych
-# The purpose of this script is to analyze GRACE Data by applying a shapefile (mask)
+# The purpose of this script is to analyze GRACE Data for Arizona by points and shapes
 # %%
 import os
 from geopandas.tools.sjoin import sjoin
@@ -55,7 +55,47 @@ print("The latest date in the data is:",
 # %%
 grace_dataset["lwe_thickness"]['time'].values.shape    
 
+# %% Slicing data to get variables
+lat = grace_dataset.variables['lat'][:]
+lon = grace_dataset.variables['lat'][:]
+time = grace_dataset.variables['time'][:]
+lwe = grace_dataset['lwe_thickness']
+print(lwe)
+
+# %% Now I need to assign a coordinate system to lwe
+lwe.coords['lon'] = (lwe.coords['lon'] + 180) % 360 - 180
+#print(lwe['lon'])
+
+lwe2 = lwe.sortby(lwe.lon)
+#print(lwe2['lon'])
+
+lwe2 = lwe2.rio.set_spatial_dims('lon', 'lat')
+lwe2.rio.crs
+
+lwe2.rio.set_crs("epsg:4326")
+lwe2.rio.crs
+
+# %% Export to raster for graphing
+lwe2.rio.to_raster(r"testGRACE.tif")
+# This wrote a tif!!!
+
+# %% Try to convert time to datetime format
+# Basing it off this https://stackoverflow.com/questions/38691545/python-convert-days-since-1990-to-datetime-object
+days = int(grace_dataset["lwe_thickness"]["time"].values.max())
+print(days)
+
+start = dt.date(2002,1,1)
+delta = dt.timedelta(days)
+offset = start + delta
+print(start, delta, offset)
+print(type(offset))
+
 # %%
+time_range = pd.date_range(start=start, end=offset)
+time_range
+
+
+# %% ---- Plotting Points ----
 key = 400
 #longitude = grace_dataset["lwe_thickness"]["lon"].values[key]
 #latitude = grace_dataset["lwe_thickness"]["lat"].values[key]
@@ -63,7 +103,7 @@ longitude = -110.911
 latitude = 32.253
 print("Long, Lat values:", longitude, latitude)
 
-# %% Lat an longitude of Tucson
+# Lat an longitude of Tucson
 # 32.253460, -110.911789.
 
 # Create a spatial map of your selected location with cartopy
@@ -93,53 +133,6 @@ ax.add_feature(cfeature.LAND, edgecolor='black')
 
 ax.gridlines()
 plt.show()
-
-# %%
-lat = grace_dataset.variables['lat'][:]
-lon = grace_dataset.variables['lat'][:]
-time = grace_dataset.variables['time'][:]
-lwe = grace_dataset['lwe_thickness']
-print(lwe)
-
-# %% Now I need to assign a coordinate system to lwe
-lwe.coords['lon'] = (lwe.coords['lon'] + 180) % 360 - 180
-print(lwe['lon'])
-
-# %%
-lwe2 = lwe.sortby(lwe.lon)
-print(lwe2['lon'])
-
-# %%
-lwe2 = lwe2.rio.set_spatial_dims('lon', 'lat')
-lwe2.rio.crs
-
-#%%
-lwe2.rio.set_crs("epsg:4326")
-lwe2.rio.crs
-
-# %%
-lwe2.rio.to_raster(r"testGRACE.tif")
-# This wrote a tif!!!
-
-# %% Plotting??
-fig, ax = plt.subplots()
-lwe2.plot(ax = ax, label="lwe2")
-ax.set_title("Testing Grace Plotting")
-plt.legend()
-# %% Try to convert time to datetime format
-# Basing it off this https://stackoverflow.com/questions/38691545/python-convert-days-since-1990-to-datetime-object
-days = int(grace_dataset["lwe_thickness"]["time"].values.max())
-print(days)
-
-start = dt.date(2002,1,1)
-delta = dt.timedelta(days)
-offset = start + delta
-print(start, delta, offset)
-print(type(offset))
-
-# %%
-time_range = pd.date_range(start=start, end=offset)
-time_range
 
 # %% Tucson
 latitude = grace_dataset['lwe_thickness']['lat'].values[488]
@@ -287,7 +280,7 @@ one_point_df
 one_point_df['date'] = time_range
 one_point_df
 
-# Next step is to mask with a shapefile
+# ---- Plotting weighted Averages Based off Shape File Mask ----
 # Helpful webpage https://gis.stackexchange.com/questions/357490/mask-xarray-dataset-using-a-shapefile
 # %%
 ShapeMask = rasterio.features.geometry_mask(georeg.iloc[0],
