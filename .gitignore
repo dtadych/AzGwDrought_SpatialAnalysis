@@ -1,6 +1,6 @@
 # Need to ingore the .csv's and database files
 
-*.csv
+*.tif
 *.xlsx
 *.dbf
 *.cpg
@@ -8,3 +8,4 @@
 *.qpj
 *.shp
 *.shx
+*.csv
