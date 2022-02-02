@@ -1,8 +1,12 @@
 # === GRACE Spatial Analysis Script ===
 # written by Danielle Tadych
 # The purpose of this script is to analyze GRACE Data for Arizona by points and shapes
+# Lines 6->
 # %%
+from calendar import calendar
+from itertools import count
 import os
+from typing import Mapping
 from geopandas.tools.sjoin import sjoin
 import matplotlib
 import matplotlib.pyplot as plt
@@ -16,10 +20,13 @@ from shapely.geometry import box, geo
 import geopandas as gp
 import xarray as xr
 import rioxarray as rxr
+import cartopy
 import cartopy.crs as ccrs
 import cartopy.feature as cfeature
 import netCDF4
 import rasterio
+import rasterstats
+
 # %% Read in the file
 filename = 'CSR_GRACE_GRACE-FO_RL06_Mascons_all-corrections_v02.nc'
 datapath = '../../GRACE'
@@ -34,6 +41,12 @@ grace_dataset
 filename = "Georegions_AGU.shp"
 filepath = os.path.join('/Users/danielletadych/Documents/PhD_Materials/github_repos/AzGwDrought_SpatialAnalysis/MergedData/Output_files', filename)
 georeg = gp.read_file(filepath)
+
+# %%
+filename = "AZ_counties.shp"
+filepath = os.path.join('/Users/danielletadych/Documents/PhD_Materials/github_repos/AzGwDrought_SpatialAnalysis/MergedData/Shapefiles', filename)
+counties = gp.read_file(filepath)
+
 # %%
 metadata = grace_dataset.attrs
 metadata
@@ -53,11 +66,11 @@ print("The latest date in the data is:",
     grace_dataset["lwe_thickness"]["time"].values.max())
 
 # %%
-grace_dataset["lwe_thickness"]['time'].values.shape    
+grace_dataset["lwe_thickness"]['time'].values.shape   
 
 # %% Slicing data to get variables
 lat = grace_dataset.variables['lat'][:]
-lon = grace_dataset.variables['lat'][:]
+lon = grace_dataset.variables['lon'][:]
 time = grace_dataset.variables['time'][:]
 lwe = grace_dataset['lwe_thickness']
 print(lwe)
@@ -72,28 +85,65 @@ lwe2 = lwe.sortby(lwe.lon)
 lwe2 = lwe2.rio.set_spatial_dims('lon', 'lat')
 lwe2.rio.crs
 
-lwe2.rio.set_crs("epsg:4326")
+lwe2 = lwe2.rio.set_crs("epsg:4269")
 lwe2.rio.crs
 
+# %% Convert time to datetime format
+# https://stackoverflow.com/questions/38691545/python-convert-days-since-1990-to-datetime-object
+# http://unidata.github.io/netcdf4-python/#netCDF4.num2date
+# time = ncfile.variables['time'] # do not cast to numpy array yet 
+# time_convert = netCDF4.num2date(time[:], time.units, time.calendar)
+
+time = grace_dataset.variables['time'] # do not cast to numpy array yet 
+#time
+
+time_convert = netCDF4.num2date(time[:], "days since 2002-01-01T00:00:00Z", calendar='standard')
+#time_convert
+
+lwe2['time'] = time_convert
+#lwe2
+
+# Converting to the proper datetime format for statistical analyses
+#nor_xr is  dataarray (var) name
+datetimeindex = lwe2.indexes['time'].to_datetimeindex()
+ 
+lwe2['time'] = datetimeindex
+lwe2
 # %% Export to raster for graphing
-lwe2.rio.to_raster(r"testGRACE.tif")
+#lwe2.rio.to_raster(r"testGRACE_time.tif")
 # This wrote a tif!!!
 
-# %% Try to convert time to datetime format
-# Basing it off this https://stackoverflow.com/questions/38691545/python-convert-days-since-1990-to-datetime-object
-days = int(grace_dataset["lwe_thickness"]["time"].values.max())
-print(days)
-
-start = dt.date(2002,1,1)
-delta = dt.timedelta(days)
-offset = start + delta
-print(start, delta, offset)
-print(type(offset))
+# %% Plot the new geotif
+da = xr.open_rasterio("testGRACE_time.tif")
+#transform = cartopy.Affine.from_gdal(*da.attrs["transform"]) # this is important to retain the geographic attributes from the file
+da = 
+# %%
+fig = plt.figure(figsize=(16,8))
+ax = fig.add_subplot(111)
+ax.imshow(da.variable.data[0])
+plt.show()
 
 # %%
-time_range = pd.date_range(start=start, end=offset)
-time_range
-
+# Plot!
+crs=ccrs.PlateCarree()
+fig = plt.figure(figsize=(16,8))
+ax = fig.add_subplot(111, projection=crs)
+ax.coastlines(resolution='10m', alpha=0.1)
+ax.contourf(x, y, da.variable.data[0], cmap='Greys')
+ax.set_extent([lon_min, lon_max, lat_min, lat_max])
+# Grid and Labels
+gl = ax.gridlines(crs=crs, draw_labels=True, alpha=0.5)
+gl.xlabels_top = None
+gl.ylabels_right = None
+xgrid = np.arange(lon_min-0.5, lon_max+0.5, 1.)
+ygrid = np.arange(lat_min, lat_max+1, 1.)
+gl.xlocator = mticker.FixedLocator(xgrid.tolist())
+gl.ylocator = mticker.FixedLocator(ygrid.tolist())
+gl.xformatter = LONGITUDE_FORMATTER
+gl.yformatter = LATITUDE_FORMATTER
+gl.xlabel_style = {'size': 14, 'color': 'black'}
+gl.ylabel_style = {'size': 14, 'color': 'black'}
+plt.show()
 
 # %% ---- Plotting Points ----
 key = 400
@@ -268,54 +318,30 @@ one_point.plot.line(hue='lat',
 ax.set(title="Liquid Water Equivalent thickness for Cochise/Wilcox Area (cm)")
 plt.xlabel('Days since January 1, 2002')
 plt.ylabel('LWE (cm)')
-# %% Fort Mojave Area
-
-
-
-# %% plot one point
-one_point_df = one_point.to_dataframe()
-one_point_df
-
 # %%
-one_point_df['date'] = time_range
-one_point_df
-
 # ---- Plotting weighted Averages Based off Shape File Mask ----
-# Helpful webpage https://gis.stackexchange.com/questions/357490/mask-xarray-dataset-using-a-shapefile
-# %%
-ShapeMask = rasterio.features.geometry_mask(georeg.iloc[0],
-                                      out_shape=(len(lwe2.lon), len(lwe2.lat)),
-                                      transform=lwe2.transform,
-                                      invert=True)
-ShapeMask = xr.DataArray(ShapeMask , dims=("y", "x"))
+# Check the cooridnate systems
+mask = counties
+print("mask crs:", counties.crs)
+print("data crs:", lwe2.rio.crs)
 
-# Then apply the mask
-GRACEmasked = grace_dataset.where(ShapeMask == True)
-# %% Slightly different method
-# https://gis.stackexchange.com/questions/354782/masking-netcdf-time-series-data-from-shapefile-using-python/354798#354798
-
-#MSWEP_monthly2 = xarray.open_dataarray('D:\G3P\DATA\Models\MSWEP\MSWEP_monthly.nc4')
-#MSWEP_monthly2.rio.set_spatial_dims(x_dim="lon", y_dim="lat", inplace=True)
-#MSWEP_monthly2.rio.write_crs("epsg:4326", inplace=True)
-#Africa_Shape = geopandas.read_file('D:\G3P\DATA\Shapefile\Africa_SHP\Africa.shp', crs="epsg:4326")
-
-#clipped = MSWEP_monthly2.rio.clip(Africa_Shape.geometry.apply(mapping), Africa_Shape.crs, drop=False)
-
-grace2 = grace_dataset
-grace2 = grace2.rename_dims({"lon": "longitude", "lat": "latitude"})
-#%%
-#grace2 = grace2.rio.write_crs("epsg:4326", inplace=True)
-#print(grace2.crs)
-#%%
-grace2.rio.set_spatial_dims("longitude", "latitude", inplace=True)
-grace2.rio.write_crs("epsg:4326", inplace=True)
-
-#%% --- skip to here ---
-print(lwe2.rio.crs, georeg.crs)
-# %%
-clipped = lwe2.rio.clip(georeg.geometry, georeg.crs, drop=False)
+# %% Clipping based off the mask
+clipped = lwe2.rio.clip(mask.geometry, counties.crs)
 clipped.plot()
+# %% Write the clipped file into .tif
+#lwe2.rio.to_raster(r"testGRACE_time.tif")
+
+#clipped.rio.to_raster(r"clipped_GRACE_counties.tif")
+#print(".tif written")
+
 # %%
-lwe3 = clipped.to_dataframe()
+
+
 # %%
-lwe3
+fig, ax = plt.subplots(figsize=(6, 6))
+
+mask.plot(ax=ax)
+
+ax.set_title("Shapefile Crop Extent",
+             fontsize=16)
+plt.show()
