@@ -1,11 +1,14 @@
 # === GRACE Spatial Analysis Script ===
 # written by Danielle Tadych
 # The purpose of this script is to analyze GRACE Data for Arizona by points and shapes
-# Lines 6->
+#  - Importing packages: Line 6
+#  - Reading in files: Line 37
+#  - EASYMORE package attempt: Line 56
 # %%
 from calendar import calendar
 from itertools import count
 import os
+from pydoc import cli
 from typing import Mapping
 #import affine
 from geopandas.tools.sjoin import sjoin
@@ -26,8 +29,10 @@ import cartopy.crs as ccrs
 import cartopy.feature as cfeature
 import netCDF4
 import rasterio
-import rasterstats as rstats
+from rasterstats import zonal_stats
+#import rasterstats as rstats
 #from xrspatial import zonal_stats
+import easymore
 
 # %% Read in the file
 filename = 'CSR_GRACE_GRACE-FO_RL06_Mascons_all-corrections_v02.nc'
@@ -49,7 +54,7 @@ filename = "AZ_counties.shp"
 filepath = os.path.join('/Users/danielletadych/Documents/PhD_Materials/github_repos/AzGwDrought_SpatialAnalysis/MergedData/Shapefiles', filename)
 counties = gp.read_file(filepath)
 
-# %%
+# %% Look at that sweet sweet data
 metadata = grace_dataset.attrs
 metadata
 
@@ -68,6 +73,7 @@ print("The latest date in the data is:",
     grace_dataset["lwe_thickness"]["time"].values.max())
 
 # %%
+print("Number of Datapoints")
 grace_dataset["lwe_thickness"]['time'].values.shape   
 
 # %% Slicing data to get variables
@@ -114,24 +120,91 @@ lwe2
 # %% Export to raster for graphing
 #lwe2.rio.to_raster(r"testGRACE_time.tif")
 # This wrote a tif!!!
+# %% Plot the new dataset
+lwe2[0,:,:].plot()
+
+# %% Remapping using EASYMORE Package
+# https://github.com/ShervanGharari/EASYMORE/blob/main/examples/Chapter1_E1.ipynb
+# # loading EASYMORE
+from easymore.easymore import easymore
+
+# initializing EASYMORE object
+esmr = easymore()
+
+# specifying EASYMORE objects
+# name of the case; the temporary, remapping and remapped file names include case name
+esmr.case_name                = 'easymore_GRACE_test'              
+# temporary path that the EASYMORE generated GIS files and remapped file will be saved
+esmr.temp_dir                 = '../temporary/'
+
+# name of target shapefile that the source netcdf files should be remapped to
+# For this test, goign to use counties
+# esmr.target_shp               = '../data/target_shapefiles/South_Saskatchewan_MedicineHat.shp'
+remap_shapefile               = '/Users/danielletadych/Documents/PhD_Materials/github_repos/AzGwDrought_SpatialAnalysis/MergedData/Shapefiles/AZ_counties.shp'
+# It needs me to reproject my shapefile to WGS84 (epsg:4326)
+#       Note: It said please
+counties  = counties.to_crs(epsg=4326)
+#counties.crs
+
+# esmr.target_shp = remap_shapefile.to_crs(espg:4326)
+esmr.target_shp = counties
+#print(esmr.target_shp, esmr.target_shp.crs)
+
+# name of netCDF file(s); multiple files can be specified with *
+# esmr.source_nc                = '../data/Source_nc_ERA5/ERA5_NA_*.nc'
+# esmr.source_nc                = lwe2
+esmr.source_nc                = '../../GRACE/CSR_GRACE_GRACE-FO_RL06_Mascons_all-corrections_v02.nc'
+
+# name of variables from source netCDF file(s) to be remapped
+esmr.var_names                = ["lwe_thickness"]
+# rename the variables from source netCDF file(s) in the remapped files;
+# it will be the same as source if not provided
+esmr.var_names_remapped       = ["lwe_thickness"]
+# name of variable longitude in source netCDF files
+esmr.var_lon                  = 'lon'
+# name of variable latitude in source netCDF files
+esmr.var_lat                  = 'lat'
+# name of variable time in source netCDF file; should be always time
+esmr.var_time                 = 'time'
+# location where the remapped netCDF file will be saved
+esmr.output_dir               = outputpath
+# format of the variables to be saved in remapped files,
+# if one format provided it will be expanded to other variables
+esmr.format_list              = ['f4']
+# fill values of the variables to be saved in remapped files,
+# if one value provided it will be expanded to other variables
+esmr.fill_value_list          = ['-9999.00']
+# if required that the remapped values to be saved as csv as well
+esmr.save_csv                 = True
+esmr.complevel                 =  9
+# if uncommented EASYMORE will use this and skip GIS tasks
+#esmr.remap_csv                = '../temporary/ERA5_Medicine_Hat_remapping.csv'
+# %%
+# execute EASYMORE
+esmr.nc_remapper()
 
 # %% Plot the new geotif
 da = xr.open_rasterio("testGRACE_time.tif")
 #transform = cartopy.Affine.from_gdal(*da.attrs["transform"]) # this is important to retain the geographic attributes from the file
-da = 
+#da = lwe2
 # %%
 fig = plt.figure(figsize=(16,8))
 ax = fig.add_subplot(111)
-ax.imshow(da.variable.data[0])
+ax.imshow(da.variable.data[1])
 plt.show()
-
+# %%
+lon_min = da.y.min
+lon_max = da.y.max
+lat_min = da.x.min
+lat_max = da.x.max
+print(lon_min)
 # %%
 # Plot!
 crs=ccrs.PlateCarree()
 fig = plt.figure(figsize=(16,8))
 ax = fig.add_subplot(111, projection=crs)
 ax.coastlines(resolution='10m', alpha=0.1)
-ax.contourf(x, y, da.variable.data[0], cmap='Greys')
+ax.contourf(da.x, da.y, da.variable.data[201], cmap='viridis')
 ax.set_extent([lon_min, lon_max, lat_min, lat_max])
 # Grid and Labels
 gl = ax.gridlines(crs=crs, draw_labels=True, alpha=0.5)
@@ -139,12 +212,6 @@ gl.xlabels_top = None
 gl.ylabels_right = None
 xgrid = np.arange(lon_min-0.5, lon_max+0.5, 1.)
 ygrid = np.arange(lat_min, lat_max+1, 1.)
-gl.xlocator = mticker.FixedLocator(xgrid.tolist())
-gl.ylocator = mticker.FixedLocator(ygrid.tolist())
-gl.xformatter = LONGITUDE_FORMATTER
-gl.yformatter = LATITUDE_FORMATTER
-gl.xlabel_style = {'size': 14, 'color': 'black'}
-gl.ylabel_style = {'size': 14, 'color': 'black'}
 plt.show()
 
 # %% ---- Plotting Points ----
@@ -321,13 +388,13 @@ ax.set(title="Liquid Water Equivalent thickness for Cochise/Wilcox Area (cm)")
 plt.xlabel('Days since January 1, 2002')
 plt.ylabel('LWE (cm)')
 # %%
-# ---- Plotting weighted Averages Based off Shape File Mask ----
+# ---- Plotting Averages Based off Shape File Mask ----
 # Check the cooridnate systems
 mask = counties
 print("mask crs:", counties.crs)
 print("data crs:", lwe2.rio.crs)
 
-# %% Clipping based off the mask
+# %% Clipping based off the mask (not weighted)
 clipped = lwe2.rio.clip(mask.geometry, mask.crs)
 clipped.plot()
 # %% Write the clipped file into .tif
@@ -335,25 +402,100 @@ clipped.plot()
 
 #clipped.rio.to_raster(r"clipped_GRACE_counties.tif")
 #print(".tif written")
-
+# %%
+clipped[0,:,:].plot()
 # %%
 fig, ax = plt.subplots(figsize=(6, 6))
-
+lwe2[0,:,:].plot()
 mask.plot(ax=ax)
-
+clipped[0,:,:].plot()
+#ax.set_ylim(31,37)
+#ax.set_xlim([-115, -109])
 ax.set_title("Shapefile Crop Extent",
              fontsize=16)
 plt.show()
 
 # %%
 clipped['time'] = datetimeindex
+
 # %%
-clipped.rio.crs
+clipped_mean = clipped.mean(("lon","lat"))
+clipped_mean
+
+# %%
+global_mean = lwe2.mean(("lon","lat"))
+global_mean
+
+# %%
+cm_df = pd.DataFrame(clipped_mean)
+cm_df.info()
+
+# %%
+cm_df = cm_df.reset_index()
+cm_df
+# %%
+cm_df['index'] = datetimeindex
+cm_df
+
+# %%
+cm_df.set_index('index', inplace=True)
+cm_df
+
+# Extract the year from the date column and create a new column year
+cm_df['year'] = pd.DatetimeIndex(cm_df.index).year
+cm_df.head()
+
+# %%
+cm_df_year = pd.pivot_table(cm_df, index=["year"], values=[0], dropna=False, aggfunc=np.mean)
+cm_df_year
+
+# %%
+clipped_mean.plot()
+# %%
+cm_df_year.plot(label="AZ mean (not weighted)")
+#global_mean.plot(label="global Mean")
+plt.legend()
+
+# %%
+# --- Computing zonal stats (weighed average) ---
+
+# This is a tutorial that runs but the means are none
+# https://gis.stackexchange.com/questions/363120/computing-annual-spatial-zonal-statistics-of-a-netcdf-file-for-polygons-in-sha
+
+
+# load and read shp-file with geopandas
+#shp_fo = r'../path/to/shp_file.shp'
+#shp_df = gpd.read_file(shp_fo)
+shp_df = counties
+
+# load and read netCDF-file to dataset and get datarray for variable
+#nc_fo = r'../path/to/netCDF_file.nc'
+#nc_ds = xr.open_dataset(nc_fo)
+#nc_var = nc_ds['var_name']
+nc_ds = grace_dataset
+nc_var = grace_dataset['lwe_thickness']
+
+# get all years for which we have data in nc-file
+years = nc_ds['time'].values
+# %%
+# get affine of nc-file with rasterio
+af = rasterio.open(r'../../GRACE/CSR_GRACE_GRACE-FO_RL06_Mascons_all-corrections_v02.nc').transform
+print(af)
+#%%
+# go through all years
+for year in years:
+    # get values of variable pear year
+    nc_arr = nc_var.sel(time=year)
+    nc_arr_vals = nc_arr.values
+    # go through all geometries and compute zonal statistics
+    for i in range(len(shp_df)):
+        print(zonal_stats(shp_df.geometry, nc_arr_vals, affine=af, stats="mean"))
+
 # %%
 # Following this tutorial - didn't work though
 # https://automating-gis-processes.github.io/CSC/notebooks/L5/zonal-statistics.html
-dem=rasterio.open("clipped_GRACE_counties.tif")
-dem
+#dem=rasterio.open("clipped_GRACE_counties.tif")
+#dem
 # %%
 ax = counties.plot(facecolor='None', edgecolor='red', linewidth=2)
 show((dem, 1), ax=ax)
@@ -361,6 +503,7 @@ show((dem, 1), ax=ax)
 dem.info()
 # %%
 counties = counties.to_crs(crs=dem.crs)
+type(counties)
 # %%
 array = dem.read(1)
 
@@ -418,6 +561,13 @@ overlay
 # dataframe of weights = new shape area/ Total pixel area
 overlay['weights'] = overlay['overlay_area']/overlay['pixel_area']
 overlay
+# %%
+overlay.plot()
+#%%
+overlay.to_file("pima_GRACE_Overlay.shp")
+
+# %% Going to Rasterize the shapefile in qgis then read it back in
+overlay_raster=rasterio.open("clipped_GRACE_counties.tif")
 #%%
 # lwe = weights x original grace value
 grace_mask = lwe2.rio.clip(mask.geometry, mask.crs)
@@ -444,4 +594,13 @@ for year in years:
     for i in range(len(mask)):
         print(rstats.zonal_stats(mask.geometry, nc_arr_vals, affine=affine, stats="mean min max"))
         print('')
+# %%
+print(lwe2.time)
+# %%
+nc_arr = lwe2.sel(time='2002-04-18T00:00:00.000000000')
+nc_arr_vals = nc_arr.values
+nc_arr_vals
+# %%
+test_mean = rstats.zonal_stats(mask.geometry, nc_arr_vals, affine=affine, stats='mean')
+print(test_mean)
 # %%
