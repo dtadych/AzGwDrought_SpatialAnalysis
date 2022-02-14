@@ -65,6 +65,9 @@ annual_db.head()
 static_geo = gp.sjoin(masterdb, georeg, how="inner", op='intersects')
 static_geo.head()
 
+# %% Exporting it because I guess I did that before since I load it in later
+static_geo.to_csv('../MergedData/Output_files/AHS_Static_geodatabase.csv')
+
 # %% Create a dataframe of AHS_Region and Well ID's
 reg_list = static_geo[['Combo_ID', 'AHS_Region']]
 reg_list
@@ -176,6 +179,9 @@ static_geo2['In_year'] = static_geo2['INSTALLED'].dt.year
 Well_Depth = static_geo2[['WELL_DEPTH', 'INSTALLED', 'Combo_ID', 'In_year']]
 #%%
 Well_Depth
+
+#%%
+Well_Depth.to_csv('../MergedData/Output_files/AHS_WellDepth')
 #%%
 Well_Depth = pd.pivot_table(static_geo2, index=["In_year"], columns=["AHS_Region"], values=["WELL_DEPTH"], dropna=False, aggfunc=np.mean)
 Well_Depth
@@ -193,8 +199,6 @@ wdc3 = pd.pivot_table(wd3, index=["In_year"], columns=["AHS_Region"], values=['W
 wdc1.to_csv('../MergedData/Output_files/AHS_Welldepth1000plus.csv')
 wdc2.to_csv('../MergedData/Output_files/AHS_Welldepth200to1000.csv')
 wdc3.to_csv('../MergedData/Output_files/AHS_Welldepth200minus.csv')
-
-# %%
 
 # %%
 filename = 'AHS_WellDepth.csv'
@@ -232,7 +236,7 @@ new_wells.to_csv('../MergedData/Output_files/AHS_NewWells.csv')
 
 # %%
 fig, ax = plt.subplots()
-ax.plot(new_wells['INSTALLED, Reg_CAP'], label='Regulated - CAP')
+ax.plot(new_wells['Reg_CAP'], label='Regulated - CAP')
 ax.plot(new_wells['Reg_CAP_Other'], label='Regulated CAP and Other SW')
 ax.plot(new_wells['Reg_NoSW'], label='Regulated - No SW')
 ax.plot(new_wells['Res'], label='Reservations')

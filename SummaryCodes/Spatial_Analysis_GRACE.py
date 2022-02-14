@@ -7,6 +7,7 @@ from calendar import calendar
 from itertools import count
 import os
 from typing import Mapping
+#import affine
 from geopandas.tools.sjoin import sjoin
 import matplotlib
 import matplotlib.pyplot as plt
@@ -25,7 +26,8 @@ import cartopy.crs as ccrs
 import cartopy.feature as cfeature
 import netCDF4
 import rasterio
-import rasterstats
+import rasterstats as rstats
+#from xrspatial import zonal_stats
 
 # %% Read in the file
 filename = 'CSR_GRACE_GRACE-FO_RL06_Mascons_all-corrections_v02.nc'
@@ -106,7 +108,7 @@ lwe2['time'] = time_convert
 # Converting to the proper datetime format for statistical analyses
 #nor_xr is  dataarray (var) name
 datetimeindex = lwe2.indexes['time'].to_datetimeindex()
- 
+# %% 
 lwe2['time'] = datetimeindex
 lwe2
 # %% Export to raster for graphing
@@ -326,16 +328,13 @@ print("mask crs:", counties.crs)
 print("data crs:", lwe2.rio.crs)
 
 # %% Clipping based off the mask
-clipped = lwe2.rio.clip(mask.geometry, counties.crs)
+clipped = lwe2.rio.clip(mask.geometry, mask.crs)
 clipped.plot()
 # %% Write the clipped file into .tif
 #lwe2.rio.to_raster(r"testGRACE_time.tif")
 
 #clipped.rio.to_raster(r"clipped_GRACE_counties.tif")
 #print(".tif written")
-
-# %%
-
 
 # %%
 fig, ax = plt.subplots(figsize=(6, 6))
@@ -345,3 +344,104 @@ mask.plot(ax=ax)
 ax.set_title("Shapefile Crop Extent",
              fontsize=16)
 plt.show()
+
+# %%
+clipped['time'] = datetimeindex
+# %%
+clipped.rio.crs
+# %%
+# Following this tutorial - didn't work though
+# https://automating-gis-processes.github.io/CSC/notebooks/L5/zonal-statistics.html
+dem=rasterio.open("clipped_GRACE_counties.tif")
+dem
+# %%
+ax = counties.plot(facecolor='None', edgecolor='red', linewidth=2)
+show((dem, 1), ax=ax)
+# %%
+dem.info()
+# %%
+counties = counties.to_crs(crs=dem.crs)
+# %%
+array = dem.read(1)
+
+af = dem.transform
+# %%
+zs_counties = zonal_stats(counties, lwe2)
+# %%
+# Trying from xarray
+weights = np.cos(np.deg2rad(lwe2.lat))
+weights.name = "weights"
+weights
+# %%
+global_weighted = lwe2.weighted(weights)
+global_weighted
+# %%
+global_weighted_mean = global_weighted.mean(("lon","lat"))
+global_weighted_mean
+
+# %%
+global_weighted_mean.plot(label="global")
+#clipped.mean(("lon","lat")).plot(label="Arizona")
+plt.legend()
+# %% OKAY, Going to try from scratch
+# Polygonize raster - did this in qgis by polygonizing Band 1, 2, and 202, clipping AZ shape, then union of all 3
+filename = "Grace_PixelShapes.shp"
+filepath = os.path.join('/Users/danielletadych/Documents/PhD_Materials/github_repos/AzGwDrought_SpatialAnalysis/MergedData/Shapefiles/GRACE_Scratchfiles', filename)
+grace_shape = gp.read_file(filepath)
+grace_shape.plot()
+# %% Load in new mask
+filename = "pimacounty.shp"
+filepath = os.path.join('/Users/danielletadych/Documents/PhD_Materials/github_repos/AzGwDrought_SpatialAnalysis/MergedData/Shapefiles', filename)
+mask = gp.read_file(filepath)
+mask.plot()
+# %%
+mask = mask[['NAME', 'geometry']]
+mask
+# %% 
+# Calculate area of each GRACE pixel
+grace_shape['pixel_area'] = grace_shape.geometry.area #/10000 for hectares
+print(grace_shape.head())
+# %%
+grace_shape = grace_shape[['geometry','pixel_area']]
+grace_shape
+# %% Clip based off mask
+grace_clip = gp.clip(grace_shape, mask)
+# %%
+# Overlay shapefile of mask
+overlay = gp.overlay(grace_clip, mask, how='union')
+overlay
+# %% Calculate new area of the pixels
+overlay['overlay_area'] = overlay.geometry.area
+overlay
+
+# %%
+# dataframe of weights = new shape area/ Total pixel area
+overlay['weights'] = overlay['overlay_area']/overlay['pixel_area']
+overlay
+#%%
+# lwe = weights x original grace value
+grace_mask = lwe2.rio.clip(mask.geometry, mask.crs)
+grace_mask.plot()
+# %%
+Grace_weighted = grace_mask['lwe_thickness'] * overlay['weights']
+Grace_weighted
+# %% Way to use rasterstats with .nc data
+#https://gis.stackexchange.com/questions/363120/computing-annual-spatial-zonal-statistics-of-a-netcdf-file-for-polygons-in-sha
+
+# get all years for which we have data in nc-file
+years = lwe2.resample('Y').sum()
+
+# %%
+# get affine of nc-file with rasterio
+affine = rasterio.open(r'../../GRACE/CSR_GRACE_GRACE-FO_RL06_Mascons_all-corrections_v02.nc').transform
+# %%
+# go through all years
+for year in years:
+    # get values of variable pear year
+    nc_arr = lwe2.sel(time=year)
+    nc_arr_vals = nc_arr.values
+    # go through all geometries and compute zonal statistics
+    for i in range(len(mask)):
+        print(rstats.zonal_stats(mask.geometry, nc_arr_vals, affine=affine, stats="mean min max"))
+        print('')
+# %%
