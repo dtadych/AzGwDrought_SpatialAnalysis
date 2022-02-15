@@ -114,16 +114,28 @@ lwe2['time'] = time_convert
 # Converting to the proper datetime format for statistical analyses
 #nor_xr is  dataarray (var) name
 datetimeindex = lwe2.indexes['time'].to_datetimeindex()
+
 # %% 
 lwe2['time'] = datetimeindex
 lwe2
 # %% Export to raster for graphing
 #lwe2.rio.to_raster(r"testGRACE_time.tif")
+lwe2.rio.to_raster(r"testGRACE_time.nc")
 # This wrote a tif!!!
 # %% Plot the new dataset
 lwe2[0,:,:].plot()
 
-# %% Remapping using EASYMORE Package
+# %% ---- Remapping using EASYMORE Package ----
+
+# reprojecting coordinate system
+reproject = counties.to_crs(epsg=4326)
+reproject.crs
+# %%
+reproject.to_file("counties_reproject.shp")
+
+# It sort of worked but got stuck so I'm going to try reprojecting Georegions shapefile through qgis and calling it 
+# "Georegions_reproject.shp"
+# %%
 # https://github.com/ShervanGharari/EASYMORE/blob/main/examples/Chapter1_E1.ipynb
 # # loading EASYMORE
 from easymore.easymore import easymore
@@ -140,20 +152,22 @@ esmr.temp_dir                 = '../temporary/'
 # name of target shapefile that the source netcdf files should be remapped to
 # For this test, goign to use counties
 # esmr.target_shp               = '../data/target_shapefiles/South_Saskatchewan_MedicineHat.shp'
-remap_shapefile               = '/Users/danielletadych/Documents/PhD_Materials/github_repos/AzGwDrought_SpatialAnalysis/MergedData/Shapefiles/AZ_counties.shp'
+#remap_shapefile               = '/Users/danielletadych/Documents/PhD_Materials/github_repos/AzGwDrought_SpatialAnalysis/MergedData/Shapefiles/AZ_counties.shp'
 # It needs me to reproject my shapefile to WGS84 (epsg:4326)
 #       Note: It said please
-counties  = counties.to_crs(epsg=4326)
+#counties  = counties.to_crs(epsg=4326)
 #counties.crs
 
 # esmr.target_shp = remap_shapefile.to_crs(espg:4326)
-esmr.target_shp = counties
-#print(esmr.target_shp, esmr.target_shp.crs)
-
+#esmr.target_shp = '/Users/danielletadych/Documents/PhD_Materials/github_repos/AzGwDrought_SpatialAnalysis/MergedData/Shapefiles/AZ_counties.shp'
+#esmr.target_shp = '/Users/danielletadych/Documents/PhD_Materials/github_repos/AzGwDrought_SpatialAnalysis/MergedData/Output_files/Georegions_AGU.shp'
+#esmr.target_shp = 'Georegions_reproject.shp'
+esmr.target_shp = 'counties_reproject.shp'
 # name of netCDF file(s); multiple files can be specified with *
 # esmr.source_nc                = '../data/Source_nc_ERA5/ERA5_NA_*.nc'
 # esmr.source_nc                = lwe2
 esmr.source_nc                = '../../GRACE/CSR_GRACE_GRACE-FO_RL06_Mascons_all-corrections_v02.nc'
+#esmr.source_nc                = 'testGRACE_time.nc'
 
 # name of variables from source netCDF file(s) to be remapped
 esmr.var_names                = ["lwe_thickness"]
@@ -292,7 +306,7 @@ one_point.plot.line(hue='lat',
                     markeredgecolor="blue"
                     )
 ax.set(title="Liquid Water Equivalent thickness for Lower right of Phoenix AMA (cm)")
-plt.xlabel('Days since January 1, 2002')
+#plt.xlabel('Days since January 1, 2002')
 plt.ylabel('LWE (cm)')
 
 # %%
@@ -406,7 +420,7 @@ clipped.plot()
 clipped[0,:,:].plot()
 # %%
 fig, ax = plt.subplots(figsize=(6, 6))
-lwe2[0,:,:].plot()
+#lwe2[0,:,:].plot()
 mask.plot(ax=ax)
 clipped[0,:,:].plot()
 #ax.set_ylim(31,37)
