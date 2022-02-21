@@ -6,6 +6,7 @@
 #  - EASYMORE package attempt: Line 56
 # %%
 from calendar import calendar
+from importlib.resources import path
 from itertools import count
 import os
 from pydoc import cli
@@ -45,8 +46,8 @@ grace_dataset = xr.open_dataset(datapath+'/'+filename)
 grace_dataset
 
 # %% Read in the mask shapefile
-filename = "Georegions_AGU.shp"
-filepath = os.path.join('/Users/danielletadych/Documents/PhD_Materials/github_repos/AzGwDrought_SpatialAnalysis/MergedData/Output_files', filename)
+filename = "Final_Georegions.shp"
+filepath = os.path.join('/Users/danielletadych/Documents/PhD_Materials/github_repos/AzGwDrought_SpatialAnalysis/MergedData/Shapefiles/Final_Georegions/', filename)
 georeg = gp.read_file(filepath)
 
 # %%
@@ -126,7 +127,7 @@ lwe2.rio.to_raster(r"testGRACE_time.nc")
 lwe2[0,:,:].plot()
 
 # %% ---- Remapping using EASYMORE Package ----
-
+grace_dataset
 # reprojecting coordinate system
 reproject = counties.to_crs(epsg=4326)
 reproject.crs
@@ -135,6 +136,19 @@ reproject.to_file("counties_reproject.shp")
 
 # It sort of worked but got stuck so I'm going to try reprojecting Georegions shapefile through qgis and calling it 
 # "Georegions_reproject.shp"
+# %% 
+grace2 = grace_dataset
+grace2
+
+# %%
+grace2['time'] = datetimeindex
+grace2
+
+# %% Write the full nc file
+fn = "testGRACE_time.nc"
+#ds = netCDF4.grace2(fn, 'w', format='NETCDF4')
+# %%
+grace2.to_netcdf()
 # %%
 # https://github.com/ShervanGharari/EASYMORE/blob/main/examples/Chapter1_E1.ipynb
 # # loading EASYMORE
@@ -166,8 +180,8 @@ esmr.target_shp = 'counties_reproject.shp'
 # name of netCDF file(s); multiple files can be specified with *
 # esmr.source_nc                = '../data/Source_nc_ERA5/ERA5_NA_*.nc'
 # esmr.source_nc                = lwe2
-esmr.source_nc                = '../../GRACE/CSR_GRACE_GRACE-FO_RL06_Mascons_all-corrections_v02.nc'
-#esmr.source_nc                = 'testGRACE_time.nc'
+#esmr.source_nc                = '../../GRACE/CSR_GRACE_GRACE-FO_RL06_Mascons_all-corrections_v02.nc'
+esmr.source_nc                = 'testGRACE_time.tif'
 
 # name of variables from source netCDF file(s) to be remapped
 esmr.var_names                = ["lwe_thickness"]
