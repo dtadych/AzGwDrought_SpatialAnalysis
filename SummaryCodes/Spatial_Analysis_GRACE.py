@@ -4,8 +4,10 @@
 #  - Importing packages: Line 6
 #  - Reading in files: Line 37
 #  - EASYMORE Remapping using a shapefile: Line 56
-#     *Note: in order for this package to work, the projections need to be in 
-#            espg4326, exported, re-read in, and the time variable for nc needs to be datetime
+#     *Note: in order for this package to work
+#               > the projections need to be in espg4326, exported, re-read in
+#               > the time variable for nc needs to be datetime
+#               > Value error -> run the "fix geometries" tool in qgis
 # %%
 from calendar import calendar
 from importlib.resources import path
@@ -16,6 +18,7 @@ from typing import Mapping
 #import affine
 from geopandas.tools.sjoin import sjoin
 import matplotlib
+from matplotlib.cbook import report_memory
 import matplotlib.pyplot as plt
 import matplotlib.lines as mlines
 from matplotlib.colors import ListedColormap
@@ -126,7 +129,7 @@ lwe2
 #lwe2.rio.to_raster(r"testGRACE_time.nc")
 # This wrote a tif!!!
 # %% Plot the new dataset
-lwe2[0,:,:].plot()
+lwe2[2,:,:].plot()
 
 # %% Plot the new geotif
 da = xr.open_rasterio("testGRACE_time.tif")
@@ -160,26 +163,26 @@ plt.show()
 
 
 # %% ---- Remapping using EASYMORE Package ----
+# Prepping the data
 # reprojecting coordinate system
-reproject = counties.to_crs(epsg=4326)
+#reproject = counties.to_crs(epsg=4326)
+reproject = georeg.to_crs(epsg=4326)
 reproject.crs
 # %%
-reproject.to_file("counties_reproject.shp")
+reproject.to_file("georeg_reproject.shp")
+# %%
+reproject.plot()
 
-# %% 
+# %% Now fixing GRACE to be datetime.  Can skip to line 186 if already ran
 grace2 = grace_dataset
 grace2
-
 # %%
 grace2['time'] = datetimeindex
 grace2
-
 # %% Write the full nc file
 fn = "testGRACE_time.nc"
-#ds = netCDF4.grace2(fn, 'w', format='NETCDF4')
-# %%
 grace2.to_netcdf(fn)
-# %%
+# %% Now remapping following this tutorial
 # https://github.com/ShervanGharari/EASYMORE/blob/main/examples/Chapter1_E1.ipynb
 # # loading EASYMORE
 from easymore.easymore import easymore
@@ -189,7 +192,7 @@ esmr = easymore()
 
 # specifying EASYMORE objects
 # name of the case; the temporary, remapping and remapped file names include case name
-esmr.case_name                = 'easymore_GRACE_test'              
+esmr.case_name                = 'easymore_GRACE_georeg'              
 # temporary path that the EASYMORE generated GIS files and remapped file will be saved
 esmr.temp_dir                 = '../temporary/'
 
@@ -206,7 +209,8 @@ esmr.temp_dir                 = '../temporary/'
 #esmr.target_shp = '/Users/danielletadych/Documents/PhD_Materials/github_repos/AzGwDrought_SpatialAnalysis/MergedData/Shapefiles/AZ_counties.shp'
 #esmr.target_shp = '/Users/danielletadych/Documents/PhD_Materials/github_repos/AzGwDrought_SpatialAnalysis/MergedData/Output_files/Georegions_AGU.shp'
 #esmr.target_shp = 'Georegions_reproject.shp'
-esmr.target_shp = 'counties_reproject.shp'
+esmr.target_shp = 'georeg_reproject_fixed.shp'
+#esmr.target_shp = 'counties_reproject.shp'
 # name of netCDF file(s); multiple files can be specified with *
 # esmr.source_nc                = '../data/Source_nc_ERA5/ERA5_NA_*.nc'
 # esmr.source_nc                = lwe2
@@ -266,8 +270,10 @@ f, axes = plt.subplots(1,1,figsize=(15,15))
 shp_target.plot(column= 'value', edgecolor='k',linewidth = 1, ax = axes , legend=True)
 #plt.savefig('../fig/Example1_B.png')
 
-
-
+# %% Now, read in the remapped csv
+filename = 'Wells55_GWSI_WLTS_DB_annual.csv'
+filepath = os.path.join(outputpath, filename)
+print(filepath)
 
 # %% ---- Plotting Points ----
 key = 400
@@ -458,7 +464,8 @@ clipped.plot()
 #clipped.rio.to_raster(r"clipped_GRACE_counties.tif")
 #print(".tif written")
 # %%
-clipped[0,:,:].plot()
+clipped[2,:,:].plot(cmap='viridis')
+mask.boundary.plot()
 # %%
 fig, ax = plt.subplots(figsize=(6, 6))
 #lwe2[0,:,:].plot()
