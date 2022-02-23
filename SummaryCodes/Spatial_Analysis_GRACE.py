@@ -271,9 +271,62 @@ shp_target.plot(column= 'value', edgecolor='k',linewidth = 1, ax = axes , legend
 #plt.savefig('../fig/Example1_B.png')
 
 # %% Now, read in the remapped csv
-filename = 'Wells55_GWSI_WLTS_DB_annual.csv'
+filename = 'easymore_GRACE_georeg_remapped_lwe_thickness__2002-04-18-00-00-00.csv'
 filepath = os.path.join(outputpath, filename)
-print(filepath)
+grace_remapped = pd.read_csv(filepath)
+grace_remapped.head()
+# %% Gotta fix those headers
+ID_key = shp_target[['GEO_Region', 'ID_t']]
+ID_key
+
+# %%
+ID_key['ID'] = 'ID_' + ID_key['ID_t'].astype(str)
+ID_key
+
+#%%
+grace_remapped = grace_remapped.set_index('time')
+
+# %%
+del grace_remapped['Unnamed: 0'] # tbh not really sure why this column is here but gotta delete it
+
+# %%
+grace_remapped
+# %%
+georeg_list = ID_key['GEO_Region'].values.tolist()
+georeg_list
+
+# %%
+grace_remapped.columns = georeg_list
+grace_remapped
+
+# %% Fixing the time element
+grace_remapped.index = pd.to_datetime(grace_remapped.index)
+grace_remapped
+# %%
+grace_remapped.plot()
+
+# %%
+grace_yearly = grace_remapped
+grace_yearly['year'] = pd.DatetimeIndex(grace_yearly.index).year
+grace_yearly
+
+# %%
+grace_yearly = grace_yearly.reset_index()
+# %%
+#grace_yearly = grace_yearly.set_index('time')
+grace_yearly
+
+# %%
+grace_yearlyavg = pd.pivot_table(grace_yearly, index=["year"], dropna=False, aggfunc=np.mean)
+grace_yearlyavg
+#%%
+grace_yearlyavg = grace_yearlyavg.reset_index()
+# %%
+grace_yearlyavg = grace_yearlyavg.set_index("year")
+grace_yearlyavg
+# %% Write a .csv for now for graphing later
+grace_remapped.to_csv('../MergedData/Output_files/grace_remapped.csv')
+grace_yearlyavg.to_csv('../MergedData/Output_files/grace_remapped_yearly.csv')
 
 # %% ---- Plotting Points ----
 key = 400
