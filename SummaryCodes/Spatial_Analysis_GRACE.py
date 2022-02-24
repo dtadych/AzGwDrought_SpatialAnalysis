@@ -324,6 +324,9 @@ grace_yearlyavg = grace_yearlyavg.reset_index()
 # %%
 grace_yearlyavg = grace_yearlyavg.set_index("year")
 grace_yearlyavg
+
+# %%
+grace_yearlyavg.plot()
 # %% Write a .csv for now for graphing later
 grace_remapped.to_csv('../MergedData/Output_files/grace_remapped.csv')
 grace_yearlyavg.to_csv('../MergedData/Output_files/grace_remapped_yearly.csv')
