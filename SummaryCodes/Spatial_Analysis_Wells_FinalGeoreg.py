@@ -14,6 +14,7 @@
 
 # %%
 from cProfile import label
+from operator import ge
 import os
 from geopandas.tools.sjoin import sjoin
 import matplotlib
@@ -36,7 +37,7 @@ datapath = '../MergedData'
 outputpath = '../MergedData/Output_files/'
 shapepath = '../MergedData/Shapefiles/Final_Georegions/'
 # %%
-filename = 'Master_ADWR_database_water.shp'
+filename = 'Master_ADWR_database_noduplicates.shp'
 filepath = os.path.join(outputpath, filename)
 print(filepath)
 
@@ -79,32 +80,22 @@ georeg = georeg.to_crs(epsg=26912)
 # %%
 static_geo = gp.sjoin(masterdb, georeg, how="inner", op='intersects')
 static_geo.head()
-
+print("join complete")
 # %% Exporting it because I guess I did that before since I load it in later
-#static_geo.to_csv('../MergedData/Output_files/Final_Static_geodatabase.csv')
+static_geo.to_csv('../MergedData/Output_files/Final_Static_geodatabase_allwells.csv')
 
 # %% Create a dataframe of Final_Region and Well ID's
-reg_list = static_geo[['Combo_ID', 'GEO_Region']]
+reg_list = static_geo[['Combo_ID', 'GEO_Region', 'GEOREGI_NU','Water_CAT', 'Loc','Regulation']]
 reg_list
 
 # %% Converting Combo_ID to int
 reg_list['Combo_ID'] = reg_list['Combo_ID'].astype(int, errors = 'raise')
-
-# %% set indext to REGISTRY_I
-reg_list.set_index('Combo_ID', inplace=True)
-reg_list
 
 # %%
 annual_db2 = annual_db.reset_index(inplace=True)
 annual_db2 = annual_db.rename(columns = {'year':'Combo_ID'})
 annual_db2.head()
 
-# %%
-#annual_db2.REGISTRY_I.astype('int64')
-reg_list.reset_index(inplace=True)
-
-# %%
-reg_list.head()
 # %% Add list to the annual database
 combo = annual_db2.merge(reg_list, how="outer")
 combo.info()
@@ -113,62 +104,83 @@ combo.info()
 # %% set index to Combo_ID
 combo.set_index('Combo_ID', inplace=True)
 
-# %% Now for plotting the timeseries
-cat_wl = combo.groupby(['GEO_Region']).mean()
+# %% Sort the values
+combo = combo.sort_values(by=['GEOREGI_NU'])
+combo
+
+# %% Now for aggregating by category for the timeseries
+cat_wl = combo.groupby(['GEO_Region', 'GEOREGI_NU']).mean()
 cat_wl
 
 # %%
-cat_wl2 = cat_wl.transpose()
+cat_wl2 = cat_wl.sort_values(by=['GEOREGI_NU'])
+cat_wl2
+
+# %% 
+cat_wl2 = cat_wl2.reset_index()
+cat_wl2
+# %%
+del cat_wl2['GEOREGI_NU']
+
+# %%
+cat_wl2 = cat_wl2.set_index("GEO_Region")
+# %%
+cat_wl2 = cat_wl2.transpose()
+cat_wl2
+
+# %% Trying to fix the year issue
+cat_wl2.reset_index(inplace=True)
+cat_wl2.info()
+# %%
+cat_wl2['index'] = pd.to_numeric(cat_wl2['index'])
+cat_wl2.info()
+# %%
+cat_wl2['index'] = cat_wl2['index'].astype(int)
+# %%
+cat_wl2.set_index('index', inplace=True)
+cat_wl2.info()
 
 # %% Going to export all these as CSV's
 #cat_wl.to_csv('../MergedData/Output_files/Final_Categories_WL.csv')
 #combo.to_csv('../MergedData/Output_files/Final_WaterLevels.csv')
-#cat_wl2.to_csv('../MergedData/Output_files/Final_WaterLevels_transposedforgraphing.csv')
+#cat_wl2.to_csv('../MergedData/Output_files/Final_WaterLevels_transposedforgraphing_allwells.csv')
 
+# %% Creating labels
+#labels = cat_wl2.columns.tolist()
+georeg = georeg.sort_values(by=['GEOREGI_NU'])
+labels = dict(zip(georeg.GEOREGI_NU, georeg.GEO_Region))
+labels
 
-# %% Trying to fix the datetime issue but it's not working.  Just skip to line 172
-cat_wl2.reset_index(inplace=True)
-cat_wl2
-# %%
-cat_wl2.info()
-# %%
-cat_wl2['index'] = cat_wl2['index'].astype(int)
-cat_wl2.info()
-#%%
-cat_wl2.index = pd.to_datetime(cat_wl2.index)
-cat_wl2.head()
-# %% 
-cat_wl2.index = pd.DatetimeIndex(cat_wl2.index)
 # %%
 cat_wl2.plot()
+plt.legend(loc=[1.05,0.50])
+plt.subplots.set(title='Average depth to Water since 1853', xlabel='Year', ylabel='Water Level (ft)')
 #%% Plotting
 fig, ax = plt.subplots()
-ax.plot(cat_wl2['Reg_CAP'], label='Regulated - CAP') 
-ax.plot(cat_wl2['Reg_CAP_Other'], label='Regulated CAP and Other SW')
-ax.plot(cat_wl2['Reg_NoSW'], label='Regulated - No SW')
-ax.plot(cat_wl2['Res'], label='Reservations')
-ax.plot(cat_wl2['Unreg_CoR'], label='Unregulated - Colorado River')
-ax.plot(cat_wl2['Unreg_NoSW'], label='Unregulated - No SW')
-ax.plot(cat_wl2['Unreg_Other'], label='Unregulated - Other SW')
-ax.set_xlim(0,152)
+ax.plot(cat_wl2, labels=cat_wl2['GEO_Region'])
 ax.set(title='Average depth to Water since 1853', xlabel='Year', ylabel='Water Level (ft)')
 ax.legend(loc = [1.05, 0.50])
 
-# %% 1950 - present day
+# %%
+ds = cat_wl2
+
 fig, ax = plt.subplots()
-ax.plot(cat_wl2['Reg_CAP'], label='Regulated - CAP')
-ax.plot(cat_wl2['Reg_CAP_Other'], label='Regulated CAP and Other SW')
-ax.plot(cat_wl2['Reg_NoSW'], label='Regulated - No SW')
-ax.plot(cat_wl2['Res'], label='Reservations')
-ax.plot(cat_wl2['Unreg_CoR'], label='Unregulated - Colorado River')
-ax.plot(cat_wl2['Unreg_NoSW'], label='Unregulated - No SW')
-ax.plot(cat_wl2['Unreg_Other'], label='Unregulated - Other SW')
-#ax.set_xlim(100,155)
-ax.set(title='Average depth to Water since 1950', xlabel='Year', ylabel='Water Level (ft)',
-        xlim = [40, 155])
-#ax.xaxis.set_major_locator(cat_wl2.Final_Region(interval=50))
-#ax.set_xticklabels()
-ax.legend(loc = [1.05, 0.50])
+#ax.plot(cat_wl2['Reservation'], label='Reservation')
+ax.plot(ds['Regulated with CAP'], label='Regulated with CAP', color="#d7191c") 
+ax.plot(ds['Regulated without CAP'], label='Regulated without CAP', color='#e77a47') 
+#ax.plot(ds['Lower Colorado River - SW Dominated'], label='Lower Colorado River - SW Dominated') 
+#ax.plot(ds['Upper Colorado River - Mixed'], label='Upper Colorado River - Mixed')
+#ax.plot(ds['Southeast - GW Dominated'], label='Southeast - GW Dominated')
+#ax.plot(ds['Northwest - GW Dominated'], label='Northwest - GW Dominated')
+#ax.plot(ds['South central - GW Dominated'], label='South central - GW Dominated')
+#ax.plot(ds['Northeast - GW Dominated'], label='Northeast - GW Dominated')
+#ax.plot(ds['North - Mixed'], label='North - Mixed')
+#ax.plot(ds['Central - Mixed'], label='Central - Mixed')
+ax.set_xlim(1970,2020)
+ax.set_ylim(500,0)
+ax.grid(True)
+ax.set(title='Average Depth to Water', xlabel='Year', ylabel='Water Level (ft)')
+ax.legend(loc = [1.04, 0.20])
 
 # %% --- Now making graphs for other things
 # - Well Density (cumulative number of wells) over time
@@ -176,7 +188,7 @@ ax.legend(loc = [1.05, 0.50])
 # - Number of new wells installed over time
 
 # Re-read in after proper formatting
-filename = 'Final_Static_geodatabase.csv'
+filename = 'Final_Static_geodatabase_allwells.csv'
 filepath = os.path.join(outputpath, filename)
 print(filepath)
 static_geo2 = pd.read_csv(filepath 
@@ -185,8 +197,8 @@ static_geo2 = pd.read_csv(filepath
 static_geo2
 
 # %% 
-static_geo2 = static_geo
-static_geo2.info()
+#static_geo2 = static_geo
+#static_geo2.info()
 
 # %%
 static_geo2['APPROVED'] = pd.to_datetime(static_geo2['APPROVED'])
@@ -198,14 +210,14 @@ static_geo2['INSTALLED'].describe()
 static_geo2['In_year'] = static_geo2['INSTALLED'].dt.year
 
 # %% 
-Well_Depth = static_geo2[['WELL_DEPTH', 'INSTALLED', 'Combo_ID', 'In_year','GEO_Region']]
+Well_Depth = static_geo2[['WELL_DEPTH', 'INSTALLED', 'Combo_ID', 'In_year','GEOREGI_NU']]
 #%%
 Well_Depth
 
 #%%
 # Well_Depth.to_csv('../MergedData/Output_files/Final_WellDepth.csv')
 #%%
-Well_Depth = pd.pivot_table(static_geo2, index=["In_year"], columns=["GEO_Region"], values=["WELL_DEPTH"], dropna=False, aggfunc=np.mean)
+Well_Depth = pd.pivot_table(static_geo2, index=["In_year"], columns=["GEOREGI_NU"], values=["WELL_DEPTH"], dropna=False, aggfunc=np.mean)
 Well_Depth.describe()
 
 # %% Set shallow and drilling depths
@@ -227,15 +239,24 @@ wdc3 = pd.pivot_table(wd3, index=["In_year"], columns=["GEO_Region"], values=['W
 #wdc2.to_csv('../MergedData/Output_files/Final_Welldepth' + str(shallow) + 'to' + str(deep) + '.csv')
 #wdc3.to_csv('../MergedData/Output_files/Final_Welldepth' + str(shallow) + 'minus.csv')
 
+# %% Plotting fun
+columns = wdc1.columns
+columns
+
+# %%
+for i in columns:
+        stuff = wdc1[i].rename(labels)
+
+print(stuff)
 # %%
 ds = wdc1
 ds.reset_index
-labels = ds.columns.tolist()
-labels
+#labels = ds.columns.tolist()
+#labels
 
 fig, ax = plt.subplots()
 for i in labels:
-        ax.plot(ds[i], label = i)
+        ax.plot(ds[i], label = labels[i])
 ax.set(title='Number of Shallow Wells (less than '+ str(shallow) +')'
         , xlabel='Year', ylabel='Well Depth (ft)'
         , xlim = [1980,2020]
@@ -285,17 +306,55 @@ new_wells
 new_wells.to_csv('../MergedData/Output_files/Final_NewWells.csv')
 
 # %%
+ds = new_wells
+ds.reset_index
+#labels = ds.columns.tolist()
+#labels
+
 fig, ax = plt.subplots()
-ax.plot(new_wells['Reg_CAP'], label='Regulated - CAP')
-ax.plot(new_wells['Reg_CAP_Other'], label='Regulated CAP and Other SW')
-ax.plot(new_wells['Reg_NoSW'], label='Regulated - No SW')
-ax.plot(new_wells['Res'], label='Reservations')
-ax.plot(new_wells['Unreg_CoR'], label='Unregulated - Colorado River')
-ax.plot(new_wells['Unreg_NoSW'], label='Unregulated - No SW')
-ax.plot(new_wells['Unreg_Other'], label='Unregulated - Other SW')
-#ax.set_xlim(100,155)
-ax.set(title='Average Borehole Depth since 1950', xlabel='Year', ylabel='Number of new wells')
+for i in labels:
+        ax.plot(ds[i], label = labels[i])
+ax.set(title='Number of new wells per region', xlabel='Year', ylabel='Well Depth (ft)'
+       , xlim = [1980,2020]
+        )
 #ax.xaxis.set_major_locator(cat_wl2.Final_Region(interval=50))
 #ax.set_xticklabels()
-ax.legend(loc = [1.05, 0.50])
+ax.legend(loc = [1.05, 0])
 # %%
+georeg['area'] = georeg.geometry.area
+georeg
+# %%
+georeg2 = pd.DataFrame(georeg)
+georeg2
+# %%
+del georeg2['geometry']
+georeg2.info()
+# %%
+georeg2.to_csv('../MergedData/Output_files/georegions_area.csv')
+
+# %%
+# %% Plotting help from Amanda - don't run this
+#create dfs for all runs which have the average diff in WTD across the run and the x/y loc of the well
+minimum = 0
+maximum = 50
+#https://www.rapidtables.com/convert/color/rgb-to-hex.html
+#GREYS ["#D2D2D2","#646464"]
+#BLUES ["#AFDAFF","#3251A1"]
+norm=plt.Normalize(-100,100)
+cmap = matplotlib.colors.LinearSegmentedColormap.from_list("", ["#AFDAFF","#3251A1"])
+norm2=plt.Normalize(-25,25)
+cmap2 = matplotlib.colors.LinearSegmentedColormap.from_list("", ["#66C2A5","white","#FC8D62"])
+plt.scatter(x = all_yr_avg['x_locs'] , y = all_yr_avg['y_locs'], s = 10.0, linewidth=.2,  c = all_yr_avg['diff'], edgecolor = "black",cmap = cmap2, norm=norm2) #well locations #x,y for plotting
+plt.clim(-25, 25)#setting limits for color bar
+plt.colorbar(label='Anomaly (m)', orientation="vertical", shrink=0.75)
+plt.imshow(wtdflip[0,:,:],vmin=minimum, vmax=maximum,cmap = cmap, norm=norm)
+plt.colorbar(label='Baseline Water Table Depth (m)', shrink=0.75)
+#title = f'Baseline Model Performance Compared to \n44 Observation Wells'
+#plt.title(title)
+plt.xlabel('')
+plt.ylabel('')
+plt.xticks([]),plt.yticks([])
+fig_name = f'./spatial_outputs/spatial_wtd_diff_all_yr_avg.png'
+plt.savefig(fig_name, dpi=400, bbox_inches='tight')
+plt.show()
+plt.close()

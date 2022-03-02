@@ -3,11 +3,13 @@
 # The purpose of this script is to analyze GRACE Data for Arizona by points and shapes
 #  - Importing packages: Line 6
 #  - Reading in files: Line 37
-#  - EASYMORE Remapping using a shapefile: Line 56
+#  - EASYMORE Remapping using a shapefile to computer zonal statistics: Line 56
 #     *Note: in order for this package to work
 #               > the projections need to be in espg4326, exported, re-read in
 #               > the time variable for nc needs to be datetime
 #               > Value error -> run the "fix geometries" tool in qgis
+#  - Plotting a single grid cell based on lat/lon: Line 336
+#  - Calculating the average based off a mask (not weighted): Line 510
 # %%
 from calendar import calendar
 from importlib.resources import path
@@ -321,12 +323,55 @@ grace_yearlyavg = pd.pivot_table(grace_yearly, index=["year"], dropna=False, agg
 grace_yearlyavg
 #%%
 grace_yearlyavg = grace_yearlyavg.reset_index()
+grace_yearlyavg
+
 # %%
-grace_yearlyavg = grace_yearlyavg.set_index("year")
+#grace_yearlyavg['year'] = pd.to_numeric(grace_yearlyavg['year'])
+#grace_yearlyavg['year'] = grace_yearlyavg['year'].astype(int)
+grace_yearlyavg = grace_yearlyavg.set_index('year', inplace=True)
 grace_yearlyavg
 
 # %%
 grace_yearlyavg.plot()
+
+#%%
+ds = grace_yearlyavg
+name = "Average Depth to Water"
+minyear=2002
+maxyear=2020
+min_y = -15
+max_y = 7
+
+# Plot all of them
+fig, ax = plt.subplots(2,2,figsize=(16,9))
+ax[1,1].plot(ds['Reservation'], label='Reservation', color='#8d5a99')
+ax[0,0].plot(ds['Regulated with CAP'], label='Regulated with CAP', color="#d7191c") 
+ax[0,0].plot(ds['Regulated without CAP'], label='Regulated without CAP', color='#e77a47') 
+ax[0,1].plot(ds['Lower Colorado River - SW Dominated'], color='#2cbe21', label='Lower Colorado River - SW Dominated')
+ax[0,1].plot(ds['Upper Colorado River - Mixed'], color='#2f8c73', label='Upper Colorado River - Mixed')
+ax[0,1].plot(ds['Norh - Mixed'], color='#41bf9e', label='North - Mixed')
+ax[0,1].plot(ds['Central - Mixed'], color='#7adec4', label='Central - Mixed')
+ax[1,0].plot(ds['Northwest - GW Dominated'], color='#165782', label='Northwest - GW Dominated')
+ax[1,0].plot(ds['Northeast - GW Dominated'], color='#1f78b4', label='Northeast - GW Dominated')
+ax[1,0].plot(ds['South central - GW Dominated'], color='#229ce8', label='South central - GW Dominated')
+ax[1,0].plot(ds['Southeast - GW Dominated'], color='#6db7e8', label='Southeast - GW Dominated')
+ax[0,0].set_xlim(minyear,maxyear)
+ax[0,1].set_xlim(minyear,maxyear)
+ax[1,0].set_xlim(minyear,maxyear)
+ax[1,1].set_xlim(minyear,maxyear)
+ax[0,0].set_ylim(min_y,max_y)
+ax[0,1].set_ylim(min_y,max_y)
+ax[1,0].set_ylim(min_y,max_y)
+ax[1,1].set_ylim(min_y,max_y)
+ax[0,0].grid(True)
+ax[0,1].grid(True)
+ax[1,0].grid(True)
+ax[1,1].grid(True)
+ax[0,0].set(title=name, xlabel='Year', ylabel='Change from Baseline (cm)')
+ax[0,0].legend(loc = [0.1, 0.20])
+ax[0,1].legend(loc = [0.1, 0.05])
+ax[1,0].legend(loc = [0.1, 0.05])
+ax[1,1].legend(loc = [0.1, 0.20])
 # %% Write a .csv for now for graphing later
 grace_remapped.to_csv('../MergedData/Output_files/grace_remapped.csv')
 grace_yearlyavg.to_csv('../MergedData/Output_files/grace_remapped_yearly.csv')
@@ -573,152 +618,3 @@ clipped_mean.plot()
 cm_df_year.plot(label="AZ mean (not weighted)")
 #global_mean.plot(label="global Mean")
 plt.legend()
-
-# %%
-# --- Computing zonal stats (weighed average) ---
-
-# This is a tutorial that runs but the means are none
-# https://gis.stackexchange.com/questions/363120/computing-annual-spatial-zonal-statistics-of-a-netcdf-file-for-polygons-in-sha
-
-
-# load and read shp-file with geopandas
-#shp_fo = r'../path/to/shp_file.shp'
-#shp_df = gpd.read_file(shp_fo)
-shp_df = counties
-
-# load and read netCDF-file to dataset and get datarray for variable
-#nc_fo = r'../path/to/netCDF_file.nc'
-#nc_ds = xr.open_dataset(nc_fo)
-#nc_var = nc_ds['var_name']
-nc_ds = grace_dataset
-nc_var = grace_dataset['lwe_thickness']
-
-# get all years for which we have data in nc-file
-years = nc_ds['time'].values
-# %%
-# get affine of nc-file with rasterio
-af = rasterio.open(r'../../GRACE/CSR_GRACE_GRACE-FO_RL06_Mascons_all-corrections_v02.nc').transform
-print(af)
-#%%
-# go through all years
-for year in years:
-    # get values of variable pear year
-    nc_arr = nc_var.sel(time=year)
-    nc_arr_vals = nc_arr.values
-    # go through all geometries and compute zonal statistics
-    for i in range(len(shp_df)):
-        print(zonal_stats(shp_df.geometry, nc_arr_vals, affine=af, stats="mean"))
-
-# %%
-# Following this tutorial - didn't work though
-# https://automating-gis-processes.github.io/CSC/notebooks/L5/zonal-statistics.html
-#dem=rasterio.open("clipped_GRACE_counties.tif")
-#dem
-# %%
-ax = counties.plot(facecolor='None', edgecolor='red', linewidth=2)
-show((dem, 1), ax=ax)
-# %%
-dem.info()
-# %%
-counties = counties.to_crs(crs=dem.crs)
-type(counties)
-# %%
-array = dem.read(1)
-
-af = dem.transform
-# %%
-zs_counties = zonal_stats(counties, lwe2)
-# %%
-# Trying from xarray
-weights = np.cos(np.deg2rad(lwe2.lat))
-weights.name = "weights"
-weights
-# %%
-global_weighted = lwe2.weighted(weights)
-global_weighted
-# %%
-global_weighted_mean = global_weighted.mean(("lon","lat"))
-global_weighted_mean
-
-# %%
-global_weighted_mean.plot(label="global")
-#clipped.mean(("lon","lat")).plot(label="Arizona")
-plt.legend()
-# %% OKAY, Going to try from scratch
-# Polygonize raster - did this in qgis by polygonizing Band 1, 2, and 202, clipping AZ shape, then union of all 3
-filename = "Grace_PixelShapes.shp"
-filepath = os.path.join('/Users/danielletadych/Documents/PhD_Materials/github_repos/AzGwDrought_SpatialAnalysis/MergedData/Shapefiles/GRACE_Scratchfiles', filename)
-grace_shape = gp.read_file(filepath)
-grace_shape.plot()
-# %% Load in new mask
-filename = "pimacounty.shp"
-filepath = os.path.join('/Users/danielletadych/Documents/PhD_Materials/github_repos/AzGwDrought_SpatialAnalysis/MergedData/Shapefiles', filename)
-mask = gp.read_file(filepath)
-mask.plot()
-# %%
-mask = mask[['NAME', 'geometry']]
-mask
-# %% 
-# Calculate area of each GRACE pixel
-grace_shape['pixel_area'] = grace_shape.geometry.area #/10000 for hectares
-print(grace_shape.head())
-# %%
-grace_shape = grace_shape[['geometry','pixel_area']]
-grace_shape
-# %% Clip based off mask
-grace_clip = gp.clip(grace_shape, mask)
-# %%
-# Overlay shapefile of mask
-overlay = gp.overlay(grace_clip, mask, how='union')
-overlay
-# %% Calculate new area of the pixels
-overlay['overlay_area'] = overlay.geometry.area
-overlay
-
-# %%
-# dataframe of weights = new shape area/ Total pixel area
-overlay['weights'] = overlay['overlay_area']/overlay['pixel_area']
-overlay
-# %%
-overlay.plot()
-#%%
-overlay.to_file("pima_GRACE_Overlay.shp")
-
-# %% Going to Rasterize the shapefile in qgis then read it back in
-overlay_raster=rasterio.open("clipped_GRACE_counties.tif")
-#%%
-# lwe = weights x original grace value
-grace_mask = lwe2.rio.clip(mask.geometry, mask.crs)
-grace_mask.plot()
-# %%
-Grace_weighted = grace_mask['lwe_thickness'] * overlay['weights']
-Grace_weighted
-# %% Way to use rasterstats with .nc data
-#https://gis.stackexchange.com/questions/363120/computing-annual-spatial-zonal-statistics-of-a-netcdf-file-for-polygons-in-sha
-
-# get all years for which we have data in nc-file
-years = lwe2.resample('Y').sum()
-
-# %%
-# get affine of nc-file with rasterio
-affine = rasterio.open(r'../../GRACE/CSR_GRACE_GRACE-FO_RL06_Mascons_all-corrections_v02.nc').transform
-# %%
-# go through all years
-for year in years:
-    # get values of variable pear year
-    nc_arr = lwe2.sel(time=year)
-    nc_arr_vals = nc_arr.values
-    # go through all geometries and compute zonal statistics
-    for i in range(len(mask)):
-        print(rstats.zonal_stats(mask.geometry, nc_arr_vals, affine=affine, stats="mean min max"))
-        print('')
-# %%
-print(lwe2.time)
-# %%
-nc_arr = lwe2.sel(time='2002-04-18T00:00:00.000000000')
-nc_arr_vals = nc_arr.values
-nc_arr_vals
-# %%
-test_mean = rstats.zonal_stats(mask.geometry, nc_arr_vals, affine=affine, stats='mean')
-print(test_mean)
-# %%
