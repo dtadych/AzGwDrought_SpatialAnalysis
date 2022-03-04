@@ -110,6 +110,7 @@ combo
 
 # %% Now for aggregating by category for the timeseries
 cat_wl = combo.groupby(['GEO_Region', 'GEOREGI_NU']).mean()
+#cat_wl = combo.groupby(['GEOREGI_NU']).mean()
 cat_wl
 
 # %%
@@ -120,13 +121,13 @@ cat_wl2
 cat_wl2 = cat_wl2.reset_index()
 cat_wl2
 # %%
-del cat_wl2['GEOREGI_NU']
+#del cat_wl2['GEOREGI_NU']
 
 # %%
-cat_wl2 = cat_wl2.set_index("GEO_Region")
+cat_wl2 = cat_wl2.set_index("GEOREGI_NU")
 # %%
 cat_wl2 = cat_wl2.transpose()
-cat_wl2
+cat_wl2.info()
 
 # %% Trying to fix the year issue
 cat_wl2.reset_index(inplace=True)
@@ -141,46 +142,91 @@ cat_wl2.set_index('index', inplace=True)
 cat_wl2.info()
 
 # %% Going to export all these as CSV's
-#cat_wl.to_csv('../MergedData/Output_files/Final_Categories_WL.csv')
-#combo.to_csv('../MergedData/Output_files/Final_WaterLevels.csv')
-#cat_wl2.to_csv('../MergedData/Output_files/Final_WaterLevels_transposedforgraphing_allwells.csv')
+#cat_wl.to_csv('../MergedData/Output_files/Final_Categories_WL_adjusted.csv')
+#combo.to_csv('../MergedData/Output_files/Final_WaterLevels_adjusted.csv')
+#cat_wl2.to_csv('../MergedData/Output_files/Final_WaterLevels_transposedforgraphing_allwells_adjusted.csv')
 
-# %% Creating labels
+# %% Creating dictionary of labels
 #labels = cat_wl2.columns.tolist()
 georeg = georeg.sort_values(by=['GEOREGI_NU'])
 labels = dict(zip(georeg.GEOREGI_NU, georeg.GEO_Region))
 labels
 
-# %%
-cat_wl2.plot()
-plt.legend(loc=[1.05,0.50])
-plt.subplots.set(title='Average depth to Water since 1853', xlabel='Year', ylabel='Water Level (ft)')
+# %% Creating colors
+c_1 = '#8d5a99'
+c_2 = "#d7191c"
+c_3 = '#e77a47'
+c_4 = '#2cbe21'
+c_5 = '#2f8c73'
+c_6 = '#6db7e8'
+c_7 = '#165782'
+c_8 = '#229ce8'
+c_9 = '#1f78b4'
+c_10 = '#41bf9e'
+c_11 = '#7adec4'
+
 #%% Plotting
-fig, ax = plt.subplots()
-ax.plot(cat_wl2, labels=cat_wl2['GEO_Region'])
-ax.set(title='Average depth to Water since 1853', xlabel='Year', ylabel='Water Level (ft)')
-ax.legend(loc = [1.05, 0.50])
+ds = cat_wl2
+minyear=1970
+maxyear=2020
+name = "Average Depth to Water for " + str(minyear) + " to " + str(maxyear)
+min_y = 0
+max_y = 350
+
+# Plot all of them
+fig, ax = plt.subplots(figsize = (16,9))
+#ax.plot(ds[1.0], label='Reservation', color=c_1)
+ax.plot(ds[2.0], label='Regulated with CAP', color=c_2) 
+ax.plot(ds[3.0], label='Regulated without CAP', color=c_3) 
+ax.plot(ds[4.0], color=c_4, label='Lower Colorado River - SW Dominated')
+ax.plot(ds[5.0], color=c_5, label='Upper Colorado River - Mixed')
+ax.plot(ds[10.0], color=c_10, label='North - Mixed')
+ax.plot(ds[11.0], color=c_11, label='Central - Mixed')
+ax.plot(ds[7.0], color=c_7, label='Northwest - GW Dominated')
+ax.plot(ds[9.0], color=c_9, label='Northeast - GW Dominated')
+ax.plot(ds[8.0], color=c_8, label='South central - GW Dominated')
+ax.plot(ds[6.0], color=c_6, label='Southeast - GW Dominated')
+ax.set_xlim(minyear,maxyear)
+ax.set_ylim(max_y,min_y)
+ax.grid(True)
+ax.set(title=name, xlabel='Year', ylabel='Water Level (ft)')
+ax.legend(loc = [1.04, 0.40])
+
+#%% Plot just the regulated
+fig, ax = plt.subplots(figsize = (16,9))
+#ax.plot(ds[1.0], label='Reservation', color=c_1)
+ax.plot(ds[2.0], label='Regulated with CAP', color=c_2) 
+ax.plot(ds[3.0], label='Regulated without CAP', color=c_3) 
+ax.set_xlim(minyear,maxyear)
+ax.set_ylim(max_y,min_y)
+ax.grid(True)
+ax.set(title=name, xlabel='Year', ylabel='Water Level (ft)')
+ax.legend(loc = [1.04, 0.40])
+
+#%% Plot SW Dominated and Mixed
+fig, ax = plt.subplots(figsize = (16,9))
+ax.plot(ds[4.0], color=c_4, label='Lower Colorado River - SW Dominated')
+ax.plot(ds[5.0], color=c_5, label='Upper Colorado River - Mixed')
+ax.plot(ds[10.0], color=c_10, label='North - Mixed')
+ax.plot(ds[11.0], color=c_11, label='Central - Mixed')
+ax.set_xlim(minyear,maxyear)
+ax.set_ylim(max_y,min_y)
+ax.grid(True)
+ax.set(title=name, xlabel='Year', ylabel='Water Level (ft)')
+ax.legend(loc = [1.04, 0.40])
 
 # %%
-ds = cat_wl2
-
-fig, ax = plt.subplots()
-#ax.plot(cat_wl2['Reservation'], label='Reservation')
-ax.plot(ds['Regulated with CAP'], label='Regulated with CAP', color="#d7191c") 
-ax.plot(ds['Regulated without CAP'], label='Regulated without CAP', color='#e77a47') 
-#ax.plot(ds['Lower Colorado River - SW Dominated'], label='Lower Colorado River - SW Dominated') 
-#ax.plot(ds['Upper Colorado River - Mixed'], label='Upper Colorado River - Mixed')
-#ax.plot(ds['Southeast - GW Dominated'], label='Southeast - GW Dominated')
-#ax.plot(ds['Northwest - GW Dominated'], label='Northwest - GW Dominated')
-#ax.plot(ds['South central - GW Dominated'], label='South central - GW Dominated')
-#ax.plot(ds['Northeast - GW Dominated'], label='Northeast - GW Dominated')
-#ax.plot(ds['North - Mixed'], label='North - Mixed')
-#ax.plot(ds['Central - Mixed'], label='Central - Mixed')
-ax.set_xlim(1970,2020)
-ax.set_ylim(500,0)
+# Plot just the Groundwater Dominated
+fig, ax = plt.subplots(figsize = (16,9))
+ax.plot(ds[7.0], color=c_7, label='Northwest - GW Dominated')
+ax.plot(ds[9.0], color=c_9, label='Northeast - GW Dominated')
+ax.plot(ds[8.0], color=c_8, label='South central - GW Dominated')
+ax.plot(ds[6.0], color=c_6, label='Southeast - GW Dominated')
+ax.set_xlim(minyear,maxyear)
+ax.set_ylim(max_y,min_y)
 ax.grid(True)
-ax.set(title='Average Depth to Water', xlabel='Year', ylabel='Water Level (ft)')
-ax.legend(loc = [1.04, 0.20])
+ax.set(title=name, xlabel='Year', ylabel='Water Level (ft)')
+ax.legend(loc = [1.04, 0.40])
 
 # %% --- Now making graphs for other things
 # - Well Density (cumulative number of wells) over time
@@ -188,7 +234,7 @@ ax.legend(loc = [1.04, 0.20])
 # - Number of new wells installed over time
 
 # Re-read in after proper formatting
-filename = 'Final_Static_geodatabase_allwells.csv'
+filename = 'Final_Static_geodatabase.csv'
 filepath = os.path.join(outputpath, filename)
 print(filepath)
 static_geo2 = pd.read_csv(filepath 

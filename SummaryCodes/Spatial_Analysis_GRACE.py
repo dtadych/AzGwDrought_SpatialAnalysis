@@ -326,36 +326,126 @@ grace_yearlyavg = grace_yearlyavg.reset_index()
 grace_yearlyavg
 
 # %%
-#grace_yearlyavg['year'] = pd.to_numeric(grace_yearlyavg['year'])
-#grace_yearlyavg['year'] = grace_yearlyavg['year'].astype(int)
-grace_yearlyavg = grace_yearlyavg.set_index('year', inplace=True)
+grace_yearlyavg['year'] = pd.to_numeric(grace_yearlyavg['year'])
+grace_yearlyavg['year'] = grace_yearlyavg['year'].astype(int)
+grace_yearlyavg.info()
+#%%
+grace_yearlyavg = grace_yearlyavg.set_index('year')
 grace_yearlyavg
 
 # %%
 grace_yearlyavg.plot()
 
+# %% Now let's do this for months
+# %%
+grace_monthly = grace_remapped
+grace_monthly['month'] = pd.DatetimeIndex(grace_monthly.index).month
+grace_monthly
+
+# %%
+grace_monthly = grace_monthly.reset_index()
+
+# %%
+grace_monthlyavg = pd.pivot_table(grace_monthly, index=["month"], dropna=False, aggfunc=np.mean)
+grace_monthlyavg
+
+del grace_monthlyavg['year']
 #%%
-ds = grace_yearlyavg
-name = "Average Depth to Water"
+grace_monthlyavg = grace_monthlyavg.reset_index()
+grace_monthlyavg
+
+# %%
+grace_monthlyavg['month'] = pd.to_numeric(grace_monthlyavg['month'])
+grace_monthlyavg['month'] = grace_monthlyavg['month'].astype(int)
+grace_monthlyavg = grace_monthlyavg.set_index('month')
+grace_monthlyavg
+
+# %%
+grace_monthlyavg.plot()
+# %% --- Plotting the Remapped data ---
+# Creating colors
+c_1 = '#8d5a99'
+c_2 = "#d7191c"
+c_3 = '#e77a47'
+c_4 = '#2cbe21'
+c_5 = '#2f8c73'
+c_6 = '#6db7e8'
+c_7 = '#165782'
+c_8 = '#229ce8'
+c_9 = '#1f78b4'
+c_10 = '#41bf9e'
+c_11 = '#7adec4'
+
+# %% For plotting the Monthly Average
+ds = grace_monthlyavg
+name = "Seasonal Average (Interannual) Change from 2004-2009 Baseline"
+ylabel = "Liquid Water Equivalent (cm)"
 minyear=2002
 maxyear=2020
 min_y = -15
 max_y = 7
 
 # Plot all of them
-fig, ax = plt.subplots(2,2,figsize=(32,18))
+fig, ax = plt.subplots(2,2,figsize=(24,12))
 #fig.tight_layout()
+fig.suptitle(name, fontsize = 20, y = 0.91)
+fig.supylabel(ylabel, fontsize = 20, x = 0.09)
 #ax[1,1].plot(ds['Reservation'], label='Reservation', color='#8d5a99')
-ax[0,0].plot(ds['Regulated with CAP'], label='Regulated with CAP', color="#d7191c") 
-ax[0,0].plot(ds['Regulated without CAP'], label='Regulated without CAP', color='#e77a47') 
-ax[1,1].plot(ds['Lower Colorado River - SW Dominated'], color='#2cbe21', label='Lower Colorado River - SW Dominated')
-ax[0,1].plot(ds['Upper Colorado River - Mixed'], color='#2f8c73', label='Upper Colorado River - Mixed')
-ax[0,1].plot(ds['Norh - Mixed'], color='#41bf9e', label='North - Mixed')
-ax[0,1].plot(ds['Central - Mixed'], color='#7adec4', label='Central - Mixed')
-ax[1,0].plot(ds['Northwest - GW Dominated'], color='#165782', label='Northwest - GW Dominated')
-ax[1,0].plot(ds['Northeast - GW Dominated'], color='#1f78b4', label='Northeast - GW Dominated')
-ax[1,0].plot(ds['South central - GW Dominated'], color='#229ce8', label='South central - GW Dominated')
-ax[1,0].plot(ds['Southeast - GW Dominated'], color='#6db7e8', label='Southeast - GW Dominated')
+ax[0,0].plot(ds['Regulated with CAP'], label='Regulated with CAP', color=c_2) 
+ax[0,0].plot(ds['Regulated without CAP'], label='Regulated without CAP', color=c_3) 
+ax[1,1].plot(ds['Lower Colorado River - SW Dominated'], color=c_4, label='Lower Colorado River - SW Dominated')
+ax[0,1].plot(ds['Upper Colorado River - Mixed'], color=c_5, label='Upper Colorado River - Mixed')
+ax[0,1].plot(ds['Norh - Mixed'], color=c_10, label='North - Mixed')
+ax[0,1].plot(ds['Central - Mixed'], color=c_11, label='Central - Mixed')
+ax[1,0].plot(ds['Northwest - GW Dominated'], color=c_7, label='Northwest - GW Dominated')
+ax[1,0].plot(ds['Northeast - GW Dominated'], color=c_9, label='Northeast - GW Dominated')
+ax[1,0].plot(ds['South central - GW Dominated'], color=c_8, label='South central - GW Dominated')
+ax[1,0].plot(ds['Southeast - GW Dominated'], color=c_6, label='Southeast - GW Dominated')
+#ax[0,0].set_xlim(minyear,maxyear)
+#ax[0,1].set_xlim(minyear,maxyear)
+#ax[1,0].set_xlim(minyear,maxyear)
+#ax[1,1].set_xlim(minyear,maxyear)
+#ax[0,0].set_ylim(min_y,max_y)
+#ax[0,1].set_ylim(min_y,max_y)
+#ax[1,0].set_ylim(min_y,max_y)
+#ax[1,1].set_ylim(min_y,max_y)
+ax[0,0].grid(True)
+ax[0,1].grid(True)
+ax[1,0].grid(True)
+ax[1,1].grid(True)
+#ax[0,0].set(title=name, xlabel='Year', ylabel='Change from Baseline (cm)')
+#ax[0,0].set_title(name, loc='right')
+ax[0,0].legend(loc = [0.55, 0.60], fontsize=14)
+ax[0,1].legend(loc = [0.55, 0.6], fontsize=14)
+ax[1,0].legend(loc = [0.55, 0.6], fontsize=14)
+ax[1,1].legend(loc = [0.45, 0.75], fontsize=14)
+
+plt.savefig(outputpath+name)
+#%% For Plotting the Yearly average
+ds = grace_yearlyavg
+name = "Yearly Average (Intra-annual) Change from 2004-2009 Baseline"
+minyear=2002
+maxyear=2020
+min_y = -15
+max_y = 7
+ylabel = "Liquid Water Equivalent (cm)"
+
+# Plot all of them
+fig, ax = plt.subplots(2,2,figsize=(24,12))
+#fig.tight_layout()
+fig.suptitle(name, fontsize = 20, y = 0.91)
+fig.supylabel(ylabel, fontsize = 20, x = 0.09)
+#ax[1,1].plot(ds['Reservation'], label='Reservation', color=c_1)
+ax[0,0].plot(ds['Regulated with CAP'], label='Regulated with CAP', color=c_2) 
+ax[0,0].plot(ds['Regulated without CAP'], label='Regulated without CAP', color=c_3) 
+ax[1,1].plot(ds['Lower Colorado River - SW Dominated'], color=c_4, label='Lower Colorado River - SW Dominated')
+ax[0,1].plot(ds['Upper Colorado River - Mixed'], color=c_5, label='Upper Colorado River - Mixed')
+ax[0,1].plot(ds['Norh - Mixed'], color=c_10, label='North - Mixed')
+ax[0,1].plot(ds['Central - Mixed'], color=c_11, label='Central - Mixed')
+ax[1,0].plot(ds['Northwest - GW Dominated'], color=c_7, label='Northwest - GW Dominated')
+ax[1,0].plot(ds['Northeast - GW Dominated'], color=c_9, label='Northeast - GW Dominated')
+ax[1,0].plot(ds['South central - GW Dominated'], color=c_8, label='South central - GW Dominated')
+ax[1,0].plot(ds['Southeast - GW Dominated'], color=c_6, label='Southeast - GW Dominated')
 ax[0,0].set_xlim(minyear,maxyear)
 ax[0,1].set_xlim(minyear,maxyear)
 ax[1,0].set_xlim(minyear,maxyear)
@@ -370,15 +460,61 @@ ax[1,0].grid(True)
 ax[1,1].grid(True)
 #ax[0,0].set(title=name, xlabel='Year', ylabel='Change from Baseline (cm)')
 #ax[0,0].set_title(name, loc='right')
-ax[0,0].set_ylabel("Change from 2004-2009 Baseline (cm)", loc='bottom')
-ax[0,0].legend(loc = [0.1, 0.20])
-ax[0,1].legend(loc = [0.1, 0.05])
-ax[1,0].legend(loc = [0.1, 0.05])
-ax[1,1].legend(loc = [0.1, 0.20])
+#ax[0,0].set_ylabel("Change from 2004-2009 Baseline (cm)", loc='bottom', fontsize=14)
+ax[0,0].legend(loc = [0.1, 0.20], fontsize=14)
+ax[0,1].legend(loc = [0.1, 0.05], fontsize=14)
+ax[1,0].legend(loc = [0.1, 0.05], fontsize=14)
+ax[1,1].legend(loc = [0.1, 0.20], fontsize=14)
+plt.savefig(outputpath+name)
+
+# %% For plotting all the data
+ds = grace_remapped
+name = "All GRACE Data (not averaged)"
+minyear=2002
+maxyear=2020
+min_y = -15
+max_y = 7
+
+# Plot all of them
+fig, ax = plt.subplots(2,2,figsize=(24,12))
+#fig.tight_layout()
+#ax[1,1].plot(ds['Reservation'], label='Reservation', color='#8d5a99')
+ax[0,0].plot(ds['Regulated with CAP'], label='Regulated with CAP', color=c_2) 
+ax[0,0].plot(ds['Regulated without CAP'], label='Regulated without CAP', color=c_3) 
+ax[1,1].plot(ds['Lower Colorado River - SW Dominated'], color=c_4, label='Lower Colorado River - SW Dominated')
+ax[0,1].plot(ds['Upper Colorado River - Mixed'], color=c_5, label='Upper Colorado River - Mixed')
+ax[0,1].plot(ds['Norh - Mixed'], color=c_10, label='North - Mixed')
+ax[0,1].plot(ds['Central - Mixed'], color=c_11, label='Central - Mixed')
+ax[1,0].plot(ds['Northwest - GW Dominated'], color=c_7, label='Northwest - GW Dominated')
+ax[1,0].plot(ds['Northeast - GW Dominated'], color=c_9, label='Northeast - GW Dominated')
+ax[1,0].plot(ds['South central - GW Dominated'], color=c_8, label='South central - GW Dominated')
+ax[1,0].plot(ds['Southeast - GW Dominated'], color=c_6, label='Southeast - GW Dominated')
+#ax[0,0].set_xlim(minyear,maxyear)
+#ax[0,1].set_xlim(minyear,maxyear)
+#ax[1,0].set_xlim(minyear,maxyear)
+#ax[1,1].set_xlim(minyear,maxyear)
+#ax[0,0].set_ylim(min_y,max_y)
+#ax[0,1].set_ylim(min_y,max_y)
+#ax[1,0].set_ylim(min_y,max_y)
+#ax[1,1].set_ylim(min_y,max_y)
+ax[0,0].grid(True)
+ax[0,1].grid(True)
+ax[1,0].grid(True)
+ax[1,1].grid(True)
+#ax[0,0].set(title=name, xlabel='Year', ylabel='Change from Baseline (cm)')
+#ax[0,0].set_title(name, loc='right')
+#ax[0,0].set_ylabel("Change from 2004-2009 Baseline (cm)", loc='bottom', fontsize=14)
+ax[0,0].legend(loc = [0.1, 0.20], fontsize=14)
+ax[0,1].legend(loc = [0.1, 0.05], fontsize=14)
+ax[1,0].legend(loc = [0.1, 0.05], fontsize=14)
+ax[1,1].legend(loc = [0.1, 0.20], fontsize=14)
+plt.savefig(outputpath+name)
 
 # %% Write a .csv for now for graphing later
 grace_remapped.to_csv('../MergedData/Output_files/grace_remapped.csv')
 grace_yearlyavg.to_csv('../MergedData/Output_files/grace_remapped_yearly.csv')
+#%%
+grace_monthlyavg.to_csv('../MergedData/Output_files/grace_remapped_monthly.csv')
 
 # %% ---- Plotting Points ----
 key = 400
@@ -569,9 +705,6 @@ clipped.plot()
 #clipped.rio.to_raster(r"clipped_GRACE_counties.tif")
 #print(".tif written")
 # %%
-clipped[2,:,:].plot(cmap='viridis')
-mask.boundary.plot()
-# %%
 fig, ax = plt.subplots(figsize=(6, 6))
 #lwe2[0,:,:].plot()
 clipped[0,:,:].plot()
@@ -625,20 +758,32 @@ plt.legend()
 
 # %%
 # Plot all of them
-fig, ax = plt.subplots(2,2,figsize=(29,18))
-#fig.tight_layout()
-#ax[1,1].plot(ds['Reservation'], label='Reservation', color='#8d5a99')
-ax[0,0].plot(ds['Regulated with CAP'], label='Regulated with CAP', color="#d7191c") 
-ax[0,0].plot(ds['Regulated without CAP'], label='Regulated without CAP', color='#e77a47') 
-ax[1,1].plot(ds['Lower Colorado River - SW Dominated'], color='#2cbe21', label='Lower Colorado River - SW Dominated')
-ax[0,1].plot(ds['Upper Colorado River - Mixed'], color='#2f8c73', label='Upper Colorado River - Mixed')
-ax[0,1].plot(ds['Norh - Mixed'], color='#41bf9e', label='North - Mixed')
-ax[0,1].plot(ds['Central - Mixed'], color='#7adec4', label='Central - Mixed')
-ax[1,0].plot(ds['Northwest - GW Dominated'], color='#165782', label='Northwest - GW Dominated')
-ax[1,0].plot(ds['Northeast - GW Dominated'], color='#1f78b4', label='Northeast - GW Dominated')
-ax[1,0].plot(ds['South central - GW Dominated'], color='#229ce8', label='South central - GW Dominated')
-ax[1,0].plot(ds['Southeast - GW Dominated'], color='#6db7e8', label='Southeast - GW Dominated')
+ds = grace_yearlyavg
+name = "Annual Change from the 2004-2009 Baseline"
+ylabel = "Liquid Water Equivalent (cm)"
+minyear=2002
+maxyear=2020
+min_y = -15
+max_y = 7
+fsize = 14
 
+# For the actual figure
+fig, ax = plt.subplots(2,2,figsize=(24,12))
+#fig.tight_layout()
+fig.suptitle(name, fontsize=20, y=0.91)
+fig.supylabel(ylabel, fontsize = 14, x=0.09)
+#ax[1,1].plot(ds['Reservation'], label='Reservation', color='#8d5a99')
+ax[0,0].plot(ds['Regulated with CAP'], label='Regulated with CAP', color=c_2) 
+ax[0,0].plot(ds['Regulated without CAP'], label='Regulated without CAP', color=c_3) 
+ax[1,1].plot(ds['Lower Colorado River - SW Dominated'], color=c_4, label='Lower Colorado River - SW Dominated')
+ax[0,1].plot(ds['Upper Colorado River - Mixed'], color=c_5, label='Upper Colorado River - Mixed')
+ax[0,1].plot(ds['Norh - Mixed'], color=c_10, label='North - Mixed')
+ax[0,1].plot(ds['Central - Mixed'], color=c_11, label='Central - Mixed')
+ax[1,0].plot(ds['Northwest - GW Dominated'], color=c_7, label='Northwest - GW Dominated')
+ax[1,0].plot(ds['Northeast - GW Dominated'], color=c_9, label='Northeast - GW Dominated')
+ax[1,0].plot(ds['South central - GW Dominated'], color=c_8, label='South central - GW Dominated')
+ax[1,0].plot(ds['Southeast - GW Dominated'], color=c_6, label='Southeast - GW Dominated')
+#Plotting Arizona Average
 ax[0,0].plot(cm_df_year, color='#2F2F2F', label='Arizona Average')
 ax[0,1].plot(cm_df_year, color='#2F2F2F', label='Arizona Average')
 ax[1,0].plot(cm_df_year, color='#2F2F2F', label='Arizona Average')
@@ -658,9 +803,11 @@ ax[1,0].grid(True)
 ax[1,1].grid(True)
 #ax[0,0].set(title=name, xlabel='Year', ylabel='Change from Baseline (cm)')
 #ax[0,0].set_title(name, loc='right')
-ax[0,0].set_ylabel("Change from 2004-2009 Baseline (cm)", loc='bottom')
-ax[0,0].legend(loc = [0.1, 0.20])
-ax[0,1].legend(loc = [0.1, 0.05])
-ax[1,0].legend(loc = [0.1, 0.05])
-ax[1,1].legend(loc = [0.1, 0.20])
-# %%
+#ax[1,0].set_ylabel("Change from 2004-2009 Baseline (cm)", loc='top', fontsize = fsize)
+ax[0,0].legend(loc = [0.1, 0.20], fontsize = fsize)
+ax[0,1].legend(loc = [0.1, 0.05], fontsize = fsize)
+ax[1,0].legend(loc = [0.1, 0.05], fontsize = fsize)
+ax[1,1].legend(loc = [0.1, 0.20], fontsize = fsize)
+plt.savefig(outputpath+name+'_AZavg')
+# %% Now let's run some statistics
+
