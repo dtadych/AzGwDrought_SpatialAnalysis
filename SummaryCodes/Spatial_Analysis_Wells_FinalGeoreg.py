@@ -462,86 +462,63 @@ ax[2].legend(loc = [1.05, 0.3], fontsize = fsize)
 plt.savefig(outputpath+name)
 
 # %%
-columns = ds.columns
-columns
-
-# %%
-for i in columns:
-        stuff = wdc1[i].rename(labels)
-
-print(stuff)
-# %%
-ds = wdc1
-ds.reset_index
-#labels = ds.columns.tolist()
-#labels
-
-fig, ax = plt.subplots()
-for i in labels:
-        ax.plot(ds[i], label = labels[i])
-ax.set(title='Number of Shallow Wells (less than '+ str(shallow) +')'
-        , xlabel='Year', ylabel='Well Depth (ft)'
-        , xlim = [1980,2020]
-        )
-#ax.xaxis.set_major_locator(cat_wl2.Final_Region(interval=50))
-#ax.set_xticklabels()
-ax.legend(loc = [1.05, 0])
-# %%
-ds = wdc2
-ds.reset_index
-labels = ds.columns.tolist()
-labels
-
-fig, ax = plt.subplots()
-for i in labels:
-        ax.plot(ds[i], label = i)
-ax.set(title='Number of Mid-range Wells (between '+ str(shallow) +' and '+ str(deep)+')', xlabel='Year', ylabel='Well Depth (ft)'
-       , xlim = [1980,2020]
-        )
-#ax.xaxis.set_major_locator(cat_wl2.Final_Region(interval=50))
-#ax.set_xticklabels()
-ax.legend(loc = [1.05, 0])
-
-# %%
-ds = wdc3
-ds.reset_index
-labels = ds.columns.tolist()
-labels
-
-fig, ax = plt.subplots()
-for i in labels:
-        ax.plot(ds[i], label = i)
-ax.set(title='Number of Deep Wells (greater than '+ str(deep) +')', xlabel='Year', ylabel='Well Depth (ft)'
-       , xlim = [1980,2020]
-        )
-#ax.xaxis.set_major_locator(cat_wl2.Final_Region(interval=50))
-#ax.set_xticklabels()
-ax.legend(loc = [1.05, 0])
-
-# %%
-static_geo2['INSTALLED'] = static_geo2['INSTALLED'].replace(['1970-01-01T00:00:00.000000000'], np.NaN)
-
-# %%
-new_wells = pd.pivot_table(static_geo2, index=["In_year"], columns=["GEO_Region"], values=["INSTALLED"], dropna=False, aggfunc=len)
+new_wells = pd.pivot_table(static_geo2, index=["In_year"], columns=["GEOREGI_NU"], values=["INSTALLED"], dropna=False, aggfunc=len)
 new_wells
 # %%
-new_wells.to_csv('../MergedData/Output_files/Final_NewWells.csv')
+#new_wells.to_csv('../MergedData/Output_files/Final_NewWells.csv')
 
 # %%
 ds = new_wells
-ds.reset_index
-#labels = ds.columns.tolist()
-#labels
+name = 'Number of new wells per region'
+ylabel = "Well Count (#)"
+minyear=1975
+maxyear=2020
+#min_y = -15
+#max_y = 7
+fsize = 14
 
-fig, ax = plt.subplots()
-for i in labels:
-        ax.plot(ds[i], label = labels[i])
-ax.set(title='Number of new wells per region', xlabel='Year', ylabel='Well Depth (ft)'
-       , xlim = [1980,2020]
-        )
-#ax.xaxis.set_major_locator(cat_wl2.Final_Region(interval=50))
-#ax.set_xticklabels()
-ax.legend(loc = [1.05, 0])
+columns = ds.columns
+labels = ds.columns.tolist()
+print(labels)
+
+# For the actual figure
+fig, ax = plt.subplots(3,figsize=(12,9))
+#fig.tight_layout()
+fig.suptitle(name, fontsize=20, y=0.91)
+#fig.supylabel(ylabel, fontsize = 14, x=0.09)
+#ax[1,1].plot(ds['Reservation'], label='Reservation', color='#8d5a99')
+ax[0].plot(ds[labels[1]], label='Regulated with CAP', color=c_2) 
+ax[0].plot(ds[labels[2]], label='Regulated without CAP', color=c_3) 
+ax[1].plot(ds[labels[3]], color=c_4, label='Lower Colorado River - SW Dominated')
+ax[1].plot(ds[labels[4]], color=c_5, label='Upper Colorado River - Mixed')
+ax[1].plot(ds[labels[9]], color=c_10, label='North - Mixed')
+ax[1].plot(ds[labels[10]], color=c_11, label='Central - Mixed')
+ax[2].plot(ds[labels[6]], color=c_7, label='Northwest - GW Dominated')
+ax[2].plot(ds[labels[8]], color=c_9, label='Northeast - GW Dominated')
+ax[2].plot(ds[labels[7]], color=c_8, label='South central - GW Dominated')
+ax[2].plot(ds[labels[5]], color=c_6, label='Southeast - GW Dominated')
+
+ax[0].set_xlim(minyear,maxyear)
+ax[1].set_xlim(minyear,maxyear)
+ax[2].set_xlim(minyear,maxyear)
+
+#ax[0].set_ylim(min_y,max_y)
+#ax[1].set_ylim(min_y,max_y)
+#ax[2].set_ylim(min_y,max_y)
+
+ax[0].grid(True)
+ax[1].grid(True)
+ax[2].grid(True)
+
+#ax[0,0].set(title=name, xlabel='Year', ylabel='Change from Baseline (cm)')
+#ax[0,0].set_title(name, loc='right')
+#ax[1,0].set_ylabel("Change from 2004-2009 Baseline (cm)", loc='top', fontsize = fsize)
+ax[0].legend(loc = [1.05, 0.40], fontsize = fsize)
+ax[1].legend(loc = [1.05, 0.3], fontsize = fsize)
+ax[2].legend(loc = [1.05, 0.3], fontsize = fsize)
+
+plt.savefig(outputpath+name)
+
 # %%
 georeg['area'] = georeg.geometry.area
 georeg
