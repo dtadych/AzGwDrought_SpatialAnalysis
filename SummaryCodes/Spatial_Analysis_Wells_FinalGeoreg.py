@@ -37,18 +37,27 @@ datapath = '../MergedData'
 outputpath = '../MergedData/Output_files/'
 shapepath = '../MergedData/Shapefiles/Final_Georegions/'
 # %%
-filename = 'Master_ADWR_database_noduplicates.shp'
-filepath = os.path.join(outputpath, filename)
+filename_mdb_nd = 'Master_ADWR_database_noduplicates.shp'
+filepath = os.path.join(outputpath, filename_mdb_nd)
 print(filepath)
 
 masterdb = gp.read_file(filepath)
 pd.options.display.float_format = '{:.2f}'.format
 print(masterdb.info())
+
+# %%
+filename_mdb_w = 'Master_ADWR_database_water.shp'
+filepath = os.path.join(outputpath, filename_mdb_w)
+print(filepath)
+
+masterdb_water = gp.read_file(filepath)
+pd.options.display.float_format = '{:.2f}'.format
+print(masterdb_water.info())
 # %%
 # Reading in the shapefile
 # GEOREG.to_file('../MergedData/Output_files/Georegions_3col.shp')
-filename = "Final_Georegions.shp"
-filepath = os.path.join(shapepath, filename)
+filename_georeg = "Final_Georegions.shp"
+filepath = os.path.join(shapepath, filename_georeg)
 georeg = gp.read_file(filepath)
 # %%
 #georeg.boundary.plot()
@@ -59,10 +68,9 @@ georeg['GEOREGI_NU'] = georeg['GEOREGI_NU'].astype('int64')
 georeg.info()
 #%%
 # Read in the annual time series database
-filename = 'Wells55_GWSI_WLTS_DB_annual.csv'
-filepath = os.path.join(outputpath, filename)
+filename_ts = 'Wells55_GWSI_WLTS_DB_annual.csv'
+filepath = os.path.join(outputpath, filename_ts)
 print(filepath)
-# %%
 annual_db = pd.read_csv(filepath, header=1, index_col=0)
 annual_db.head()
 #pd.options.display.float_format = '{:.2f}'.format
@@ -73,14 +81,15 @@ annual_db.head()
 
 # %% Overlay georegions onto the static database
 # Going to use sjoin based off this website: https://geopandas.org/docs/user_guide/mergingdata.html
-print(masterdb.crs, georeg.crs)
+print("Non-cancelled: ", masterdb.crs, "Water Wells: ", masterdb_water.crs, "Georegions: ", georeg.crs)
 
 # %%
 georeg = georeg.to_crs(epsg=26912)
 # %%
 static_geo = gp.sjoin(masterdb, georeg, how="inner", op='intersects')
 static_geo.head()
-print("join complete")
+print(str(filename_mdb_nd) + " and " + str(filename_georeg) + " join complete.")
+
 # %% Exporting it because I guess I did that before since I load it in later
 static_geo.to_csv('../MergedData/Output_files/Final_Static_geodatabase_allwells.csv')
 
@@ -122,6 +131,7 @@ cat_wl2 = cat_wl2.reset_index()
 cat_wl2
 # %%
 #del cat_wl2['GEOREGI_NU']
+del cat_wl2['GEO_Region']
 
 # %%
 cat_wl2 = cat_wl2.set_index("GEOREGI_NU")
@@ -234,7 +244,7 @@ ax.legend(loc = [1.04, 0.40])
 # - Number of new wells installed over time
 
 # Re-read in after proper formatting
-filename = 'Final_Static_geodatabase.csv'
+filename = 'Final_Static_geodatabase_waterwells.csv'
 filepath = os.path.join(outputpath, filename)
 print(filepath)
 static_geo2 = pd.read_csv(filepath 
@@ -247,8 +257,8 @@ static_geo2
 #static_geo2.info()
 
 # %%
-static_geo2['APPROVED'] = pd.to_datetime(static_geo2['APPROVED'])
-static_geo2['APPROVED'].describe()
+#static_geo2['APPROVED'] = pd.to_datetime(static_geo2['APPROVED'])
+#static_geo2['APPROVED'].describe()
 # %%
 static_geo2['INSTALLED'] = pd.to_datetime(static_geo2['INSTALLED'])
 static_geo2['INSTALLED'].describe()
@@ -276,9 +286,17 @@ wd2 = static_geo2[(static_geo2["WELL_DEPTH"] <= deep) & (static_geo2["WELL_DEPTH
 wd3 = static_geo2[(static_geo2["WELL_DEPTH"] < shallow)]
 
 # %%
-wdc1 = pd.pivot_table(wd1, index=["In_year"], columns=["GEO_Region"], values=['WELL_DEPTH'], dropna=False, aggfunc=len)
-wdc2 = pd.pivot_table(wd2, index=["In_year"], columns=["GEO_Region"], values=['WELL_DEPTH'], dropna=False, aggfunc=len)
-wdc3 = pd.pivot_table(wd3, index=["In_year"], columns=["GEO_Region"], values=['WELL_DEPTH'], dropna=False, aggfunc=len)
+wd1 = wd1.sort_values(by=['GEOREGI_NU'])
+wd2 = wd2.sort_values(by=['GEOREGI_NU'])
+wd3 = wd3.sort_values(by=['GEOREGI_NU'])
+#%%
+wdc1 = pd.pivot_table(wd1, index=["In_year"], columns=["GEOREGI_NU"], values=['WELL_DEPTH'], dropna=False, aggfunc=len)
+wdc2 = pd.pivot_table(wd2, index=["In_year"], columns=["GEOREGI_NU"], values=['WELL_DEPTH'], dropna=False, aggfunc=len)
+wdc3 = pd.pivot_table(wd3, index=["In_year"], columns=["GEOREGI_NU"], values=['WELL_DEPTH'], dropna=False, aggfunc=len)
+
+#wdc1 = pd.pivot_table(wd1, index=["In_year"], columns=["GEO_Region"], values=['WELL_DEPTH'], dropna=False, aggfunc=len)
+#wdc2 = pd.pivot_table(wd2, index=["In_year"], columns=["GEO_Region"], values=['WELL_DEPTH'], dropna=False, aggfunc=len)
+#wdc3 = pd.pivot_table(wd3, index=["In_year"], columns=["GEO_Region"], values=['WELL_DEPTH'], dropna=False, aggfunc=len)
 
 #%% Exporting the Depth categories
 #wdc1.to_csv('../MergedData/Output_files/Final_Welldepth' + str(deep) + 'plus.csv')
@@ -286,7 +304,165 @@ wdc3 = pd.pivot_table(wd3, index=["In_year"], columns=["GEO_Region"], values=['W
 #wdc3.to_csv('../MergedData/Output_files/Final_Welldepth' + str(shallow) + 'minus.csv')
 
 # %% Plotting fun
-columns = wdc1.columns
+# Plot all of the deep wells
+ds = wdc1
+name = 'Number of Deep Wells (greater than '+ str(deep) +' ft)'
+ylabel = "Well Count (#)"
+minyear=1975
+maxyear=2020
+#min_y = -15
+#max_y = 7
+fsize = 14
+
+columns = ds.columns
+labels = ds.columns.tolist()
+print(labels)
+
+# For the actual figure
+fig, ax = plt.subplots(3,figsize=(12,9))
+#fig.tight_layout()
+fig.suptitle(name, fontsize=20, y=0.91)
+#fig.supylabel(ylabel, fontsize = 14, x=0.09)
+#ax[1,1].plot(ds['Reservation'], label='Reservation', color='#8d5a99')
+ax[0].plot(ds[labels[1]], label='Regulated with CAP', color=c_2) 
+ax[0].plot(ds[labels[2]], label='Regulated without CAP', color=c_3) 
+ax[1].plot(ds[labels[3]], color=c_4, label='Lower Colorado River - SW Dominated')
+ax[1].plot(ds[labels[4]], color=c_5, label='Upper Colorado River - Mixed')
+ax[1].plot(ds[labels[9]], color=c_10, label='North - Mixed')
+ax[1].plot(ds[labels[10]], color=c_11, label='Central - Mixed')
+ax[2].plot(ds[labels[6]], color=c_7, label='Northwest - GW Dominated')
+ax[2].plot(ds[labels[8]], color=c_9, label='Northeast - GW Dominated')
+ax[2].plot(ds[labels[7]], color=c_8, label='South central - GW Dominated')
+ax[2].plot(ds[labels[5]], color=c_6, label='Southeast - GW Dominated')
+
+ax[0].set_xlim(minyear,maxyear)
+ax[1].set_xlim(minyear,maxyear)
+ax[2].set_xlim(minyear,maxyear)
+
+#ax[0].set_ylim(min_y,max_y)
+#ax[1].set_ylim(min_y,max_y)
+#ax[2].set_ylim(min_y,max_y)
+
+ax[0].grid(True)
+ax[1].grid(True)
+ax[2].grid(True)
+
+#ax[0,0].set(title=name, xlabel='Year', ylabel='Change from Baseline (cm)')
+#ax[0,0].set_title(name, loc='right')
+#ax[1,0].set_ylabel("Change from 2004-2009 Baseline (cm)", loc='top', fontsize = fsize)
+ax[0].legend(loc = [1.05, 0.40], fontsize = fsize)
+ax[1].legend(loc = [1.05, 0.3], fontsize = fsize)
+ax[2].legend(loc = [1.05, 0.3], fontsize = fsize)
+
+plt.savefig(outputpath+name)
+
+# %% Mid-range wells
+# Plot all of them
+ds = wdc2
+name = 'Number of Mid-range Wells (between '+ str(shallow) +' and '+ str(deep)+' ft.)'
+ylabel = "Well Count (#)"
+minyear=1975
+maxyear=2020
+#min_y = -15
+#max_y = 7
+fsize = 14
+
+columns = ds.columns
+labels = ds.columns.tolist()
+print(labels)
+
+# For the actual figure
+fig, ax = plt.subplots(3,figsize=(12,9))
+#fig.tight_layout()
+fig.suptitle(name, fontsize=20, y=0.91)
+#fig.supylabel(ylabel, fontsize = 14, x=0.09)
+#ax[1,1].plot(ds['Reservation'], label='Reservation', color='#8d5a99')
+ax[0].plot(ds[labels[1]], label='Regulated with CAP', color=c_2) 
+ax[0].plot(ds[labels[2]], label='Regulated without CAP', color=c_3) 
+ax[1].plot(ds[labels[3]], color=c_4, label='Lower Colorado River - SW Dominated')
+ax[1].plot(ds[labels[4]], color=c_5, label='Upper Colorado River - Mixed')
+ax[1].plot(ds[labels[9]], color=c_10, label='North - Mixed')
+ax[1].plot(ds[labels[10]], color=c_11, label='Central - Mixed')
+ax[2].plot(ds[labels[6]], color=c_7, label='Northwest - GW Dominated')
+ax[2].plot(ds[labels[8]], color=c_9, label='Northeast - GW Dominated')
+ax[2].plot(ds[labels[7]], color=c_8, label='South central - GW Dominated')
+ax[2].plot(ds[labels[5]], color=c_6, label='Southeast - GW Dominated')
+
+ax[0].set_xlim(minyear,maxyear)
+ax[1].set_xlim(minyear,maxyear)
+ax[2].set_xlim(minyear,maxyear)
+
+#ax[0].set_ylim(min_y,max_y)
+#ax[1].set_ylim(min_y,max_y)
+#ax[2].set_ylim(min_y,max_y)
+
+ax[0].grid(True)
+ax[1].grid(True)
+ax[2].grid(True)
+
+#ax[0,0].set(title=name, xlabel='Year', ylabel='Change from Baseline (cm)')
+#ax[0,0].set_title(name, loc='right')
+#ax[1,0].set_ylabel("Change from 2004-2009 Baseline (cm)", loc='top', fontsize = fsize)
+ax[0].legend(loc = [1.05, 0.40], fontsize = fsize)
+ax[1].legend(loc = [1.05, 0.3], fontsize = fsize)
+ax[2].legend(loc = [1.05, 0.3], fontsize = fsize)
+
+plt.savefig(outputpath+name)
+
+# %% Shallow wells
+ds = wdc3
+name = 'Number of Shallow Wells (less than '+ str(shallow) +' ft)'
+ylabel = "Well Count (#)"
+minyear=1975
+maxyear=2020
+#min_y = -15
+#max_y = 7
+fsize = 14
+
+columns = ds.columns
+labels = ds.columns.tolist()
+print(labels)
+
+# For the actual figure
+fig, ax = plt.subplots(3,figsize=(12,9))
+#fig.tight_layout()
+fig.suptitle(name, fontsize=20, y=0.91)
+#fig.supylabel(ylabel, fontsize = 14, x=0.09)
+#ax[1,1].plot(ds['Reservation'], label='Reservation', color='#8d5a99')
+ax[0].plot(ds[labels[1]], label='Regulated with CAP', color=c_2) 
+ax[0].plot(ds[labels[2]], label='Regulated without CAP', color=c_3) 
+ax[1].plot(ds[labels[3]], color=c_4, label='Lower Colorado River - SW Dominated')
+ax[1].plot(ds[labels[4]], color=c_5, label='Upper Colorado River - Mixed')
+ax[1].plot(ds[labels[9]], color=c_10, label='North - Mixed')
+ax[1].plot(ds[labels[10]], color=c_11, label='Central - Mixed')
+ax[2].plot(ds[labels[6]], color=c_7, label='Northwest - GW Dominated')
+ax[2].plot(ds[labels[8]], color=c_9, label='Northeast - GW Dominated')
+ax[2].plot(ds[labels[7]], color=c_8, label='South central - GW Dominated')
+ax[2].plot(ds[labels[5]], color=c_6, label='Southeast - GW Dominated')
+
+ax[0].set_xlim(minyear,maxyear)
+ax[1].set_xlim(minyear,maxyear)
+ax[2].set_xlim(minyear,maxyear)
+
+#ax[0].set_ylim(min_y,max_y)
+#ax[1].set_ylim(min_y,max_y)
+#ax[2].set_ylim(min_y,max_y)
+
+ax[0].grid(True)
+ax[1].grid(True)
+ax[2].grid(True)
+
+#ax[0,0].set(title=name, xlabel='Year', ylabel='Change from Baseline (cm)')
+#ax[0,0].set_title(name, loc='right')
+#ax[1,0].set_ylabel("Change from 2004-2009 Baseline (cm)", loc='top', fontsize = fsize)
+ax[0].legend(loc = [1.05, 0.40], fontsize = fsize)
+ax[1].legend(loc = [1.05, 0.3], fontsize = fsize)
+ax[2].legend(loc = [1.05, 0.3], fontsize = fsize)
+
+plt.savefig(outputpath+name)
+
+# %%
+columns = ds.columns
 columns
 
 # %%
