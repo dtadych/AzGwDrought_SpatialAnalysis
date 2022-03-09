@@ -28,7 +28,7 @@ import pandas as pd
 from shapely.geometry import box
 import geopandas as gp
 #import earthpy as et
-
+import scipy.stats as sp
 # %%
 # Load in the master database
 
@@ -61,7 +61,7 @@ filepath = os.path.join(shapepath, filename_georeg)
 georeg = gp.read_file(filepath)
 # %%
 #georeg.boundary.plot()
-georeg.plot(cmap='viridis').legend()
+georeg.plot(cmap='viridis')
 
 #%%
 georeg['GEOREGI_NU'] = georeg['GEOREGI_NU'].astype('int64')
@@ -91,7 +91,7 @@ static_geo.head()
 print(str(filename_mdb_nd) + " and " + str(filename_georeg) + " join complete.")
 
 # %% Exporting it because I guess I did that before since I load it in later
-static_geo.to_csv('../MergedData/Output_files/Final_Static_geodatabase_allwells.csv')
+# static_geo.to_csv('../MergedData/Output_files/Final_Static_geodatabase_allwells.csv')
 
 # %% Create a dataframe of Final_Region and Well ID's
 reg_list = static_geo[['Combo_ID', 'GEO_Region', 'GEOREGI_NU','Water_CAT', 'Loc','Regulation']]
@@ -174,6 +174,8 @@ c_8 = '#229ce8'
 c_9 = '#1f78b4'
 c_10 = '#41bf9e'
 c_11 = '#7adec4'
+drought_color = '#ffa6b8'
+wet_color = '#b8d3f2'
 
 #%% Plotting
 ds = cat_wl2
@@ -181,9 +183,10 @@ minyear=1970
 maxyear=2020
 name = "Average Depth to Water for " + str(minyear) + " to " + str(maxyear)
 min_y = 0
-max_y = 350
+max_y = 400
+fsize = 14
 
-# Plot all of them
+# Plot all of them on a single graph
 fig, ax = plt.subplots(figsize = (16,9))
 #ax.plot(ds[1.0], label='Reservation', color=c_1)
 ax.plot(ds[2.0], label='Regulated with CAP', color=c_2) 
@@ -196,6 +199,23 @@ ax.plot(ds[7.0], color=c_7, label='Northwest - GW Dominated')
 ax.plot(ds[9.0], color=c_9, label='Northeast - GW Dominated')
 ax.plot(ds[8.0], color=c_8, label='South central - GW Dominated')
 ax.plot(ds[6.0], color=c_6, label='Southeast - GW Dominated')
+# Drought Year Shading
+a = 2011
+b = 2015.999
+c = 2018.001
+d = 2018.999
+e = 2006
+f = 2007.999
+plt.axvspan(a, b, color=drought_color, alpha=0.5, lw=0, label="Drought")
+plt.axvspan(c, d, color=drought_color, alpha=0.5, lw=0)
+plt.axvspan(e, f, color=drought_color, alpha=0.5, lw=0)
+
+# Wet years (2005 and 2010)
+g = 2005
+h = 2010
+ax.axvspan(g, e, color=wet_color, alpha=0.5, lw=0, label="Wet Years")
+ax.axvspan(h, a, color=wet_color, alpha=0.5, lw=0)
+
 ax.set_xlim(minyear,maxyear)
 ax.set_ylim(max_y,min_y)
 ax.grid(True)
@@ -212,6 +232,21 @@ ax.set_ylim(max_y,min_y)
 ax.grid(True)
 ax.set(title=name, xlabel='Year', ylabel='Water Level (ft)')
 ax.legend(loc = [1.04, 0.40])
+# Drought Year Shading
+a = 2011
+b = 2015.999
+c = 2018.001
+d = 2018.999
+e = 2006
+f = 2007.999
+plt.axvspan(a, b, color='#ffa6b8', alpha=0.5, lw=0, label="Drought")
+plt.axvspan(c, d, color='#ffa6b8', alpha=0.5, lw=0)
+plt.axvspan(e, f, color='#ffa6b8', alpha=0.5, lw=0)
+# Wet years (2005 and 2010)
+g = 2005
+h = 2010
+ax.axvspan(g, e, color=wet_color, alpha=0.5, lw=0, label="Wet Years")
+ax.axvspan(h, a, color=wet_color, alpha=0.5, lw=0)
 
 #%% Plot SW Dominated and Mixed
 fig, ax = plt.subplots(figsize = (16,9))
@@ -224,6 +259,22 @@ ax.set_ylim(max_y,min_y)
 ax.grid(True)
 ax.set(title=name, xlabel='Year', ylabel='Water Level (ft)')
 ax.legend(loc = [1.04, 0.40])
+
+# Drought Year Shading
+a = 2011
+b = 2015.999
+c = 2018.001
+d = 2018.999
+e = 2006
+f = 2007.999
+plt.axvspan(a, b, color='#ffa6b8', alpha=0.5, lw=0, label="Drought")
+plt.axvspan(c, d, color='#ffa6b8', alpha=0.5, lw=0)
+plt.axvspan(e, f, color='#ffa6b8', alpha=0.5, lw=0)
+# Wet years (2005 and 2010)
+g = 2005
+h = 2010
+ax.axvspan(g, e, color=wet_color, alpha=0.5, lw=0, label="Wet Years")
+ax.axvspan(h, a, color=wet_color, alpha=0.5, lw=0)
 
 # %%
 # Plot just the Groundwater Dominated
@@ -238,12 +289,128 @@ ax.grid(True)
 ax.set(title=name, xlabel='Year', ylabel='Water Level (ft)')
 ax.legend(loc = [1.04, 0.40])
 
+# Drought Year Shading
+a = 2011
+b = 2015.999
+c = 2018.001
+d = 2018.999
+e = 2006
+f = 2007.999
+plt.axvspan(a, b, color='#ffa6b8', alpha=0.5, lw=0, label="Drought")
+plt.axvspan(c, d, color='#ffa6b8', alpha=0.5, lw=0)
+plt.axvspan(e, f, color='#ffa6b8', alpha=0.5, lw=0)
+# Wet years (2005 and 2010)
+g = 2005
+h = 2010
+ax.axvspan(g, e, color=wet_color, alpha=0.5, lw=0, label="Wet Years")
+ax.axvspan(h, a, color=wet_color, alpha=0.5, lw=0)
+
+# %% Plot in a four panel graph
+ds = cat_wl2
+minyear=2002
+maxyear=2020
+name = "Average Depth to Water for " + str(minyear) + " to " + str(maxyear)
+min_y = 0
+max_y = 400
+fsize = 14
+ylabel = "Water Level (ft)"
+
+# del ds.at[2015, 10]
+ds.at[2015, 10] = None
+
+# For the actual figure
+fig, ax = plt.subplots(2,2,figsize=(24,12))
+#fig.tight_layout()
+fig.suptitle(name, fontsize=20, y=0.91)
+fig.supylabel(ylabel, fontsize = 14, x=0.09)
+fig.supxlabel("Year", fontsize = 14, y=0.08)
+#ax[1,1].plot(ds['Reservation'], label='Reservation', color='#8d5a99')
+ax[0,0].plot(ds[2], label='Regulated with CAP', color=c_2) 
+ax[0,0].plot(ds[3], label='Regulated without CAP', color=c_3) 
+ax[1,1].plot(ds[4], color=c_4, label='Lower Colorado River - SW Dominated')
+ax[0,1].plot(ds[5], color=c_5, label='Upper Colorado River - Mixed')
+ax[0,1].plot(ds[10], color=c_10, label='North - Mixed')
+ax[0,1].plot(ds[11], color=c_11, label='Central - Mixed')
+ax[1,0].plot(ds[7], color=c_7, label='Northwest - GW Dominated')
+ax[1,0].plot(ds[9], color=c_9, label='Northeast - GW Dominated')
+ax[1,0].plot(ds[8], color=c_8, label='South central - GW Dominated')
+ax[1,0].plot(ds[6], color=c_6, label='Southeast - GW Dominated')
+
+# ax.plot(ds[2.0], label='Regulated with CAP', color=c_2) 
+# ax.plot(ds[3.0], label='Regulated without CAP', color=c_3) 
+# ax.plot(ds[4.0], color=c_4, label='Lower Colorado River - SW Dominated')
+# ax.plot(ds[5.0], color=c_5, label='Upper Colorado River - Mixed')
+# ax.plot(ds[10.0], color=c_10, label='North - Mixed')
+# ax.plot(ds[11.0], color=c_11, label='Central - Mixed')
+# ax.plot(ds[7.0], color=c_7, label='Northwest - GW Dominated')
+# ax.plot(ds[9.0], color=c_9, label='Northeast - GW Dominated')
+# ax.plot(ds[8.0], color=c_8, label='South central - GW Dominated')
+# ax.plot(ds[6.0], color=c_6, label='Southeast - GW Dominated')
+
+ax[0,0].set_xlim(minyear,maxyear)
+ax[0,1].set_xlim(minyear,maxyear)
+ax[1,0].set_xlim(minyear,maxyear)
+ax[1,1].set_xlim(minyear,maxyear)
+ax[0,0].set_ylim(max_y,min_y)
+ax[0,1].set_ylim(max_y,min_y)
+ax[1,0].set_ylim(max_y,min_y)
+ax[1,1].set_ylim(max_y,min_y)
+ax[0,0].grid(True)
+ax[0,1].grid(True)
+ax[1,0].grid(True)
+ax[1,1].grid(True)
+#ax[0,0].set(title=name, xlabel='Year', ylabel='Change from Baseline (cm)')
+#ax[0,0].set_title(name, loc='right')
+#ax[1,0].set_ylabel("Change from 2004-2009 Baseline (cm)", loc='top', fontsize = fsize)
+
+# # Drought Year Shading
+a = 2011
+b = 2015.999
+c = 2018.001
+d = 2018.999
+e = 2006
+f = 2007.999
+
+ax[0,0].axvspan(a, b, color=drought_color, alpha=0.5, lw=0, label="Drought")
+ax[0,0].axvspan(c, d, color=drought_color, alpha=0.5, lw=0)
+ax[0,0].axvspan(e, f, color=drought_color, alpha=0.5, lw=0)
+ax[1,0].axvspan(a, b, color=drought_color, alpha=0.5, lw=0, label="Drought")
+ax[1,0].axvspan(c, d, color=drought_color, alpha=0.5, lw=0)
+ax[1,0].axvspan(e, f, color=drought_color, alpha=0.5, lw=0)
+ax[0,1].axvspan(a, b, color=drought_color, alpha=0.5, lw=0, label="Drought")
+ax[0,1].axvspan(c, d, color=drought_color, alpha=0.5, lw=0)
+ax[0,1].axvspan(e, f, color=drought_color, alpha=0.5, lw=0)
+ax[1,1].axvspan(a, b, color=drought_color, alpha=0.5, lw=0, label="Drought")
+ax[1,1].axvspan(c, d, color=drought_color, alpha=0.5, lw=0)
+ax[1,1].axvspan(e, f, color=drought_color, alpha=0.5, lw=0)
+
+# Wet years (2005 and 2010)
+g = 2005
+h = 2010
+ax[0,0].axvspan(g, e, color=wet_color, alpha=0.5, lw=0, label="Wet Years")
+ax[0,0].axvspan(h, a, color=wet_color, alpha=0.5, lw=0)
+ax[0,1].axvspan(g, e, color=wet_color, alpha=0.5, lw=0, label="Wet Years")
+ax[0,1].axvspan(h, a, color=wet_color, alpha=0.5, lw=0)
+ax[1,0].axvspan(g, e, color=wet_color, alpha=0.5, lw=0, label="Wet Years")
+ax[1,0].axvspan(h, a, color=wet_color, alpha=0.5, lw=0)
+ax[1,1].axvspan(g, e, color=wet_color, alpha=0.5, lw=0, label="Wet Years")
+ax[1,1].axvspan(h, a, color=wet_color, alpha=0.5, lw=0)
+
+# ax[0,0].legend(loc = [0.1, 0.15], fontsize = fsize)
+# ax[0,1].legend(loc = [0.1, 0.05], fontsize = fsize)
+# ax[1,0].legend(loc = [0.1, 0.05], fontsize = fsize)
+# ax[1,1].legend(loc = [0.1, 0.20], fontsize = fsize)
+
+# plt.savefig(outputpath+name+'_4panel')
+plt.savefig(outputpath+name+'_4panel_drought')
 # %% --- Now making graphs for other things
 # - Well Density (cumulative number of wells) over time
 # - max screen depth over time (Casing_DEP vs Installed)
 # - Number of new wells installed over time
 
-# Re-read in after proper formatting
+# Re-read in after proper install date formatting
+#       Note: had to go into excel and change the date from mm/dd/yy to mm/dd/yyyy
+#             because date parser cutoff for older items is 1969
 filename = 'Final_Static_geodatabase_waterwells.csv'
 filepath = os.path.join(outputpath, filename)
 print(filepath)
@@ -259,11 +426,12 @@ static_geo2
 # %%
 #static_geo2['APPROVED'] = pd.to_datetime(static_geo2['APPROVED'])
 #static_geo2['APPROVED'].describe()
-# %%
+# %% Only run this if date parser didn't work
 static_geo2['INSTALLED'] = pd.to_datetime(static_geo2['INSTALLED'])
 static_geo2['INSTALLED'].describe()
 # %%
 static_geo2['In_year'] = static_geo2['INSTALLED'].dt.year
+static_geo2['In_year'].describe()
 
 # %% 
 Well_Depth = static_geo2[['WELL_DEPTH', 'INSTALLED', 'Combo_ID', 'In_year','GEOREGI_NU']]
@@ -465,7 +633,7 @@ plt.savefig(outputpath+name)
 new_wells = pd.pivot_table(static_geo2, index=["In_year"], columns=["GEOREGI_NU"], values=["INSTALLED"], dropna=False, aggfunc=len)
 new_wells
 # %%
-#new_wells.to_csv('../MergedData/Output_files/Final_NewWells.csv')
+new_wells.to_csv('../MergedData/Output_files/Final_NewWells.csv')
 
 # %%
 ds = new_wells
@@ -473,8 +641,8 @@ name = 'Number of new wells per region'
 ylabel = "Well Count (#)"
 minyear=1975
 maxyear=2020
-#min_y = -15
-#max_y = 7
+min_y = 0
+max_y = 100
 fsize = 14
 
 columns = ds.columns
@@ -519,20 +687,233 @@ ax[2].legend(loc = [1.05, 0.3], fontsize = fsize)
 
 plt.savefig(outputpath+name)
 
-# %%
-georeg['area'] = georeg.geometry.area
+# %% ---- Fancier Analyses ----
+# Calculating well densities
+new_wells2 = pd.read_csv('../MergedData/Output_files/Final_NewWells.csv',
+                        header=1, index_col=0)
+new_wells2 = new_wells2.reset_index()
+new_wells2 = new_wells2.iloc[1:, :]
+#new_wells2 = new_wells2.rename(columns = {'GEOREGI_NU':'Year'})
+new_wells2 = new_wells2.set_index('GEOREGI_NU')
+new_wells2
+
+# %% Calculate the region area
+# tost["area"] = tost['geometry'].area/ 10**6
+georeg['area'] = georeg.geometry.area/10**6
 georeg
 # %%
 georeg2 = pd.DataFrame(georeg)
 georeg2
-# %%
-del georeg2['geometry']
-georeg2.info()
-# %%
-georeg2.to_csv('../MergedData/Output_files/georegions_area.csv')
 
 # %%
-# %% Plotting help from Amanda - don't run this
+#del georeg2['geometry']
+#georeg2.info()
+# %%
+#georeg2.to_csv('../MergedData/Output_files/georegions_area.csv')
+
+#%%
+georeg_area = georeg2[['GEOREGI_NU','area']]
+georeg_area.info()
+
+# %%
+georeg_area = georeg_area.set_index('GEOREGI_NU')
+georeg_area = georeg_area.transpose()
+georeg_area
+
+# %%
+new_wells2 = new_wells.reset_index()
+new_wells2
+# %% df1.div(df2.iloc[0], axis='columns') - This only returns nan
+well_densities = new_wells2.div(georeg_area.iloc[0])
+well_densities
+
+# %% df1/df2.values[0,:]
+well_densities = new_wells2/georeg_area.values[0,:]
+well_densities
+
+# %%
+well_densities['1'].plot()
+
+# %%
+well_densities.info()
+
+# %%
+well_densities1 = well_densities.reset_index()
+well_densities1.info()
+
+# %%
+well_densities1['GEOREGI_NU'] = pd.to_numeric(well_densities1['GEOREGI_NU'])
+well_densities1.info()
+
+# %%
+well_densities1['GEOREGI_NU'] = well_densities1['GEOREGI_NU'].astype(int)
+well_densities1.info()
+
+# %%
+well_densities1.set_index('GEOREGI_NU', inplace=True)
+well_densities1.info()
+
+# %%
+ds = well_densities1
+name = 'Well Densities Per region (#/km2)'
+ylabel = "Well Count (#)"
+minyear=1975
+maxyear=2020
+min_y = 0
+max_y = 10e-8
+fsize = 14
+
+columns = ds.columns
+labels = ds.columns.tolist()
+print(labels)
+
+# For the actual figure
+fig, ax = plt.subplots(3,figsize=(12,9))
+#fig.tight_layout()
+fig.suptitle(name, fontsize=20, y=0.91)
+#fig.supylabel(ylabel, fontsize = 14, x=0.09)
+#ax[1,1].plot(ds['Reservation'], label='Reservation', color='#8d5a99')
+ax[0].plot(ds['2'], label='Regulated with CAP', color=c_2) 
+ax[0].plot(ds['3'], label='Regulated without CAP', color=c_3) 
+ax[1].plot(ds['4'], color=c_4, label='Lower Colorado River - SW Dominated')
+ax[1].plot(ds['5'], color=c_5, label='Upper Colorado River - Mixed')
+ax[1].plot(ds['10'], color=c_10, label='North - Mixed')
+ax[1].plot(ds['11'], color=c_11, label='Central - Mixed')
+ax[2].plot(ds['7'], color=c_7, label='Northwest - GW Dominated')
+ax[2].plot(ds['9'], color=c_9, label='Northeast - GW Dominated')
+ax[2].plot(ds['8'], color=c_8, label='South central - GW Dominated')
+ax[2].plot(ds['6'], color=c_6, label='Southeast - GW Dominated')
+
+ax[0].set_xlim(minyear,maxyear)
+ax[1].set_xlim(minyear,maxyear)
+ax[2].set_xlim(minyear,maxyear)
+
+#ax[0].set_ylim(min_y,max_y)
+#ax[1].set_ylim(min_y,max_y)
+#ax[2].set_ylim(min_y,max_y)
+
+ax[0].grid(True)
+ax[1].grid(True)
+ax[2].grid(True)
+
+#ax[0,0].set(title=name, xlabel='Year', ylabel='Change from Baseline (cm)')
+#ax[0,0].set_title(name, loc='right')
+#ax[1,0].set_ylabel("Change from 2004-2009 Baseline (cm)", loc='top', fontsize = fsize)
+ax[0].legend(loc = [1.05, 0.40], fontsize = fsize)
+ax[1].legend(loc = [1.05, 0.3], fontsize = fsize)
+ax[2].legend(loc = [1.05, 0.3], fontsize = fsize)
+
+plt.savefig(outputpath+name+"fixed_axes")
+
+# %% Trying to plot other charts - below here is mostly garbage
+georeg = georeg.sort_values(by=['GEOREGI_NU'])
+labels = dict(zip(georeg.GEOREGI_NU, georeg.GEO_Region))
+labels
+
+barcolors = [c_1, c_2, c_3, c_4, c_5, c_6, c_7, c_8, c_9, c_10, c_11]
+# %% Kinda worked!  Ned to figure out how to specify things a little more
+ds = well_densities1
+plt.figure(figsize = (9,6))
+plt.bar(ds.columns, ds.sum(), color = barcolors)
+
+# %% fail
+ds = new_wells
+plt.figure(figsize = (9,6))
+plt.pie(ds.columns, ds.sum(), colors=barcolors)
+
+# %% fail
+ds = well_densities1
+plt.figure(figsize = (9,6))
+plt.boxplot(ds.sum())
+
+# %%
+stats = pd.DataFrame(index=['slp','int','r_sq','p_val','std_er'],columns=ds.columns)
+print(stats)
+
+# %%
+stats = pd.DataFrame()
+# %% -- Linear regression --
+# https://mohammadimranhasan.com/linear-regression-of-time-series-data-with-pandas-library-in-python/
+#y=np.array(df['OW2 As(mg/L)'].dropna().values, dtype=float)
+#x=np.array(pd.to_datetime(df['OW2 As(mg/L)'].dropna()).index.values, dtype=float)
+#slope, intercept, r_value, p_value, std_err =sp.linregress(x,y)
+ds = cat_wl2
+min_yr = 2002
+mx_yr = 2020
+Name = str(min_yr) + " to " + str(mx_yr) + " Linear Regression:"
+print(Name)
+
+#f = ds[(ds.index >= min_yr) & (ds.index <= mx_yr)]
+
+# -- For Multiple years --
+Name = "Linear Regression for Non-drought years: "
+wetyrs = [2005, 2008, 2009, 2010, 2016, 2017, 2019]
+dryyrs = [2002, 2003, 2004, 2006, 2007, 2011, 2012, 2013, 2014, 2015, 2018]
+#f = ds[(ds.index == wetyrs)]
+
+f = pd.DataFrame()
+for i in dryyrs:
+        wut = ds[(ds.index == i)]
+        f = f.append(wut)
+print(f)
+
+stats = pd.DataFrame()
+for i in range(1, 12, 1):
+        df = f[i]
+        #print(df)
+        y=np.array(df.values, dtype=float)
+        x=np.array(pd.to_datetime(df).index.values, dtype=float)
+        slope, intercept, r_value, p_value, std_err =sp.linregress(x,y)
+#        print('Georegion Number: ', i, '\n', 
+#                'slope = ', slope, '\n', 
+#                'intercept = ', intercept, '\n', 
+#                'r^2 = ', r_value, '\n', 
+#                'p-value = ', p_value, '\n', 
+#                'std error = ', std_err)
+        
+        # row1 = pd.DataFrame([slope], index=[i], columns=['slope'])
+        # row2 = pd.DataFrame([intercept], index=[i], columns=['intercept'])
+        # stats = stats.append(row1)
+        # stats = stats.append(row2)
+        # stats['intercept'] = intercept
+        stats = stats.append({'slope': slope, 
+                        #       'int':intercept, 
+                              'rsq':r_value, 
+                              'p_val':p_value, 
+                              'std_err':std_err}, 
+                              ignore_index=True)
+        xf = np.linspace(min(x),max(x),100)
+        xf1 = xf.copy()
+        #xf1 = pd.to_datetime(xf1)
+        yf = (slope*xf)+intercept
+        fig, ax = plt.subplots(1, 1)
+        ax.plot(xf1, yf,label='Linear fit', lw=3)
+        df.plot(ax=ax,marker='o', ls='')
+        ax.set_ylim(max(y),0)
+        ax.legend()
+
+
+# stats = stats.append(slope)
+#        stats[i] = stats[i].append(slope)
+
+#   df = df.append({'A': i}, ignore_index=True)
+stats.index = labels.values()
+stats1 = stats.transpose()
+del stats1['Reservation']
+stats1
+
+# %% Data visualization
+xf = np.linspace(min(x),max(x),100)
+xf1 = xf.copy()
+#xf1 = pd.to_datetime(xf1)
+yf = (slope*xf)+intercept
+f, ax = plt.subplots(1, 1)
+ax.plot(xf1, yf,label='Linear fit', lw=3)
+ds.plot(ax=ax,marker='o', ls='')
+ax.legend();
+# %%
+# ------------------------------------------------------------------ 
+# Plotting help from Amanda - don't run this
 #create dfs for all runs which have the average diff in WTD across the run and the x/y loc of the well
 minimum = 0
 maximum = 50
@@ -557,3 +938,4 @@ fig_name = f'./spatial_outputs/spatial_wtd_diff_all_yr_avg.png'
 plt.savefig(fig_name, dpi=400, bbox_inches='tight')
 plt.show()
 plt.close()
+# %%

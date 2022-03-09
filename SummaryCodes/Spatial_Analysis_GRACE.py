@@ -804,10 +804,47 @@ ax[1,1].grid(True)
 #ax[0,0].set(title=name, xlabel='Year', ylabel='Change from Baseline (cm)')
 #ax[0,0].set_title(name, loc='right')
 #ax[1,0].set_ylabel("Change from 2004-2009 Baseline (cm)", loc='top', fontsize = fsize)
-ax[0,0].legend(loc = [0.1, 0.20], fontsize = fsize)
-ax[0,1].legend(loc = [0.1, 0.05], fontsize = fsize)
-ax[1,0].legend(loc = [0.1, 0.05], fontsize = fsize)
-ax[1,1].legend(loc = [0.1, 0.20], fontsize = fsize)
-plt.savefig(outputpath+name+'_AZavg')
+
+# Drought Year Shading
+a = 2011
+b = 2015.999
+c = 2018.001
+d = 2018.999
+e = 2006
+f = 2007.999
+drought_color = '#ffa6b8'
+wet_color = '#b8d3f2'
+
+ax[0,0].axvspan(a, b, color=drought_color, alpha=0.5, lw=0, label="Drought")
+ax[0,0].axvspan(c, d, color=drought_color, alpha=0.5, lw=0)
+ax[0,0].axvspan(e, f, color=drought_color, alpha=0.5, lw=0)
+ax[1,0].axvspan(a, b, color=drought_color, alpha=0.5, lw=0, label="Drought")
+ax[1,0].axvspan(c, d, color=drought_color, alpha=0.5, lw=0)
+ax[1,0].axvspan(e, f, color=drought_color, alpha=0.5, lw=0)
+ax[0,1].axvspan(a, b, color=drought_color, alpha=0.5, lw=0, label="Drought")
+ax[0,1].axvspan(c, d, color=drought_color, alpha=0.5, lw=0)
+ax[0,1].axvspan(e, f, color=drought_color, alpha=0.5, lw=0)
+ax[1,1].axvspan(a, b, color=drought_color, alpha=0.5, lw=0, label="Drought")
+ax[1,1].axvspan(c, d, color=drought_color, alpha=0.5, lw=0)
+ax[1,1].axvspan(e, f, color=drought_color, alpha=0.5, lw=0)
+
+# Wet years (2005 and 2010)
+g = 2005
+h = 2010
+ax[0,0].axvspan(g, e, color=wet_color, alpha=0.5, lw=0, label="Wet Years")
+ax[0,0].axvspan(h, a, color=wet_color, alpha=0.5, lw=0)
+ax[0,1].axvspan(g, e, color=wet_color, alpha=0.5, lw=0, label="Wet Years")
+ax[0,1].axvspan(h, a, color=wet_color, alpha=0.5, lw=0)
+ax[1,0].axvspan(g, e, color=wet_color, alpha=0.5, lw=0, label="Wet Years")
+ax[1,0].axvspan(h, a, color=wet_color, alpha=0.5, lw=0)
+ax[1,1].axvspan(g, e, color=wet_color, alpha=0.5, lw=0, label="Wet Years")
+ax[1,1].axvspan(h, a, color=wet_color, alpha=0.5, lw=0)
+
+ax[0,0].legend(loc = [0.05, 0.15], fontsize = fsize)
+ax[0,1].legend(loc = [0.05, 0.05], fontsize = fsize)
+ax[1,0].legend(loc = [0.05, 0.04], fontsize = fsize)
+ax[1,1].legend(loc = [0.05, 0.18], fontsize = fsize)
+
+plt.savefig(outputpath+name+'_AZavg_drought')
 # %% Now let's run some statistics
 
