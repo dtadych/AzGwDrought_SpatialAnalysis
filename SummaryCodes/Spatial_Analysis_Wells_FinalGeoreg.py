@@ -307,7 +307,7 @@ ax.axvspan(h, a, color=wet_color, alpha=0.5, lw=0)
 
 # %% Plot in a four panel graph
 ds = cat_wl2
-minyear=2002
+minyear=1970
 maxyear=2020
 name = "Average Depth to Water for " + str(minyear) + " to " + str(maxyear)
 min_y = 0
@@ -319,7 +319,7 @@ ylabel = "Water Level (ft)"
 ds.at[2015, 10] = None
 
 # For the actual figure
-fig, ax = plt.subplots(2,2,figsize=(24,12))
+fig, ax = plt.subplots(2,2,figsize=(18,10))
 #fig.tight_layout()
 fig.suptitle(name, fontsize=20, y=0.91)
 fig.supylabel(ylabel, fontsize = 14, x=0.09)
@@ -402,7 +402,101 @@ ax[1,1].axvspan(h, a, color=wet_color, alpha=0.5, lw=0)
 # ax[1,1].legend(loc = [0.1, 0.20], fontsize = fsize)
 
 # plt.savefig(outputpath+name+'_4panel')
-plt.savefig(outputpath+name+'_4panel_drought')
+# plt.savefig(outputpath+name+'_4panel_drought')
+
+
+# %% Plot in a three panel graph
+ds = cat_wl2
+minyear=2002
+maxyear=2020
+name = "Average Depth to Water for " + str(minyear) + " to " + str(maxyear)
+min_y = 0
+max_y = 400
+fsize = 14
+ylabel = "Water Level (ft)"
+
+# del ds.at[2015, 10]
+ds.at[2015, 10] = None
+
+# For the actual figure
+fig, ax = plt.subplots(3,1,figsize=(15,15))
+#fig.tight_layout()
+fig.suptitle(name, fontsize=20, y=0.91)
+fig.supylabel(ylabel, fontsize = 14, x=0.09)
+fig.supxlabel("Year", fontsize = 14, y=0.08)
+# Panel numbers for easy adjusting
+p1 = 0 # Panel 1
+p2 = 1 # Panel 2
+p3 = 2 # Panel 3
+p4 = 3 # Panel 4
+#ax[1,1].plot(ds['Reservation'], label='Reservation', color='#8d5a99')
+ax[p1].plot(ds[2], label='Regulated with CAP', color=c_2) 
+ax[p3].plot(ds[3], label='Regulated without CAP', color=c_3) 
+ax[p1].plot(ds[4], color=c_4, label='Lower Colorado River - SW Dominated')
+ax[p2].plot(ds[5], color=c_5, label='Upper Colorado River - Mixed')
+ax[p2].plot(ds[10], color=c_10, label='North - Mixed')
+ax[p2].plot(ds[11], color=c_11, label='Central - Mixed')
+ax[p3].plot(ds[7], color=c_7, label='Northwest - GW Dominated')
+ax[p3].plot(ds[9], color=c_9, label='Northeast - GW Dominated')
+ax[p3].plot(ds[8], color=c_8, label='South central - GW Dominated')
+ax[p3].plot(ds[6], color=c_6, label='Southeast - GW Dominated')
+
+ax[p1].set_xlim(minyear,maxyear)
+ax[p2].set_xlim(minyear,maxyear)
+ax[p3].set_xlim(minyear,maxyear)
+# ax[p4].set_xlim(minyear,maxyear)
+ax[p1].set_ylim(max_y,min_y)
+ax[p2].set_ylim(max_y,min_y)
+ax[p3].set_ylim(max_y,min_y)
+# ax[p4].set_ylim(max_y,min_y)
+ax[p1].grid(True)
+ax[p2].grid(True)
+ax[p3].grid(True)
+# ax[p4].grid(True)
+#ax[0,0].set(title=name, xlabel='Year', ylabel='Change from Baseline (cm)')
+#ax[0,0].set_title(name, loc='right')
+#ax[1,0].set_ylabel("Change from 2004-2009 Baseline (cm)", loc='top', fontsize = fsize)
+
+# # Drought Year Shading
+# a = 2011
+# b = 2015.999
+# c = 2018.001
+# d = 2018.999
+# e = 2006
+# f = 2007.999
+
+# ax[0,0].axvspan(a, b, color=drought_color, alpha=0.5, lw=0, label="Drought")
+# ax[0,0].axvspan(c, d, color=drought_color, alpha=0.5, lw=0)
+# ax[0,0].axvspan(e, f, color=drought_color, alpha=0.5, lw=0)
+# ax[1,0].axvspan(a, b, color=drought_color, alpha=0.5, lw=0, label="Drought")
+# ax[1,0].axvspan(c, d, color=drought_color, alpha=0.5, lw=0)
+# ax[1,0].axvspan(e, f, color=drought_color, alpha=0.5, lw=0)
+# ax[0,1].axvspan(a, b, color=drought_color, alpha=0.5, lw=0, label="Drought")
+# ax[0,1].axvspan(c, d, color=drought_color, alpha=0.5, lw=0)
+# ax[0,1].axvspan(e, f, color=drought_color, alpha=0.5, lw=0)
+# ax[1,1].axvspan(a, b, color=drought_color, alpha=0.5, lw=0, label="Drought")
+# ax[1,1].axvspan(c, d, color=drought_color, alpha=0.5, lw=0)
+# ax[1,1].axvspan(e, f, color=drought_color, alpha=0.5, lw=0)
+
+# # Wet years (2005 and 2010)
+# g = 2005
+# h = 2010
+# ax[0,0].axvspan(g, e, color=wet_color, alpha=0.5, lw=0, label="Wet Years")
+# ax[0,0].axvspan(h, a, color=wet_color, alpha=0.5, lw=0)
+# ax[0,1].axvspan(g, e, color=wet_color, alpha=0.5, lw=0, label="Wet Years")
+# ax[0,1].axvspan(h, a, color=wet_color, alpha=0.5, lw=0)
+# ax[1,0].axvspan(g, e, color=wet_color, alpha=0.5, lw=0, label="Wet Years")
+# ax[1,0].axvspan(h, a, color=wet_color, alpha=0.5, lw=0)
+# ax[1,1].axvspan(g, e, color=wet_color, alpha=0.5, lw=0, label="Wet Years")
+# ax[1,1].axvspan(h, a, color=wet_color, alpha=0.5, lw=0)
+
+ax[p1].legend(loc = [1.02, 0.40], fontsize = fsize)
+ax[p2].legend(loc = [1.02, 0.40], fontsize = fsize)
+ax[p3].legend(loc = [1.02, 0.30], fontsize = fsize)
+# ax[p4].legend(loc = [0.1, 0.20], fontsize = fsize)
+
+plt.savefig(outputpath+name+'_3panel', bbox_inches = 'tight') # bbox_inches makes sure the legend saves
+# plt.savefig(outputpath+name+'_3panel_drought')
 # %% --- Now making graphs for other things
 # - Well Density (cumulative number of wells) over time
 # - max screen depth over time (Casing_DEP vs Installed)
@@ -833,7 +927,8 @@ print(stats)
 # %%
 stats = pd.DataFrame()
 # %% -- Linear regression --
-# https://mohammadimranhasan.com/linear-regression-of-time-series-data-with-pandas-library-in-python/
+# Actual documentation: https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.linregress.html
+# Tutorial from https://mohammadimranhasan.com/linear-regression-of-time-series-data-with-pandas-library-in-python/
 #y=np.array(df['OW2 As(mg/L)'].dropna().values, dtype=float)
 #x=np.array(pd.to_datetime(df['OW2 As(mg/L)'].dropna()).index.values, dtype=float)
 #slope, intercept, r_value, p_value, std_err =sp.linregress(x,y)
