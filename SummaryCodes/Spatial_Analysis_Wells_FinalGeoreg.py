@@ -405,24 +405,25 @@ ax[1,1].axvspan(h, a, color=wet_color, alpha=0.5, lw=0)
 # plt.savefig(outputpath+name+'_4panel_drought')
 
 
-# %% Plot in a three panel graph
+# %% Plot in a four panel 1 column graph
 ds = cat_wl2
 minyear=2002
 maxyear=2020
 name = "Average Depth to Water for " + str(minyear) + " to " + str(maxyear)
 min_y = 0
-max_y = 400
+max_y = 350
 fsize = 14
 ylabel = "Water Level (ft)"
+linewidth = 2
 
 # del ds.at[2015, 10]
 ds.at[2015, 10] = None
 
 # For the actual figure
-fig, ax = plt.subplots(3,1,figsize=(15,15))
+fig, ax = plt.subplots(4,1,figsize=(12,15))
 #fig.tight_layout()
 fig.suptitle(name, fontsize=20, y=0.91)
-fig.supylabel(ylabel, fontsize = 14, x=0.09)
+fig.supylabel(ylabel, fontsize = 14, x=0.05)
 fig.supxlabel("Year", fontsize = 14, y=0.08)
 # Panel numbers for easy adjusting
 p1 = 0 # Panel 1
@@ -430,16 +431,113 @@ p2 = 1 # Panel 2
 p3 = 2 # Panel 3
 p4 = 3 # Panel 4
 #ax[1,1].plot(ds['Reservation'], label='Reservation', color='#8d5a99')
-ax[p1].plot(ds[2], label='Regulated with CAP', color=c_2) 
-ax[p3].plot(ds[3], label='Regulated without CAP', color=c_3) 
-ax[p1].plot(ds[4], color=c_4, label='Lower Colorado River - SW Dominated')
-ax[p2].plot(ds[5], color=c_5, label='Upper Colorado River - Mixed')
-ax[p2].plot(ds[10], color=c_10, label='North - Mixed')
-ax[p2].plot(ds[11], color=c_11, label='Central - Mixed')
-ax[p3].plot(ds[7], color=c_7, label='Northwest - GW Dominated')
-ax[p3].plot(ds[9], color=c_9, label='Northeast - GW Dominated')
-ax[p3].plot(ds[8], color=c_8, label='South central - GW Dominated')
-ax[p3].plot(ds[6], color=c_6, label='Southeast - GW Dominated')
+ax[p1].plot(ds[2], label='Regulated with CAP', color=c_2, lw=linewidth) 
+ax[p3].plot(ds[3], label='Regulated without CAP', color=c_3, lw=linewidth) 
+ax[p1].plot(ds[4], color=c_4, label='Lower Colorado River - SW Dominated', lw=linewidth)
+ax[p2].plot(ds[5], color=c_5, label='Upper Colorado River - Mixed', lw=linewidth)
+#ax[p2].plot(ds[10], color=c_10, label='North - Mixed', lw=linewidth)
+ax[p2].plot(ds[11], color=c_11, label='Central - Mixed', lw=3)
+ax[p4].plot(ds[7], color=c_7, label='Northwest - GW Dominated', lw=linewidth)
+ax[p3].plot(ds[9], color=c_9, label='Northeast - GW Dominated', lw=linewidth)
+ax[p4].plot(ds[8], color=c_8, label='South central - GW Dominated', lw=linewidth)
+ax[p3].plot(ds[6], color=c_6, label='Southeast - GW Dominated', lw=3)
+
+ax[p1].set_xlim(minyear,maxyear)
+ax[p2].set_xlim(minyear,maxyear)
+ax[p3].set_xlim(minyear,maxyear)
+ax[p4].set_xlim(minyear,maxyear)
+ax[p1].set_ylim(max_y,min_y)
+ax[p2].set_ylim(max_y,min_y)
+ax[p3].set_ylim(max_y,min_y)
+ax[p4].set_ylim(max_y,min_y)
+ax[p1].grid(True)
+ax[p2].grid(True)
+ax[p3].grid(True)
+ax[p4].grid(True)
+#ax[0,0].set(title=name, xlabel='Year', ylabel='Change from Baseline (cm)')
+#ax[0,0].set_title(name, loc='right')
+#ax[1,0].set_ylabel("Change from 2004-2009 Baseline (cm)", loc='top', fontsize = fsize)
+
+# Drought Year Shading
+a = 2011
+b = 2015.999
+c = 2018.001
+d = 2018.999
+e = 2006
+f = 2007.999
+
+ax[p1].axvspan(a, b, color=drought_color, alpha=0.5, lw=0, label="Drought")
+ax[p1].axvspan(c, d, color=drought_color, alpha=0.5, lw=0)
+ax[p1].axvspan(e, f, color=drought_color, alpha=0.5, lw=0)
+ax[p2].axvspan(a, b, color=drought_color, alpha=0.5, lw=0, label="Drought")
+ax[p2].axvspan(c, d, color=drought_color, alpha=0.5, lw=0)
+ax[p2].axvspan(e, f, color=drought_color, alpha=0.5, lw=0)
+ax[p3].axvspan(a, b, color=drought_color, alpha=0.5, lw=0, label="Drought")
+ax[p3].axvspan(c, d, color=drought_color, alpha=0.5, lw=0)
+ax[p3].axvspan(e, f, color=drought_color, alpha=0.5, lw=0)
+ax[p4].axvspan(a, b, color=drought_color, alpha=0.5, lw=0, label="Drought")
+ax[p4].axvspan(c, d, color=drought_color, alpha=0.5, lw=0)
+ax[p4].axvspan(e, f, color=drought_color, alpha=0.5, lw=0)
+
+# Wet years (2005 and 2010)
+g = 2005
+h = 2010
+ax[p1].axvspan(g, e, color=wet_color, alpha=0.5, lw=0, label="Wet Years")
+ax[p1].axvspan(h, a, color=wet_color, alpha=0.5, lw=0)
+ax[p2].axvspan(g, e, color=wet_color, alpha=0.5, lw=0, label="Wet Years")
+ax[p2].axvspan(h, a, color=wet_color, alpha=0.5, lw=0)
+ax[p3].axvspan(g, e, color=wet_color, alpha=0.5, lw=0, label="Wet Years")
+ax[p3].axvspan(h, a, color=wet_color, alpha=0.5, lw=0)
+ax[p4].axvspan(g, e, color=wet_color, alpha=0.5, lw=0, label="Wet Years")
+ax[p4].axvspan(h, a, color=wet_color, alpha=0.5, lw=0)
+
+ax[p1].legend(loc = [1.02, 0.40], fontsize = fsize)
+ax[p2].legend(loc = [1.02, 0.40], fontsize = fsize)
+ax[p3].legend(loc = [1.02, 0.30], fontsize = fsize)
+ax[p4].legend(loc = [1.02, 0.20], fontsize = fsize)
+
+# plt.savefig(outputpath+name+'_3panel', bbox_inches = 'tight') # bbox_inches makes sure the legend saves
+# plt.savefig(outputpath+name+'_4panel', bbox_inches = 'tight') # bbox_inches makes sure the legend saves
+plt.savefig(outputpath+name+'_4panel_drought', bbox_inches = 'tight') # bbox_inches makes sure the legend saves
+
+# plt.savefig(outputpath+name+'_3panel_drought')
+
+# %% Plot in a three panel graph, 1 column
+ds = cat_wl2
+minyear=1971
+maxyear=2020
+name = "Average Depth to Water for " + str(minyear) + " to " + str(maxyear)
+min_y = 0
+max_y = 350
+fsize = 14
+ylabel = "Water Level (ft)"
+linewidth = 2
+
+# del ds.at[2015, 10]
+ds.at[2015, 10] = None
+
+# For the actual figure
+fig, ax = plt.subplots(3,1,figsize=(12,15))
+#fig.tight_layout()
+fig.suptitle(name, fontsize=20, y=0.91)
+fig.supylabel(ylabel, fontsize = 14, x=0.05)
+fig.supxlabel("Year", fontsize = 14, y=0.08)
+# Panel numbers for easy adjusting
+p1 = 0 # Panel 1
+p2 = 1 # Panel 2
+p3 = 2 # Panel 3
+p4 = 3 # Panel 4
+#ax[1,1].plot(ds['Reservation'], label='Reservation', color='#8d5a99')
+ax[p1].plot(ds[2], label='Regulated with CAP', color=c_2, lw=linewidth) 
+ax[p3].plot(ds[3], label='Regulated without CAP', color=c_3, lw=linewidth) 
+ax[p1].plot(ds[4], color=c_4, label='Lower Colorado River - SW Dominated', lw=linewidth)
+ax[p2].plot(ds[5], color=c_5, label='Upper Colorado River - Mixed', lw=linewidth)
+#ax[p2].plot(ds[10], color=c_10, label='North - Mixed', lw=linewidth)
+ax[p2].plot(ds[11], color=c_11, label='Central - Mixed', lw=linewidth)
+ax[p3].plot(ds[7], color=c_7, label='Northwest - GW Dominated', lw=linewidth)
+ax[p3].plot(ds[9], color=c_9, label='Northeast - GW Dominated', lw=linewidth)
+ax[p3].plot(ds[8], color=c_8, label='South central - GW Dominated', lw=linewidth)
+ax[p3].plot(ds[6], color=c_6, label='Southeast - GW Dominated', lw=linewidth)
 
 ax[p1].set_xlim(minyear,maxyear)
 ax[p2].set_xlim(minyear,maxyear)
@@ -465,37 +563,39 @@ ax[p3].grid(True)
 # e = 2006
 # f = 2007.999
 
-# ax[0,0].axvspan(a, b, color=drought_color, alpha=0.5, lw=0, label="Drought")
-# ax[0,0].axvspan(c, d, color=drought_color, alpha=0.5, lw=0)
-# ax[0,0].axvspan(e, f, color=drought_color, alpha=0.5, lw=0)
-# ax[1,0].axvspan(a, b, color=drought_color, alpha=0.5, lw=0, label="Drought")
-# ax[1,0].axvspan(c, d, color=drought_color, alpha=0.5, lw=0)
-# ax[1,0].axvspan(e, f, color=drought_color, alpha=0.5, lw=0)
-# ax[0,1].axvspan(a, b, color=drought_color, alpha=0.5, lw=0, label="Drought")
-# ax[0,1].axvspan(c, d, color=drought_color, alpha=0.5, lw=0)
-# ax[0,1].axvspan(e, f, color=drought_color, alpha=0.5, lw=0)
-# ax[1,1].axvspan(a, b, color=drought_color, alpha=0.5, lw=0, label="Drought")
-# ax[1,1].axvspan(c, d, color=drought_color, alpha=0.5, lw=0)
-# ax[1,1].axvspan(e, f, color=drought_color, alpha=0.5, lw=0)
+# ax[p1].axvspan(a, b, color=drought_color, alpha=0.5, lw=0, label="Drought")
+# ax[p1].axvspan(c, d, color=drought_color, alpha=0.5, lw=0)
+# ax[p1].axvspan(e, f, color=drought_color, alpha=0.5, lw=0)
+# ax[p2].axvspan(a, b, color=drought_color, alpha=0.5, lw=0, label="Drought")
+# ax[p2].axvspan(c, d, color=drought_color, alpha=0.5, lw=0)
+# ax[p2].axvspan(e, f, color=drought_color, alpha=0.5, lw=0)
+# ax[p3].axvspan(a, b, color=drought_color, alpha=0.5, lw=0, label="Drought")
+# ax[p3].axvspan(c, d, color=drought_color, alpha=0.5, lw=0)
+# ax[p3].axvspan(e, f, color=drought_color, alpha=0.5, lw=0)
+# # ax[p4].axvspan(a, b, color=drought_color, alpha=0.5, lw=0, label="Drought")
+# # ax[p4].axvspan(c, d, color=drought_color, alpha=0.5, lw=0)
+# # ax[p4].axvspan(e, f, color=drought_color, alpha=0.5, lw=0)
 
 # # Wet years (2005 and 2010)
 # g = 2005
 # h = 2010
-# ax[0,0].axvspan(g, e, color=wet_color, alpha=0.5, lw=0, label="Wet Years")
-# ax[0,0].axvspan(h, a, color=wet_color, alpha=0.5, lw=0)
-# ax[0,1].axvspan(g, e, color=wet_color, alpha=0.5, lw=0, label="Wet Years")
-# ax[0,1].axvspan(h, a, color=wet_color, alpha=0.5, lw=0)
-# ax[1,0].axvspan(g, e, color=wet_color, alpha=0.5, lw=0, label="Wet Years")
-# ax[1,0].axvspan(h, a, color=wet_color, alpha=0.5, lw=0)
-# ax[1,1].axvspan(g, e, color=wet_color, alpha=0.5, lw=0, label="Wet Years")
-# ax[1,1].axvspan(h, a, color=wet_color, alpha=0.5, lw=0)
+# ax[p1].axvspan(g, e, color=wet_color, alpha=0.5, lw=0, label="Wet Years")
+# ax[p1].axvspan(h, a, color=wet_color, alpha=0.5, lw=0)
+# ax[p2].axvspan(g, e, color=wet_color, alpha=0.5, lw=0, label="Wet Years")
+# ax[p2].axvspan(h, a, color=wet_color, alpha=0.5, lw=0)
+# ax[p3].axvspan(g, e, color=wet_color, alpha=0.5, lw=0, label="Wet Years")
+# ax[p3].axvspan(h, a, color=wet_color, alpha=0.5, lw=0)
+# # ax[p4].axvspan(g, e, color=wet_color, alpha=0.5, lw=0, label="Wet Years")
+# # ax[p4].axvspan(h, a, color=wet_color, alpha=0.5, lw=0)
 
 ax[p1].legend(loc = [1.02, 0.40], fontsize = fsize)
 ax[p2].legend(loc = [1.02, 0.40], fontsize = fsize)
 ax[p3].legend(loc = [1.02, 0.30], fontsize = fsize)
-# ax[p4].legend(loc = [0.1, 0.20], fontsize = fsize)
+# ax[p4].legend(loc = [1.02, 0.20], fontsize = fsize)
 
 plt.savefig(outputpath+name+'_3panel', bbox_inches = 'tight') # bbox_inches makes sure the legend saves
+# plt.savefig(outputpath+name+'_4panel', bbox_inches = 'tight') # bbox_inches makes sure the legend saves
+
 # plt.savefig(outputpath+name+'_3panel_drought')
 # %% --- Now making graphs for other things
 # - Well Density (cumulative number of wells) over time
@@ -785,6 +885,7 @@ plt.savefig(outputpath+name)
 # Calculating well densities
 new_wells2 = pd.read_csv('../MergedData/Output_files/Final_NewWells.csv',
                         header=1, index_col=0)
+new_wells2
 new_wells2 = new_wells2.reset_index()
 new_wells2 = new_wells2.iloc[1:, :]
 #new_wells2 = new_wells2.rename(columns = {'GEOREGI_NU':'Year'})
@@ -817,33 +918,21 @@ georeg_area
 # %%
 new_wells2 = new_wells.reset_index()
 new_wells2
-# %% df1.div(df2.iloc[0], axis='columns') - This only returns nan
-well_densities = new_wells2.div(georeg_area.iloc[0])
-well_densities
 
 # %% df1/df2.values[0,:]
 well_densities = new_wells2/georeg_area.values[0,:]
 well_densities
 
 # %%
-well_densities['1'].plot()
+well_densities['3'].plot()
 
 # %%
 well_densities.info()
 
 # %%
 well_densities1 = well_densities.reset_index()
-well_densities1.info()
-
-# %%
 well_densities1['GEOREGI_NU'] = pd.to_numeric(well_densities1['GEOREGI_NU'])
-well_densities1.info()
-
-# %%
 well_densities1['GEOREGI_NU'] = well_densities1['GEOREGI_NU'].astype(int)
-well_densities1.info()
-
-# %%
 well_densities1.set_index('GEOREGI_NU', inplace=True)
 well_densities1.info()
 
@@ -899,16 +988,60 @@ ax[2].legend(loc = [1.05, 0.3], fontsize = fsize)
 
 plt.savefig(outputpath+name+"fixed_axes")
 
-# %% Trying to plot other charts - below here is mostly garbage
+# %% Trying to different types of charts
+# Labels for reference and different color orders
 georeg = georeg.sort_values(by=['GEOREGI_NU'])
 labels = dict(zip(georeg.GEOREGI_NU, georeg.GEO_Region))
-labels
+# del labels[1]
+print(labels)
 
-barcolors = [c_1, c_2, c_3, c_4, c_5, c_6, c_7, c_8, c_9, c_10, c_11]
-# %% Kinda worked!  Ned to figure out how to specify things a little more
+barcolors = [c_2, c_3, c_4, c_5, c_10, c_11, c_7, c_9, c_8, c_6]
+barhcolors = [c_6, c_8, c_9, c_7, c_3, c_11, c_10, c_5, c_4, c_2]
+
+# %% Normal Bar Chart
 ds = well_densities1
-plt.figure(figsize = (9,6))
-plt.bar(ds.columns, ds.sum(), color = barcolors)
+ds1 = pd.DataFrame()
+ds1['Reg. with CAP'] = ds['2']
+ds1['Reg. without CAP'] = ds['3']
+ds1['Lower CO River'] = ds['4']
+ds1['Upper CO River'] = ds['5']
+ds1['North'] = ds['10']
+ds1['Central'] = ds['11']
+ds1['Northwest'] = ds['7']
+ds1['Northeast'] = ds['9']
+ds1['South-central'] = ds['8']
+ds1['Southeast'] = ds['6']
+
+plt.figure(figsize = (10,6))
+plt.title('Well Densities Per Region')
+plt.bar(ds1.columns, ds1.sum(), color = barcolors, zorder=4)
+plt.ylabel('Number of Wells / km^2')
+plt.xticks(rotation=30)
+plt.grid(axis='y', linewidth=0.5, zorder=0)
+
+# %% Horizontal Bar Chart
+ds = well_densities1
+ds1 = pd.DataFrame()
+ds1['Southeast'] = ds['6']
+ds1['South-central'] = ds['8']
+ds1['Northeast'] = ds['9']
+ds1['Northwest'] = ds['7']
+ds1['Reg. without CAP'] = ds['3']
+ds1['Central'] = ds['11']
+ds1['North'] = ds['10']
+ds1['Upper Colorado River'] = ds['5']
+ds1['Lower Colorado River'] = ds['4']
+ds1['Regulated with CAP'] = ds['2']
+
+plt.figure(figsize = (10,6))
+plt.title('Well Densities Per Region')
+plt.barh(ds1.columns, ds1.sum(), color = barhcolors, zorder=4)
+plt.xlabel('Number of Wells / km^2')
+plt.xticks()
+plt.grid(axis='x', linewidth=0.5, zorder=0)
+# %%
+ds = well_densities1
+plt.figure(figsize)
 
 # %% fail
 ds = new_wells
