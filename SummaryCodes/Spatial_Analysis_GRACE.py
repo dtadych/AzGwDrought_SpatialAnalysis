@@ -163,6 +163,8 @@ xgrid = np.arange(lon_min-0.5, lon_max+0.5, 1.)
 ygrid = np.arange(lat_min, lat_max+1, 1.)
 plt.show()
 
+# %% Trying to think of how to lump these attribute tables
+
 
 # %% ---- Remapping using EASYMORE Package ----
 # Prepping the data
@@ -194,7 +196,7 @@ esmr = easymore()
 
 # specifying EASYMORE objects
 # name of the case; the temporary, remapping and remapped file names include case name
-esmr.case_name                = 'easymore_GRACE_georeg'              
+esmr.case_name                = 'easymore_GRACE_AZ_irrAg'              
 # temporary path that the EASYMORE generated GIS files and remapped file will be saved
 esmr.temp_dir                 = '../temporary/'
 
@@ -211,7 +213,8 @@ esmr.temp_dir                 = '../temporary/'
 #esmr.target_shp = '/Users/danielletadych/Documents/PhD_Materials/github_repos/AzGwDrought_SpatialAnalysis/MergedData/Shapefiles/AZ_counties.shp'
 #esmr.target_shp = '/Users/danielletadych/Documents/PhD_Materials/github_repos/AzGwDrought_SpatialAnalysis/MergedData/Output_files/Georegions_AGU.shp'
 #esmr.target_shp = 'Georegions_reproject.shp'
-esmr.target_shp = 'georeg_reproject_fixed.shp'
+# esmr.target_shp = 'georeg_reproject_fixed.shp'
+esmr.target_shp = 'Ag_NonAG_reproject.shp'
 #esmr.target_shp = 'counties_reproject.shp'
 # name of netCDF file(s); multiple files can be specified with *
 # esmr.source_nc                = '../data/Source_nc_ERA5/ERA5_NA_*.nc'

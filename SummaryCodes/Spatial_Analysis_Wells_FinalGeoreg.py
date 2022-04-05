@@ -602,7 +602,7 @@ plt.savefig(outputpath+name+'_3panel', bbox_inches = 'tight') # bbox_inches make
 # - max screen depth over time (Casing_DEP vs Installed)
 # - Number of new wells installed over time
 
-# Re-read in after proper install date formatting
+# Re-read in after proper install date formatting, also had to fix NaN values in Regulation column
 #       Note: had to go into excel and change the date from mm/dd/yy to mm/dd/yyyy
 #             because date parser cutoff for older items is 1969
 filename = 'Final_Static_geodatabase_waterwells.csv'
@@ -627,15 +627,25 @@ static_geo2['INSTALLED'].describe()
 static_geo2['In_year'] = static_geo2['INSTALLED'].dt.year
 static_geo2['In_year'].describe()
 
+# %% Checking information about static_geo2
+
+static_na = static_geo2[static_geo2['Regulation'].isna()]
+print(static_na)
+
+# %%
+static_na['GEO_Region'].unique()
+
 # %% 
-Well_Depth = static_geo2[['WELL_DEPTH', 'INSTALLED', 'Combo_ID', 'In_year','GEOREGI_NU']]
+Well_Depth = static_geo2[['WELL_DEPTH', 'INSTALLED', 'Combo_ID', 'In_year','GEOREGI_NU', 'Regulation', 'Water_CAT']]
 #%%
 Well_Depth
 
 #%%
 # Well_Depth.to_csv('../MergedData/Output_files/Final_WellDepth.csv')
 #%%
-Well_Depth = pd.pivot_table(static_geo2, index=["In_year"], columns=["GEOREGI_NU"], values=["WELL_DEPTH"], dropna=False, aggfunc=np.mean)
+# Well_Depth = pd.pivot_table(static_geo2, index=["In_year"], columns=["GEOREGI_NU"], values=["WELL_DEPTH"], dropna=False, aggfunc=np.mean)
+Well_Depth = pd.pivot_table(static_geo2, index=["In_year"], columns=["Regulation"], values=["WELL_DEPTH"], dropna=False, aggfunc=np.mean)
+state_depth = pd.pivot_table(static_geo2, index=["In_year"], values=["WELL_DEPTH"], dropna=False, aggfunc=np.mean)
 Well_Depth.describe()
 
 # %% Set shallow and drilling depths
@@ -652,21 +662,29 @@ wd1 = wd1.sort_values(by=['GEOREGI_NU'])
 wd2 = wd2.sort_values(by=['GEOREGI_NU'])
 wd3 = wd3.sort_values(by=['GEOREGI_NU'])
 #%%
-wdc1 = pd.pivot_table(wd1, index=["In_year"], columns=["GEOREGI_NU"], values=['WELL_DEPTH'], dropna=False, aggfunc=len)
-wdc2 = pd.pivot_table(wd2, index=["In_year"], columns=["GEOREGI_NU"], values=['WELL_DEPTH'], dropna=False, aggfunc=len)
-wdc3 = pd.pivot_table(wd3, index=["In_year"], columns=["GEOREGI_NU"], values=['WELL_DEPTH'], dropna=False, aggfunc=len)
+# wdc1 = pd.pivot_table(wd1, index=["In_year"], columns=["GEOREGI_NU"], values=['WELL_DEPTH'], dropna=False, aggfunc=len)
+# wdc2 = pd.pivot_table(wd2, index=["In_year"], columns=["GEOREGI_NU"], values=['WELL_DEPTH'], dropna=False, aggfunc=len)
+# wdc3 = pd.pivot_table(wd3, index=["In_year"], columns=["GEOREGI_NU"], values=['WELL_DEPTH'], dropna=False, aggfunc=len)
 
-#wdc1 = pd.pivot_table(wd1, index=["In_year"], columns=["GEO_Region"], values=['WELL_DEPTH'], dropna=False, aggfunc=len)
-#wdc2 = pd.pivot_table(wd2, index=["In_year"], columns=["GEO_Region"], values=['WELL_DEPTH'], dropna=False, aggfunc=len)
-#wdc3 = pd.pivot_table(wd3, index=["In_year"], columns=["GEO_Region"], values=['WELL_DEPTH'], dropna=False, aggfunc=len)
+# wdc1 = pd.pivot_table(wd1, index=["In_year"], columns=["GEO_Region"], values=['WELL_DEPTH'], dropna=False, aggfunc=len)
+# wdc2 = pd.pivot_table(wd2, index=["In_year"], columns=["GEO_Region"], values=['WELL_DEPTH'], dropna=False, aggfunc=len)
+# wdc3 = pd.pivot_table(wd3, index=["In_year"], columns=["GEO_Region"], values=['WELL_DEPTH'], dropna=False, aggfunc=len)
+
+wdc1 = pd.pivot_table(wd1, index=["In_year"], columns=["Regulation"], values=['WELL_DEPTH'], dropna=False, aggfunc=len)
+wdc2 = pd.pivot_table(wd2, index=["In_year"], columns=["Regulation"], values=['WELL_DEPTH'], dropna=False, aggfunc=len)
+wdc3 = pd.pivot_table(wd3, index=["In_year"], columns=["Regulation"], values=['WELL_DEPTH'], dropna=False, aggfunc=len)
 
 #%% Exporting the Depth categories
-#wdc1.to_csv('../MergedData/Output_files/Final_Welldepth' + str(deep) + 'plus.csv')
-#wdc2.to_csv('../MergedData/Output_files/Final_Welldepth' + str(shallow) + 'to' + str(deep) + '.csv')
-#wdc3.to_csv('../MergedData/Output_files/Final_Welldepth' + str(shallow) + 'minus.csv')
+# wdc1.to_csv('../MergedData/Output_files/Final_Welldepth' + str(deep) + 'plus.csv')
+# wdc2.to_csv('../MergedData/Output_files/Final_Welldepth' + str(shallow) + 'to' + str(deep) + '.csv')
+# wdc3.to_csv('../MergedData/Output_files/Final_Welldepth' + str(shallow) + 'minus.csv')
 
 # %% Plotting fun
-# Plot all of the deep wells
+wdc1.plot()
+wdc2.plot()
+wdc3.plot()
+# %%
+# Plot all of the deep wells in 4 panel
 ds = wdc1
 name = 'Number of Deep Wells (greater than '+ str(deep) +' ft)'
 ylabel = "Well Count (#)"
@@ -681,25 +699,25 @@ labels = ds.columns.tolist()
 print(labels)
 
 # For the actual figure
-fig, ax = plt.subplots(3,figsize=(12,9))
+fig, ax = plt.subplots(4,figsize=(12,9))
 #fig.tight_layout()
 fig.suptitle(name, fontsize=20, y=0.91)
-#fig.supylabel(ylabel, fontsize = 14, x=0.09)
-#ax[1,1].plot(ds['Reservation'], label='Reservation', color='#8d5a99')
+fig.supylabel(ylabel, fontsize = 14, x=0.07)
 ax[0].plot(ds[labels[1]], label='Regulated with CAP', color=c_2) 
-ax[0].plot(ds[labels[2]], label='Regulated without CAP', color=c_3) 
-ax[1].plot(ds[labels[3]], color=c_4, label='Lower Colorado River - SW Dominated')
-ax[1].plot(ds[labels[4]], color=c_5, label='Upper Colorado River - Mixed')
-ax[1].plot(ds[labels[9]], color=c_10, label='North - Mixed')
-ax[1].plot(ds[labels[10]], color=c_11, label='Central - Mixed')
-ax[2].plot(ds[labels[6]], color=c_7, label='Northwest - GW Dominated')
-ax[2].plot(ds[labels[8]], color=c_9, label='Northeast - GW Dominated')
+ax[1].plot(ds[labels[2]], label='Regulated without CAP', color=c_3) 
+ax[3].plot(ds[labels[3]], color=c_4, label='Lower Colorado River - SW Dominated')
+ax[3].plot(ds[labels[4]], color=c_5, label='Upper Colorado River - Mixed')
+# ax[1].plot(ds[labels[9]], color=c_10, label='North - Mixed')
+ax[3].plot(ds[labels[10]], color=c_11, label='Central - Mixed')
+ax[1].plot(ds[labels[6]], color=c_7, label='Northwest - GW Dominated')
+ax[1].plot(ds[labels[8]], color=c_9, label='Northeast - GW Dominated')
 ax[2].plot(ds[labels[7]], color=c_8, label='South central - GW Dominated')
 ax[2].plot(ds[labels[5]], color=c_6, label='Southeast - GW Dominated')
 
 ax[0].set_xlim(minyear,maxyear)
 ax[1].set_xlim(minyear,maxyear)
 ax[2].set_xlim(minyear,maxyear)
+ax[3].set_xlim(minyear,maxyear)
 
 #ax[0].set_ylim(min_y,max_y)
 #ax[1].set_ylim(min_y,max_y)
@@ -708,6 +726,7 @@ ax[2].set_xlim(minyear,maxyear)
 ax[0].grid(True)
 ax[1].grid(True)
 ax[2].grid(True)
+ax[3].grid(True)
 
 #ax[0,0].set(title=name, xlabel='Year', ylabel='Change from Baseline (cm)')
 #ax[0,0].set_title(name, loc='right')
@@ -715,10 +734,68 @@ ax[2].grid(True)
 ax[0].legend(loc = [1.05, 0.40], fontsize = fsize)
 ax[1].legend(loc = [1.05, 0.3], fontsize = fsize)
 ax[2].legend(loc = [1.05, 0.3], fontsize = fsize)
+ax[3].legend(loc = [1.05, 0.3], fontsize = fsize)
 
-plt.savefig(outputpath+name)
+# plt.savefig(outputpath+name+'_4panel')
 
-# %% Mid-range wells
+# %%  Plot all of the deep wells in 2x2 panel
+ds = wdc1
+name = 'Number of Deep Wells (greater than '+ str(deep) +' ft)'
+ylabel = "Well Count (#)"
+minyear=1975
+maxyear=2020
+#min_y = -15
+#max_y = 7
+fsize = 10
+
+columns = ds.columns
+labels = ds.columns.tolist()
+print(labels)
+p0 = 0,0
+p1 = 0,1
+p2 = 1,0
+p3 = 1,1
+
+# For the actual figure
+fig, ax = plt.subplots(2, 2, figsize=(18,9))
+#fig.tight_layout()
+fig.suptitle(name, fontsize=20, y=0.91)
+fig.supylabel(ylabel, fontsize = 14, x=0.09)
+ax[p0].plot(ds[labels[1]], label='Regulated with CAP', color=c_2) 
+ax[p1].plot(ds[labels[2]], label='Regulated without CAP', color=c_3) 
+ax[p2].plot(ds[labels[3]], color=c_4, label='Lower Colorado River - SW Dominated')
+ax[p2].plot(ds[labels[4]], color=c_5, label='Upper Colorado River - Mixed')
+# ax[p1].plot(ds[labels[9]], color=c_10, label='North - Mixed')
+ax[p2].plot(ds[labels[10]], color=c_11, label='Central - Mixed')
+ax[p1].plot(ds[labels[6]], color=c_7, label='Northwest - GW Dominated')
+ax[p1].plot(ds[labels[8]], color=c_9, label='Northeast - GW Dominated')
+ax[p3].plot(ds[labels[7]], color=c_8, label='South central - GW Dominated')
+ax[p3].plot(ds[labels[5]], color=c_6, label='Southeast - GW Dominated')
+
+ax[p0].set_xlim(minyear,maxyear)
+ax[p1].set_xlim(minyear,maxyear)
+ax[p2].set_xlim(minyear,maxyear)
+ax[p3].set_xlim(minyear,maxyear)
+
+#ax[p0].set_ylim(min_y,max_y)
+#ax[p1].set_ylim(min_y,max_y)
+#ax[p2].set_ylim(min_y,max_y)
+
+ax[p0].grid(True)
+ax[p1].grid(True)
+ax[p2].grid(True)
+ax[p3].grid(True)
+
+#ax[0,0].set(title=name, xlabel='Year', ylabel='Change from Baseline (cm)')
+#ax[0,0].set_title(name, loc='right')
+#ax[1,0].set_ylabel("Change from 2004-2009 Baseline (cm)", loc='top', fontsize = fsize)
+ax[p0].legend(loc = [0.02, 0.8], fontsize = fsize)
+ax[p1].legend(loc = [0.02, 0.73], fontsize = fsize)
+ax[p2].legend(loc = [0.5, 0.73], fontsize = fsize)
+ax[p3].legend(loc = [0.02, 0.8], fontsize = fsize)
+
+plt.savefig(outputpath+name+'_2by2panel')
+# %% Mid-range wells 3 panel
 # Plot all of them
 ds = wdc2
 name = 'Number of Mid-range Wells (between '+ str(shallow) +' and '+ str(deep)+' ft.)'
@@ -769,9 +846,67 @@ ax[0].legend(loc = [1.05, 0.40], fontsize = fsize)
 ax[1].legend(loc = [1.05, 0.3], fontsize = fsize)
 ax[2].legend(loc = [1.05, 0.3], fontsize = fsize)
 
-plt.savefig(outputpath+name)
+plt.savefig(outputpath+name+'_3panel')
 
-# %% Shallow wells
+# %%  Plot all of the midrange wells in 2x2 panel
+ds = wdc2
+name = 'Number of Mid-range Wells (between '+ str(shallow) +' and '+ str(deep)+' ft.)'
+ylabel = "Well Count (#)"
+minyear=1975
+maxyear=2020
+#min_y = -15
+#max_y = 7
+fsize = 10
+
+columns = ds.columns
+labels = ds.columns.tolist()
+print(labels)
+p0 = 0,0
+p1 = 0,1
+p2 = 1,0
+p3 = 1,1
+
+# For the actual figure
+fig, ax = plt.subplots(2, 2, figsize=(18,9))
+#fig.tight_layout()
+fig.suptitle(name, fontsize=20, y=0.91)
+fig.supylabel(ylabel, fontsize = 14, x=0.09)
+ax[p0].plot(ds[labels[1]], label='Regulated with CAP', color=c_2) 
+ax[p1].plot(ds[labels[2]], label='Regulated without CAP', color=c_3) 
+ax[p0].plot(ds[labels[3]], color=c_4, label='Lower Colorado River - SW Dominated')
+ax[p2].plot(ds[labels[4]], color=c_5, label='Upper Colorado River - Mixed')
+# ax[p1].plot(ds[labels[9]], color=c_10, label='North - Mixed')
+ax[p2].plot(ds[labels[10]], color=c_11, label='Central - Mixed')
+ax[p1].plot(ds[labels[6]], color=c_7, label='Northwest - GW Dominated')
+ax[p1].plot(ds[labels[8]], color=c_9, label='Northeast - GW Dominated')
+ax[p3].plot(ds[labels[7]], color=c_8, label='South central - GW Dominated')
+ax[p3].plot(ds[labels[5]], color=c_6, label='Southeast - GW Dominated')
+
+ax[p0].set_xlim(minyear,maxyear)
+ax[p1].set_xlim(minyear,maxyear)
+ax[p2].set_xlim(minyear,maxyear)
+ax[p3].set_xlim(minyear,maxyear)
+
+#ax[p0].set_ylim(min_y,max_y)
+#ax[p1].set_ylim(min_y,max_y)
+#ax[p2].set_ylim(min_y,max_y)
+
+ax[p0].grid(True)
+ax[p1].grid(True)
+ax[p2].grid(True)
+ax[p3].grid(True)
+
+#ax[0,0].set(title=name, xlabel='Year', ylabel='Change from Baseline (cm)')
+#ax[0,0].set_title(name, loc='right')
+#ax[1,0].set_ylabel("Change from 2004-2009 Baseline (cm)", loc='top', fontsize = fsize)
+ax[p0].legend(loc = [0.02, 0.8], fontsize = fsize)
+ax[p1].legend(loc = [0.02, 0.73], fontsize = fsize)
+ax[p2].legend(loc = [0.6, 0.8], fontsize = fsize)
+ax[p3].legend(loc = [0.02, 0.8], fontsize = fsize)
+
+plt.savefig(outputpath+name+'_2by2panel')
+
+# %% Shallow wells in 4 panel (1 column)
 ds = wdc3
 name = 'Number of Shallow Wells (less than '+ str(shallow) +' ft)'
 ylabel = "Well Count (#)"
@@ -821,7 +956,66 @@ ax[0].legend(loc = [1.05, 0.40], fontsize = fsize)
 ax[1].legend(loc = [1.05, 0.3], fontsize = fsize)
 ax[2].legend(loc = [1.05, 0.3], fontsize = fsize)
 
-plt.savefig(outputpath+name)
+plt.savefig(outputpath+name+'_3panel')
+
+# %%  Plot all of the shallow wells in 2x2 panel
+ds = wdc3
+name = 'Number of Shallow Wells (less than '+ str(shallow) +' ft)'
+ylabel = "Well Count (#)"
+minyear=1975
+maxyear=2020
+#min_y = -15
+#max_y = 7
+fsize = 10
+
+columns = ds.columns
+labels = ds.columns.tolist()
+print(labels)
+p0 = 0,0
+p1 = 0,1
+p2 = 1,0
+p3 = 1,1
+
+# For the actual figure
+fig, ax = plt.subplots(2, 2, figsize=(18,9))
+#fig.tight_layout()
+fig.suptitle(name, fontsize=20, y=0.91)
+fig.supylabel(ylabel, fontsize = 14, x=0.09)
+ax[p0].plot(ds[labels[1]], label='Regulated with CAP', color=c_2) 
+ax[p1].plot(ds[labels[2]], label='Regulated without CAP', color=c_3) 
+ax[p0].plot(ds[labels[3]], color=c_4, label='Lower Colorado River - SW Dominated')
+ax[p2].plot(ds[labels[4]], color=c_5, label='Upper Colorado River - Mixed')
+# ax[p1].plot(ds[labels[9]], color=c_10, label='North - Mixed')
+ax[p2].plot(ds[labels[10]], color=c_11, label='Central - Mixed')
+ax[p1].plot(ds[labels[6]], color=c_7, label='Northwest - GW Dominated')
+ax[p1].plot(ds[labels[8]], color=c_9, label='Northeast - GW Dominated')
+ax[p3].plot(ds[labels[7]], color=c_8, label='South central - GW Dominated')
+ax[p3].plot(ds[labels[5]], color=c_6, label='Southeast - GW Dominated')
+
+ax[p0].set_xlim(minyear,maxyear)
+ax[p1].set_xlim(minyear,maxyear)
+ax[p2].set_xlim(minyear,maxyear)
+ax[p3].set_xlim(minyear,maxyear)
+
+#ax[p0].set_ylim(min_y,max_y)
+#ax[p1].set_ylim(min_y,max_y)
+#ax[p2].set_ylim(min_y,max_y)
+
+ax[p0].grid(True)
+ax[p1].grid(True)
+ax[p2].grid(True)
+ax[p3].grid(True)
+
+#ax[0,0].set(title=name, xlabel='Year', ylabel='Change from Baseline (cm)')
+#ax[0,0].set_title(name, loc='right')
+#ax[1,0].set_ylabel("Change from 2004-2009 Baseline (cm)", loc='top', fontsize = fsize)
+ax[p0].legend(loc = [0.02, 0.8], fontsize = fsize)
+ax[p1].legend(loc = [0.6, 0.75], fontsize = fsize)
+ax[p2].legend(loc = [0.58, 0.8], fontsize = fsize)
+ax[p3].legend(loc = [0.02, 0.8], fontsize = fsize)
+
+plt.savefig(outputpath+name+'_2by2panel')
+
 
 # %%
 new_wells = pd.pivot_table(static_geo2, index=["In_year"], columns=["GEOREGI_NU"], values=["INSTALLED"], dropna=False, aggfunc=len)

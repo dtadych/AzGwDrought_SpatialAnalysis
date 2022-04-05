@@ -11,6 +11,9 @@
 		},
 		{
 			"path": "../../Data/GRACE"
+		},
+		{
+			"path": "../GRACE"
 		}
 	],
 	"settings": {
