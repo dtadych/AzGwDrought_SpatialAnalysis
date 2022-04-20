@@ -806,6 +806,8 @@ phoenix_df.head()
 phoenix_df_year = pd.pivot_table(phoenix_df, index=["year"], values=[0], dropna=False, aggfunc=np.mean)
 phoenix_df_year
 
+del phoenix_df['year']
+
 # %%
 ylatitude = grace_dataset['lwe_thickness']['lat'].values[490]
 ylongitude = grace_dataset['lwe_thickness']['lon'].values[261]
@@ -873,28 +875,28 @@ ulongitude = grace_dataset['lwe_thickness']['lon'].values[262]
 upperco = lwe2.sel(lat = ulatitude, lon = ulongitude)
 upperco
 
-print("The current latitude is ", wlatitude, 'and longitude is -', 180 - wlongitude)
+print("The current latitude is ", ulatitude, 'and longitude is -', 180 - ulongitude)
 
-wilcox.plot()
+upperco.plot()
 
-wilcox_df = pd.DataFrame(wilcox)
-wilcox_df
+upperco_df = pd.DataFrame(upperco)
+upperco_df
 
-wilcox_df = wilcox_df.reset_index()
-wilcox_df
+upperco_df = upperco_df.reset_index()
+upperco_df
 
-wilcox_df['index'] = datetimeindex
-wilcox_df
+upperco_df['index'] = datetimeindex
+upperco_df
 
-wilcox_df.set_index('index', inplace=True)
-wilcox_df
+upperco_df.set_index('index', inplace=True)
+upperco_df
 
 # Extract the year from the date column and create a new column year
-wilcox_df['year'] = pd.DatetimeIndex(wilcox_df.index).year
-wilcox_df.head()
+upperco_df['year'] = pd.DatetimeIndex(upperco_df.index).year
+upperco_df.head()
 
-wilcox_df_year = pd.pivot_table(wilcox_df, index=["year"], values=[0], dropna=False, aggfunc=np.mean)
-wilcox_df_year
+upperco_df_year = pd.pivot_table(upperco_df, index=["year"], values=[0], dropna=False, aggfunc=np.mean)
+upperco_df_year
 
 # %%
 # ---- Plotting Averages Based off Shape File Mask ----
@@ -966,27 +968,32 @@ plt.legend()
 
 # %% Plotting single points with the state average
 f, ax = plt.subplots(figsize=(12, 6))
+
 ax.plot(cm_df_year, color='#2F2F2F', label='Arizona Average')
-ax.plot(phoenix_df_year, color='red', label = ' Pixel in Phoenix AMA - GW Regulated')
-ax.plot(yuma_df_year, color='green', label = ' Pixel in Yuma Area - GW Unregulated')
+ax.plot(phoenix_df_year, color='red', label = 'Phoenix AMA - GW Regulated')
+ax.plot(yuma_df_year, color='green', label = 'Yuma Area - Colorado River Water')
+ax.plot(wilcox_df_year, color='orange', label = 'Wilcox Area - GW Unregulated')
+ax.plot(upperco_df_year, color='teal', label = 'Upper CO River Area - Mixed SW and GW')
 
-
-ax.set(title="Individual GRACE Pixels Change from the 2004-2009 Baseline")
+ax.set(title="Individual GRACE Pixels - Change in Liquid Water Equivalent from the 2004-2009 Baseline")
 ax.legend()
-ax.grid(zorder = 0)
-plt.xlabel('Year')
-plt.ylabel('Change in LWE (cm)')
-
-# %%
-f, ax = plt.subplots(figsize=(12,6))
-ax.plot(phoenix_df_year, color='red')
-ax.set(title="Change in Liquid Water Equivalent from the 2004-2009 Baseline in Phoenix AMA")
-# ax.legend()
+ax.set_xlim(2010,2020)
 ax.grid(zorder = 0)
 plt.xlabel('Year')
 plt.ylabel('LWE Change (cm)')
-ax.set_xlim(2002,2020)
 
+# %%
+f, ax = plt.subplots(figsize=(12,6))
+ax.scatter(phoenix_df.index, phoenix_df[0], color='red')
+ax.plot(phoenix_df_year, color='red')
+ax.axvspan("2017-06-10T12:00:00.000Z", "2018-06-16T00:00:00.000Z", color='grey', alpha=0.5, lw=0, label="Satellite relaunch gap")
+ax.set(title="Change in Liquid Water Equivalent from the 2004-2009 Baseline in Phoenix AMA")
+ax.legend(loc = 'upper right')
+ax.grid(zorder = 0)
+plt.xlabel('Year')
+plt.ylabel('LWE Change (cm)')
+# ax.set_xlim("2010-01-16T12:00:00.000Z","2021-10-16T12:00:00.000Z")
+# if you go by years, the gap is from 2017.43 to 2018.61
 
 # %%
 # Plot all of the georegions and state average
@@ -1084,19 +1091,19 @@ ax[1,1].legend(loc = [0.05, 0.18], fontsize = fsize)
 ds = grace_yearlyavg
 name = "Annual Change from the 2004-2009 Baseline - Agriculture Regions"
 ylabel = "Liquid Water Equivalent (cm)"
-minyear=2002
+minyear=2010
 maxyear=2020
 min_y = -13
 max_y = 5
 fsize = 14
 
 # For the actual figure
-fig, ax = plt.subplots(figsize=(12,9))
+fig, ax = plt.subplots(figsize=(12,6))
 #fig.tight_layout()
-fig.suptitle(name, fontsize=20, y=0.91)
+fig.suptitle(name, fontsize=14, y=0.91)
 fig.supylabel(ylabel, fontsize = 14, x=0.07)
 #ax[1,1].plot(ds['Reservation'], label='Reservation', color='#8d5a99')
-# ax.plot(ds['Ag'], label='Agriculture', color='green') 
+ax.plot(ds['Ag'], label='Agriculture', color='green') 
 ax.plot(ds['Non_Ag'], label='Non-Agriculture', color='#cb9859',lw=2) 
 
 #Plotting Arizona Average
@@ -1136,6 +1143,6 @@ ax.axvspan(h, a, color=wet_color, alpha=0.5, lw=0)
 
 ax.legend(loc = [0.05, 0.15], fontsize = fsize)
 
-plt.savefig(outputpath+name+'_AZavg_drought_noag')
+# plt.savefig(outputpath+name+'_AZavg_drought_noag')
 # %% Now let's run some statistics
 
