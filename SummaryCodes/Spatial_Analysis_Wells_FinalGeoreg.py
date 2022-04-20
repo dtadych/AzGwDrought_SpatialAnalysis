@@ -15,6 +15,7 @@
 # %%
 from cProfile import label
 from operator import ge
+from optparse import Values
 import os
 from geopandas.tools.sjoin import sjoin
 import matplotlib
@@ -529,14 +530,14 @@ p3 = 2 # Panel 3
 p4 = 3 # Panel 4
 #ax[1,1].plot(ds['Reservation'], label='Reservation', color='#8d5a99')
 ax[p1].plot(ds[2], label='Regulated with CAP', color=c_2, lw=linewidth) 
-ax[p3].plot(ds[3], label='Regulated without CAP', color=c_3, lw=linewidth) 
+ax[p3].plot(ds[3], label='Regulated without CAP', color=c_3, lw=linewidth, zorder = 10) 
 ax[p1].plot(ds[4], color=c_4, label='Lower Colorado River - SW Dominated', lw=linewidth)
 ax[p2].plot(ds[5], color=c_5, label='Upper Colorado River - Mixed', lw=linewidth)
 #ax[p2].plot(ds[10], color=c_10, label='North - Mixed', lw=linewidth)
 ax[p2].plot(ds[11], color=c_11, label='Central - Mixed', lw=linewidth)
 ax[p3].plot(ds[7], color=c_7, label='Northwest - GW Dominated', lw=linewidth)
-ax[p3].plot(ds[9], color=c_9, label='Northeast - GW Dominated', lw=linewidth)
-ax[p3].plot(ds[8], color=c_8, label='South central - GW Dominated', lw=linewidth)
+# ax[p3].plot(ds[9], color=c_9, label='Northeast - GW Dominated', lw=linewidth)
+# ax[p3].plot(ds[8], color=c_8, label='South central - GW Dominated', lw=linewidth)
 ax[p3].plot(ds[6], color=c_6, label='Southeast - GW Dominated', lw=linewidth)
 
 ax[p1].set_xlim(minyear,maxyear)
@@ -593,7 +594,7 @@ ax[p2].legend(loc = [1.02, 0.40], fontsize = fsize)
 ax[p3].legend(loc = [1.02, 0.30], fontsize = fsize)
 # ax[p4].legend(loc = [1.02, 0.20], fontsize = fsize)
 
-plt.savefig(outputpath+name+'_3panel', bbox_inches = 'tight') # bbox_inches makes sure the legend saves
+plt.savefig(outputpath+name+'_3panel_custom', bbox_inches = 'tight') # bbox_inches makes sure the legend saves
 # plt.savefig(outputpath+name+'_4panel', bbox_inches = 'tight') # bbox_inches makes sure the legend saves
 
 # plt.savefig(outputpath+name+'_3panel_drought')
@@ -675,13 +676,13 @@ wd3 = wd3.sort_values(by=['GEOREGI_NU'])
 # wdc2 = pd.pivot_table(wd2, index=["In_year"], columns=["GEO_Region"], values=['WELL_DEPTH'], dropna=False, aggfunc=len)
 # wdc3 = pd.pivot_table(wd3, index=["In_year"], columns=["GEO_Region"], values=['WELL_DEPTH'], dropna=False, aggfunc=len)
 
-# wdc1 = pd.pivot_table(wd1, index=["In_year"], columns=["Regulation"], values=['WELL_DEPTH'], dropna=False, aggfunc=len)
-# wdc2 = pd.pivot_table(wd2, index=["In_year"], columns=["Regulation"], values=['WELL_DEPTH'], dropna=False, aggfunc=len)
-# wdc3 = pd.pivot_table(wd3, index=["In_year"], columns=["Regulation"], values=['WELL_DEPTH'], dropna=False, aggfunc=len)
+wdc1 = pd.pivot_table(wd1, index=["In_year"], columns=["Regulation"], values=['WELL_DEPTH'], dropna=False, aggfunc=len)
+wdc2 = pd.pivot_table(wd2, index=["In_year"], columns=["Regulation"], values=['WELL_DEPTH'], dropna=False, aggfunc=len)
+wdc3 = pd.pivot_table(wd3, index=["In_year"], columns=["Regulation"], values=['WELL_DEPTH'], dropna=False, aggfunc=len)
 
-wdc1 = pd.pivot_table(wd1, index=["In_year"], columns=["Water_CAT"], values=['WELL_DEPTH'], dropna=False, aggfunc=len)
-wdc2 = pd.pivot_table(wd2, index=["In_year"], columns=["Water_CAT"], values=['WELL_DEPTH'], dropna=False, aggfunc=len)
-wdc3 = pd.pivot_table(wd3, index=["In_year"], columns=["Water_CAT"], values=['WELL_DEPTH'], dropna=False, aggfunc=len)
+# wdc1 = pd.pivot_table(wd1, index=["In_year"], columns=["Water_CAT"], values=['WELL_DEPTH'], dropna=False, aggfunc=len)
+# wdc2 = pd.pivot_table(wd2, index=["In_year"], columns=["Water_CAT"], values=['WELL_DEPTH'], dropna=False, aggfunc=len)
+# wdc3 = pd.pivot_table(wd3, index=["In_year"], columns=["Water_CAT"], values=['WELL_DEPTH'], dropna=False, aggfunc=len)
 
 # %%
 st_wdc1 = pd.pivot_table(wd1, index=["In_year"], values=['WELL_DEPTH'], dropna=False, aggfunc=len)
@@ -1262,7 +1263,9 @@ new_wells_watercat = pd.pivot_table(static_geo2, index=["In_year"], columns=["Wa
 new_wells_reg
 new_wells_watercat
 # %%
-new_wells.to_csv('../MergedData/Output_files/Final_NewWells.csv')
+# new_wells.to_csv('../MergedData/Output_files/Final_NewWells.csv')
+new_wells_reg.to_csv('../MergedData/Output_files/Final_NewWells_regulation.csv')
+new_wells_watercat.to_csv('../MergedData/Output_files/Final_NewWells_watercat.csv')
 
 # %%
 ds = new_wells
@@ -1327,7 +1330,32 @@ new_wells2 = new_wells2.iloc[1:, :]
 new_wells2 = new_wells2.set_index('GEOREGI_NU')
 new_wells2
 
+# %%
+new_wells_reg2 = pd.read_csv('../MergedData/Output_files/Final_NewWells_regulation.csv',
+                        header=2,
+                        names = ['R','U']
+                        , index_col=0)
+# new_wells_reg2 = new_wells_reg2.reset_index()
+new_wells_reg2 = new_wells_reg2.iloc[1:, :]
+# new_wells_reg2 = new_wells_reg2.set_index('Year')
+new_wells_reg2
+
+# %%
+new_wells_watercat2 = pd.read_csv('../MergedData/Output_files/Final_NewWells_watercat.csv',
+                        header=1,
+                        names = ['CAP','GW','Mix','No_CAP','SW']
+                        , index_col=0)
+# new_wells_watercat2 = new_wells_watercat2.reset_index()
+new_wells_watercat2 = new_wells_watercat2.iloc[1:, :]
+# new_wells_watercat2 = new_wells_watercat2.set_index('Year')
+new_wells_watercat2
+
+# %%
+
 # %% Calculate the region area
+# to double check the coordinate system is in meters, georeg.crs
+# 
+# https://gis.stackexchange.com/questions/218450/getting-polygon-areas-using-geopandas
 # tost["area"] = tost['geometry'].area/ 10**6
 georeg['area'] = georeg.geometry.area/10**6
 georeg
@@ -1350,19 +1378,70 @@ georeg_area = georeg_area.set_index('GEOREGI_NU')
 georeg_area = georeg_area.transpose()
 georeg_area
 
-# %%
-new_wells2 = new_wells.reset_index()
-new_wells2
+# %% Area for other categories
+georeg_area_reg = pd.pivot_table(georeg, columns=["Regulation"], values=["area"], dropna=False, aggfunc=np.sum)
+del georeg_area_reg['NA']
+georeg_area_reg
 
-# %% df1/df2.values[0,:]
+# %%
+georeg_area_watercat = pd.pivot_table(georeg, columns=["Water_CAT"], values=["area"], dropna=False, aggfunc=np.sum)
+del georeg_area_watercat['NA']
+georeg_area_watercat
+# %% Densities for new wells
+# df1/df2.values[0,:]
 well_densities = new_wells2/georeg_area.values[0,:]
 well_densities
 
-# %%
-well_densities['3'].plot()
+# %% Densities for regulated regions
+well_densities_reg = new_wells_reg2/georeg_area_reg.values[0,:]
+well_densities_reg
+
+# %% Densities for SW
+well_densities_watercat = new_wells_watercat2/georeg_area_watercat.values[0,:]
+well_densities_watercat
+
+# %% By depth for regulated or water category, depending on what I turned on above
+dens_wdc1= wdc1/georeg_area_reg.values[0,:]
+dens_wdc2= wdc2/georeg_area_reg.values[0,:]
+dens_wdc3= wdc3/georeg_area_reg.values[0,:]
+
+# dens_wdc1= wdc1/georeg_area_watercat.values[0,:]
+# dens_wdc2= wdc2/georeg_area_watercat.values[0,:]
+# dens_wdc3= wdc3/georeg_area_watercat.values[0,:]
+
+dens_wdc1
+print(dens_wdc1.sum())
+
+# %% ------------------------------------------------------------------------
+# This whole thing was to double check if my numbers were correct, skip this.
+well_densities_reg_total = well_densities_reg.sum()
+well_densities_reg_total
 
 # %%
-well_densities.info()
+# new_wells_reg_total = new_wells_reg2.sum()
+# new_wells_reg_total = pd.pivot_table(new_wells_reg2, index = dropna=False, aggfunc=np.sum)
+new_wells_reg_total = pd.DataFrame()
+new_wells_reg_total['R'] = new_wells_reg2['R'].sum()
+new_wells_reg_total['U'] = new_wells_reg2['U'].sum()
+new_wells_reg_total
+
+# %% df.loc['Column_Total']= df.sum(numeric_only=True, axis=0)
+new_wells_reg_total = new_wells_reg2
+new_wells_reg_total.loc['Column_Total']= new_wells_reg_total.sum(numeric_only=True, axis=0)
+# new_wells_reg_total = new_wells_reg_total.loc['Column_Total']
+new_wells_reg_total
+
+# %%
+test = pd.DataFrame(new_wells_reg2.sum(numeric_only=True, axis=0))
+test = test.transpose()
+test
+# %%
+test_welldensit_reg = test/georeg_area_reg.values[0,:]
+test_welldensit_reg
+# --------------------------------------------------------------------------
+
+# %%
+well_densities['3'].plot()
 
 # %%
 well_densities1 = well_densities.reset_index()
@@ -1373,7 +1452,7 @@ well_densities1.info()
 
 # %%
 ds = well_densities1
-name = 'Well Densities Per region (#/km2)'
+name = 'Well Densities Per Region (#/km2)'
 ylabel = "Well Count (#)"
 minyear=1975
 maxyear=2020
@@ -1434,6 +1513,7 @@ barcolors = [c_2, c_3, c_4, c_5, c_10, c_11, c_7, c_9, c_8, c_6]
 barhcolors = [c_6, c_8, c_9, c_7, c_3, c_11, c_10, c_5, c_4, c_2]
 bar_regc = [c_2,c_7]
 bar_watercatc = [c_2,c_3,c_4,c_5,c_7]
+piecolors_unreg = [c_6, c_8, c_9, c_7, c_11, c_10, c_5, c_4]
 # %% Normal Bar Chart
 ds = well_densities1
 ds1 = pd.DataFrame()
@@ -1536,6 +1616,206 @@ plt.ylabel('Number of Wells (#)')
 plt.xticks(rotation=30)
 plt.grid(axis='y', linewidth=0.5, zorder=0)
 
+# %% -- Grouped bar chart - Had to create some summarazing dataframes --
+# Check the commented code to turn on whichever graph you want to make
+#   - dens = well densities
+#   - wdc1 = water depth category 1 (deep)
+#     wdc2 = midrange
+#     wdc3 = shallow
+
+# Below is for Groundwater Regulation
+ds = wdc1.copy()
+# ds = dens_wdc1.copy()
+columns = ds.columns
+labels = ds.columns.tolist()
+
+ds1 = pd.DataFrame()
+ds1['Regulated'] = ds[labels[0]]
+ds1['Unregulated'] = ds[labels[1]]
+
+dft1 = ds1.copy()
+dft1
+
+
+ds = wdc2.copy()
+# ds = dens_wdc2.copy()
+columns = ds.columns
+labels = ds.columns.tolist()
+
+ds1 = pd.DataFrame()
+ds1['Regulated'] = ds[labels[0]]
+ds1['Unregulated'] = ds[labels[1]]
+
+dft2 = ds1.copy()
+dft2
+
+
+ds = wdc3.copy()
+# ds = dens_wdc3.copy()
+columns = ds.columns
+labels = ds.columns.tolist()
+
+ds1 = pd.DataFrame()
+ds1['Regulated'] = ds[labels[0]]
+ds1['Unregulated'] = ds[labels[1]]
+
+dft3 = ds1.copy()
+dft3
+
+df1 = pd.DataFrame(dft1.sum())
+df1 = df1.transpose()
+df1 = df1.reset_index()
+df1['index'] = 'Deep'
+df1.set_index('index', inplace=True)
+df1
+
+df2 = pd.DataFrame(dft2.sum())
+df2 = df2.transpose()
+df2 = df2.reset_index()
+df2['index'] = 'Midrange'
+df2.set_index('index', inplace=True)
+df2
+
+df3 = pd.DataFrame(dft3.sum())
+df3 = df3.transpose()
+df3 = df3.reset_index()
+df3['index'] = 'Shallow'
+df3.set_index('index', inplace=True)
+df3
+
+df_test = df3.append([df2,df1])
+df_test = df_test.transpose()
+df_test = df_test.rename_axis(None,axis=1)
+df_test
+
+# group_colors = ['cornflowerblue','slategrey','darkblue']
+group_colors = ['lightsteelblue','cornflowerblue','darkblue']
+
+# name = 'Well Densities by Groundwater Regulation'
+# horlabel = 'Well Densities (well/km^2)'
+name = 'Number of wells by Groundwater Regulation'
+horlabel = 'Number of Wells (#)'
+fsize = 14
+
+df_test.plot(figsize = (12,7),
+        kind='bar',
+        stacked=False,
+        # title=name,
+        color = group_colors,
+        zorder = 2,
+        width = 0.85,
+        fontsize = fsize
+        )
+plt.title(name, fontsize = (fsize+2))
+plt.ylabel(horlabel, fontsize = fsize)
+plt.xticks(rotation=0)
+plt.grid(axis='y', linewidth=0.5, zorder=0)
+plt.legend(fontsize = fsize)
+
+plt.savefig(outputpath+name+'groupedchart')
+
+
+# %% Below is for Water Access Category
+# ds = wdc1.copy()
+ds = dens_wdc1.copy()
+columns = ds.columns
+labels = ds.columns.tolist()
+
+ds1 = pd.DataFrame()
+ds1['CAP'] = ds[labels[0]]
+ds1['SW'] = ds[labels[4]]
+ds1['Mixed'] = ds[labels[2]]
+ds1['GW Regulated'] = ds[labels[3]]
+ds1['GW'] = ds[labels[1]]
+
+dft1 = ds1.copy()
+dft1
+
+
+# ds = wdc2.copy()
+ds = dens_wdc2.copy()
+columns = ds.columns
+labels = ds.columns.tolist()
+
+ds1 = pd.DataFrame()
+ds1['CAP'] = ds[labels[0]]
+ds1['SW'] = ds[labels[4]]
+ds1['Mixed'] = ds[labels[2]]
+ds1['GW Regulated'] = ds[labels[3]]
+ds1['GW'] = ds[labels[1]]
+
+dft2 = ds1.copy()
+dft2
+
+
+# ds = wdc3.copy()
+ds = dens_wdc3.copy()
+columns = ds.columns
+labels = ds.columns.tolist()
+
+ds1 = pd.DataFrame()
+ds1['CAP'] = ds[labels[0]]
+ds1['SW'] = ds[labels[4]]
+ds1['Mixed'] = ds[labels[2]]
+ds1['GW Regulated'] = ds[labels[3]]
+ds1['GW'] = ds[labels[1]]
+
+dft3 = ds1.copy()
+dft3
+
+df1 = pd.DataFrame(dft1.sum())
+df1 = df1.transpose()
+df1 = df1.reset_index()
+df1['index'] = 'Deep'
+df1.set_index('index', inplace=True)
+df1
+
+df2 = pd.DataFrame(dft2.sum())
+df2 = df2.transpose()
+df2 = df2.reset_index()
+df2['index'] = 'Midrange'
+df2.set_index('index', inplace=True)
+df2
+
+df3 = pd.DataFrame(dft3.sum())
+df3 = df3.transpose()
+df3 = df3.reset_index()
+df3['index'] = 'Shallow'
+df3.set_index('index', inplace=True)
+df3
+
+df_test = df3.append([df2,df1])
+df_test = df_test.transpose()
+df_test = df_test.rename_axis(None,axis=1)
+df_test
+
+# group_colors = ['cornflowerblue','slategrey','darkblue']
+group_colors = ['lightsteelblue','cornflowerblue','darkblue']
+
+# name = 'Well Densities by Access to Surface Water'
+horlabel = 'Well Densities (well/km^2)'
+# name = 'Number of wells by Access to Surface Water'
+# horlabel = 'Number of Wells (#)'
+fsize = 14
+
+df_test.plot(figsize = (12,7),
+        kind='bar',
+        stacked=False,
+        # title=name,
+        color = group_colors,
+        zorder = 2,
+        width = 0.85,
+        fontsize = fsize
+        )
+plt.title(name, fontsize = (fsize+2))
+plt.ylabel(horlabel, fontsize = fsize)
+plt.xticks(rotation=0)
+plt.grid(axis='y', linewidth=0.5, zorder=0)
+plt.legend(fontsize = fsize)
+
+# plt.savefig(outputpath+name+'groupedchart')
+
+
 # %% Normal Bar Chart for Deep wells with Water Category lumping
 ds = wdc3
 columns = ds.columns
@@ -1615,8 +1895,8 @@ plt.grid(axis='y', linewidth=0.5, zorder=0)
 plt.savefig(outputpath+name+'barchart_watercat')
 
 # %% Plotting a pie chart for Regulation
-ds = new_wells_reg
-name = 'Number of wells'
+ds = well_densities_reg
+name = 'Well Densities (well per square km)'
 columns = ds.columns
 labels = ds.columns.tolist()
 
@@ -1629,23 +1909,35 @@ ds1['Unregulated'] = ds[labels[1]]
 ds2 = ds1.sum()
 # values = ds2
 
+# def make_autopct(values):
+#     def my_autopct(pct):
+#         total = sum(values)
+#         val = int(round(pct*total/100.0))
+#         return '{p:.2f}%  ({v:d})'.format(p=pct,v=val)
+#     return my_autopct
+
 def make_autopct(values):
     def my_autopct(pct):
         total = sum(values)
-        val = int(round(pct*total/100.0))
-        return '{p:.2f}%  ({v:d})'.format(p=pct,v=val)
+        val = pct*total/100.0
+        return '{v:.3f}'.format(p=pct,v=val)
     return my_autopct
 
 ds2.plot(figsize = (7,7), kind='pie',subplots=True, colors=bar_regc, 
-        # title=name,
-        fontsize=14,
-        autopct=make_autopct(ds2))
+        title=name,
+        fontsize=14
+        ,autopct=make_autopct(ds2)
+        # ,autopct='%.2f'
+        # ,autopct=['1.00','0.25'] # this doesn't work
+        )
 plt.gca().set_ylabel('')
 plt.savefig(outputpath+name+'pie_reg')
 
 # %% Plotting a pie chart for Water Category
-ds = new_wells_watercat
-name = 'Number of wells'
+# ds = new_wells_watercat
+ds = well_densities_watercat
+# name = 'Number of wells'
+name = 'Well Densities (well per square km)'
 columns = ds.columns
 labels = ds.columns.tolist()
 
@@ -1653,19 +1945,26 @@ print(labels)
 
 ds1 = pd.DataFrame()
 ds1['CAP'] = ds[labels[0]]
-ds1['No CAP'] = ds[labels[3]]
+ds1['GW Regulated'] = ds[labels[3]]
 ds1['SW'] = ds[labels[4]]
 ds1['Mixed'] = ds[labels[2]]
-ds1['GW'] = ds[labels[1]]
+ds1['GW Unregulated'] = ds[labels[1]]
 
 ds2 = ds1.sum()
 # values = ds2
 
+# def make_autopct(values):
+#     def my_autopct(pct):
+#         total = sum(values)
+#         val = int(round(pct*total/100.0))
+#         return '{p:.2f}%  ({v:d})'.format(p=pct,v=val)
+#     return my_autopct
+
 def make_autopct(values):
     def my_autopct(pct):
         total = sum(values)
-        val = int(round(pct*total/100.0))
-        return '{p:.2f}%  ({v:d})'.format(p=pct,v=val)
+        val = pct*total/100.0
+        return '{v:.3f}'.format(p=pct,v=val)
     return my_autopct
 
 ds2.plot(figsize = (7,7),kind='pie',subplots=True, colors=bar_watercatc, 
@@ -1677,7 +1976,7 @@ plt.savefig(outputpath+name+'pie_watercat')
 
 # %% Plotting a pie chart for georegions
 ds = new_wells
-name = 'Number of wells'
+name = 'Number of wells for Groundwater dominated Regions'
 columns = ds.columns
 labels = ds.columns.tolist()
 
@@ -1689,10 +1988,10 @@ ds1['South-central'] = ds[labels[7]]
 ds1['Northeast'] = ds[labels[8]]
 ds1['Northwest'] = ds[labels[6]]
 # ds1['Reg. without CAP'] = ds[labels[2]]
-# ds1['Central'] = ds[labels[10]]
-# ds1['North'] = ds[labels[9]]
-# ds1['Upper Colorado River'] = ds[labels[4]]
-# ds1['Lower Colorado River'] = ds[labels[3]]
+ds1['Central'] = ds[labels[10]]
+ds1['North'] = ds[labels[9]]
+ds1['Upper Colorado River'] = ds[labels[4]]
+ds1['Lower Colorado River'] = ds[labels[3]]
 # ds1['Regulated with CAP'] = ds[labels[1]]
 
 ds2 = ds1.sum()
@@ -1705,35 +2004,24 @@ def make_autopct(values):
         return '{p:.2f}%  ({v:d})'.format(p=pct,v=val)
     return my_autopct
 
-ds2.plot(figsize = (10,10),kind='pie',subplots=True, colors=barhcolors, 
+ds2.plot(figsize = (10,10),kind='pie',subplots=True, colors=piecolors_unreg, 
         # title=name,
         autopct=make_autopct(ds2))
         # autopct='%1.1f%%')
 plt.gca().set_ylabel('')
-# plt.savefig(outputpath+name+'pie_watercat')
+plt.savefig(outputpath+name+'pie_unregulated')
 
-# %% fail
-ds = new_wells_reg
-plt.figure(figsize = (9,6))
-plt.pie(ds.columns, ds.sum(), colors=bar_regc)
-
-# %% fail
-ds = well_densities1
-plt.figure(figsize = (9,6))
-plt.boxplot(ds.sum())
-
-# %%
-stats = pd.DataFrame(index=['slp','int','r_sq','p_val','std_er'],columns=ds.columns)
-print(stats)
-
-# %%
-stats = pd.DataFrame()
 # %% -- Linear regression --
+# This is testing whether or not the slope is positive or negative (2-way)
+#       For our purposes, time is the x variable and y is
+#       1. Water Levels
+#       2. Number of Wells
+#       3. Well Depths
+
 # Actual documentation: https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.linregress.html
 # Tutorial from https://mohammadimranhasan.com/linear-regression-of-time-series-data-with-pandas-library-in-python/
-#y=np.array(df['OW2 As(mg/L)'].dropna().values, dtype=float)
-#x=np.array(pd.to_datetime(df['OW2 As(mg/L)'].dropna()).index.values, dtype=float)
-#slope, intercept, r_value, p_value, std_err =sp.linregress(x,y)
+
+# For Water Levels
 ds = cat_wl2
 min_yr = 2002
 mx_yr = 2020
@@ -1794,20 +2082,94 @@ for i in range(1, 12, 1):
 #        stats[i] = stats[i].append(slope)
 
 #   df = df.append({'A': i}, ignore_index=True)
-stats.index = labels.values()
+stats.index = col.values()
 stats1 = stats.transpose()
 del stats1['Reservation']
 stats1
 
-# %% Data visualization
+# %%
+# For New Wells
+ds = new_wells_reg2
+betterlabels = ['Regulated','Unregulated'] 
+min_yr = 1981
+mx_yr = 1993
+Name = str(min_yr) + " to " + str(mx_yr) + " Linear Regression:"
+print(Name)
+
+f = ds[(ds.index >= min_yr) & (ds.index <= mx_yr)]
+columns = ds.columns
+column_list = ds.columns.tolist()
+
+# -- For Multiple years --
+# Name = "Linear Regression for Non-drought years: "
+# wetyrs = [2005, 2008, 2009, 2010, 2016, 2017, 2019]
+# dryyrs = [2002, 2003, 2004, 2006, 2007, 2011, 2012, 2013, 2014, 2015, 2018]
+# #f = ds[(ds.index == wetyrs)]
+
+# f = pd.DataFrame()
+# for i in dryyrs:
+#         wut = ds[(ds.index == i)]
+#         f = f.append(wut)
+# print(f)
+# ------------------------
+
+stats = pd.DataFrame()
+# for i in range(1, 12, 1):
+for i in column_list:
+        df = f[i]
+        #print(df)
+        y=np.array(df.values, dtype=float)
+        x=np.array(pd.to_datetime(df).index.values, dtype=float)
+        slope, intercept, r_value, p_value, std_err =sp.linregress(x,y)
+        # print('Georegion Number: ', i, '\n', 
+        #        'slope = ', slope, '\n', 
+        #        'intercept = ', intercept, '\n', 
+        #        'r^2 = ', r_value, '\n', 
+        #        'p-value = ', p_value, '\n', 
+        #        'std error = ', std_err)
+        
+        # row1 = pd.DataFrame([slope], index=[i], columns=['slope'])
+        # row2 = pd.DataFrame([intercept], index=[i], columns=['intercept'])
+        # stats = stats.append(row1)
+        # stats = stats.append(row2)
+        # stats['intercept'] = intercept
+        stats = stats.append({'slope': slope, 
+                        #       'int':intercept, 
+                              'rsq':r_value*r_value, 
+                              'p_val':p_value, 
+                              'std_err':std_err}, 
+                              ignore_index=True)
+        xf = np.linspace(min(x),max(x),100)
+        xf1 = xf.copy()
+        #xf1 = pd.to_datetime(xf1)
+        yf = (slope*xf)+intercept
+        # fig, ax = plt.subplots(1, 1)
+        # ax.plot(xf1, yf,label='Linear fit', lw=3)
+        # df.plot(ax=ax,marker='o', ls='')
+        # ax.set_ylim(max(y),0)
+        ax.legend()
+
+
+# stats = stats.append(slope)
+#        stats[i] = stats[i].append(slope)
+
+#   df = df.append({'A': i}, ignore_index=True)
+stats.index = betterlabels
+stats1 = stats.transpose()
+# del stats1['Reservation']
+print(stats1)
+
+# Data visualization
 xf = np.linspace(min(x),max(x),100)
 xf1 = xf.copy()
 #xf1 = pd.to_datetime(xf1)
 yf = (slope*xf)+intercept
 f, ax = plt.subplots(1, 1)
 ax.plot(xf1, yf,label='Linear fit', lw=3)
-ds.plot(ax=ax,marker='o', ls='')
-ax.legend();
+ds.plot(ax=ax,marker='o', ls='', label=betterlabels)
+ax.set_xlim(min_yr, mx_yr)
+ax.legend()
+
 # %%
 # ------------------------------------------------------------------ 
 # Plotting help from Amanda - don't run this
