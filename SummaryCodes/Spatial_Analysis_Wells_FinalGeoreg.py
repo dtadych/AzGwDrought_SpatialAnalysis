@@ -2065,7 +2065,9 @@ for i in range(1, 12, 1):
                         #       'int':intercept, 
                               'rsq':r_value, 
                               'p_val':p_value, 
-                              'std_err':std_err}, 
+                              'std_err':std_err,
+                              'mean': np.mean(y),
+                              'var': np.var(y)}, 
                               ignore_index=True)
         xf = np.linspace(min(x),max(x),100)
         xf1 = xf.copy()
@@ -2087,13 +2089,111 @@ stats1 = stats.transpose()
 del stats1['Reservation']
 stats1
 
-# %%
-# For New Wells
+# %% 2. For New Wells
 ds = new_wells_reg2
+data_type = "New Wells"
 betterlabels = ['Regulated','Unregulated'] 
 min_yr = 1981
 mx_yr = 1993
-Name = str(min_yr) + " to " + str(mx_yr) + " Linear Regression:"
+Name = str(min_yr) + " to " + str(mx_yr) + " Linear Regression for "+data_type
+print(Name)
+
+f = ds[(ds.index >= min_yr) & (ds.index <= mx_yr)]
+columns = ds.columns
+column_list = ds.columns.tolist()
+
+# -- For Multiple years --
+# Name = "Linear Regression for Non-drought years: "
+# wetyrs = [2005, 2008, 2009, 2010, 2016, 2017, 2019]
+# dryyrs = [2002, 2003, 2004, 2006, 2007, 2011, 2012, 2013, 2014, 2015, 2018]
+# #f = ds[(ds.index == wetyrs)]
+
+# f = pd.DataFrame()
+# for i in dryyrs:
+#         wut = ds[(ds.index == i)]
+#         f = f.append(wut)
+# print(f)
+# ------------------------
+
+stats = pd.DataFrame()
+# for i in range(1, 12, 1):
+for i in column_list:
+        df = f[i]
+        #print(df)
+        y=np.array(df.values, dtype=float)
+        x=np.array(pd.to_datetime(df).index.values, dtype=float)
+        slope, intercept, r_value, p_value, std_err =sp.linregress(x,y)
+        # print('Georegion Number: ', i, '\n', 
+        #        'slope = ', slope, '\n', 
+        #        'intercept = ', intercept, '\n', 
+        #        'r^2 = ', r_value, '\n', 
+        #        'p-value = ', p_value, '\n', 
+        #        'std error = ', std_err)
+        
+        # row1 = pd.DataFrame([slope], index=[i], columns=['slope'])
+        # row2 = pd.DataFrame([intercept], index=[i], columns=['intercept'])
+        # stats = stats.append(row1)
+        # stats = stats.append(row2)
+        # stats['intercept'] = intercept
+        stats = stats.append({'slope': slope, 
+                              'int':intercept, 
+                              'rsq':r_value*r_value, 
+                              'p_val':p_value, 
+                              'std_err':std_err, 
+                              'mean': np.mean(y),
+                              'var': np.var(y)
+                              },
+                              ignore_index=True)
+        xf = np.linspace(min(x),max(x),100)
+        xf1 = xf.copy()
+        #xf1 = pd.to_datetime(xf1)
+        yf = (slope*xf)+intercept
+        # fig, ax = plt.subplots(1, 1)
+        # ax.plot(xf1, yf,label='Linear fit', lw=3)
+        # df.plot(ax=ax,marker='o', ls='')
+        # ax.set_ylim(max(y),0)
+        ax.legend()
+
+
+# stats = stats.append(slope)
+#        stats[i] = stats[i].append(slope)
+
+#   df = df.append({'A': i}, ignore_index=True)
+stats.index = betterlabels
+stats1 = stats.transpose()
+# del stats1['Reservation']
+print(stats1)
+
+# Data visualization
+xf = np.linspace(min(x),max(x),100)
+xf1 = xf.copy()
+#xf1 = pd.to_datetime(xf1)
+m1 = stats1.loc['slope','Regulated']
+m2 = stats1.loc['slope','Unregulated']
+yint1 = stats1.loc['int','Regulated']
+yint2 = stats1.loc['int','Unregulated']
+yf1 = (m1*xf)+yint1
+yf2 = (m2*xf)+yint2
+
+f, ax = plt.subplots(1, 1)
+ax.plot(xf1, yf1,"-.",color='grey',label='Linear Trendline', lw=1)
+ax.plot(xf1, yf2,"-.",color='grey', lw=1)
+ds.plot(ax=ax,marker='o', ls='', label=betterlabels)
+ax.set_xlim(min_yr, mx_yr)
+ax.set_title(data_type)
+plt.figtext(0.95, 0.5, 'Regulated equation: y= '+str(int(m1))+'x + '+str(int(yint1)))
+plt.figtext(0.95, 0.6, 'Unregulated equation: y= '+str(int(m2))+'x + '+str(int(yint2)))
+ax.legend()
+plt.savefig(outputpath+'Stats/'+Name)
+stats1.to_csv(outputpath+'Stats/'+Name+'.csv')
+
+# %% 3. Well Depths
+ds = wdc3
+data_type = "Shallow Wells"
+betterlabels = ['Regulated','Unregulated'] 
+min_yr = 1981
+mx_yr = 1993
+Name = str(min_yr) + " to " + str(mx_yr) + " Linear Regression for " + data_type
 print(Name)
 
 f = ds[(ds.index >= min_yr) & (ds.index <= mx_yr)]
@@ -2168,6 +2268,174 @@ f, ax = plt.subplots(1, 1)
 ax.plot(xf1, yf,label='Linear fit', lw=3)
 ds.plot(ax=ax,marker='o', ls='', label=betterlabels)
 ax.set_xlim(min_yr, mx_yr)
+ax.set_title(data_type)
+ax.legend()
+
+ds = wdc2
+data_type = "Midrange Wells"
+betterlabels = ['Regulated','Unregulated'] 
+min_yr = 1981
+mx_yr = 1993
+Name = str(min_yr) + " to " + str(mx_yr) + " Linear Regression for " + data_type
+print(Name)
+
+f = ds[(ds.index >= min_yr) & (ds.index <= mx_yr)]
+columns = ds.columns
+column_list = ds.columns.tolist()
+
+# -- For Multiple years --
+# Name = "Linear Regression for Non-drought years: "
+# wetyrs = [2005, 2008, 2009, 2010, 2016, 2017, 2019]
+# dryyrs = [2002, 2003, 2004, 2006, 2007, 2011, 2012, 2013, 2014, 2015, 2018]
+# #f = ds[(ds.index == wetyrs)]
+
+# f = pd.DataFrame()
+# for i in dryyrs:
+#         wut = ds[(ds.index == i)]
+#         f = f.append(wut)
+# print(f)
+# ------------------------
+
+stats = pd.DataFrame()
+# for i in range(1, 12, 1):
+for i in column_list:
+        df = f[i]
+        #print(df)
+        y=np.array(df.values, dtype=float)
+        x=np.array(pd.to_datetime(df).index.values, dtype=float)
+        slope, intercept, r_value, p_value, std_err =sp.linregress(x,y)
+        # print('Georegion Number: ', i, '\n', 
+        #        'slope = ', slope, '\n', 
+        #        'intercept = ', intercept, '\n', 
+        #        'r^2 = ', r_value, '\n', 
+        #        'p-value = ', p_value, '\n', 
+        #        'std error = ', std_err)
+        
+        # row1 = pd.DataFrame([slope], index=[i], columns=['slope'])
+        # row2 = pd.DataFrame([intercept], index=[i], columns=['intercept'])
+        # stats = stats.append(row1)
+        # stats = stats.append(row2)
+        # stats['intercept'] = intercept
+        stats = stats.append({'slope': slope, 
+                        #       'int':intercept, 
+                              'rsq':r_value*r_value, 
+                              'p_val':p_value, 
+                              'std_err':std_err}, 
+                              ignore_index=True)
+        xf = np.linspace(min(x),max(x),100)
+        xf1 = xf.copy()
+        #xf1 = pd.to_datetime(xf1)
+        yf = (slope*xf)+intercept
+        # fig, ax = plt.subplots(1, 1)
+        # ax.plot(xf1, yf,label='Linear fit', lw=3)
+        # df.plot(ax=ax,marker='o', ls='')
+        # ax.set_ylim(max(y),0)
+        ax.legend()
+
+
+# stats = stats.append(slope)
+#        stats[i] = stats[i].append(slope)
+
+#   df = df.append({'A': i}, ignore_index=True)
+stats.index = betterlabels
+stats1 = stats.transpose()
+# del stats1['Reservation']
+print(stats1)
+
+# Data visualization
+xf = np.linspace(min(x),max(x),100)
+xf1 = xf.copy()
+#xf1 = pd.to_datetime(xf1)
+yf = (slope*xf)+intercept
+f, ax = plt.subplots(1, 1)
+ax.plot(xf1, yf,label='Linear fit', lw=3)
+ds.plot(ax=ax,marker='o', ls='', label=betterlabels)
+ax.set_xlim(min_yr, mx_yr)
+ax.set_title(data_type)
+ax.legend()
+
+ds = wdc1
+data_type = "Deep Wells"
+betterlabels = ['Regulated','Unregulated'] 
+min_yr = 1981
+mx_yr = 1993
+Name = str(min_yr) + " to " + str(mx_yr) + " Linear Regression for " + data_type
+print(Name)
+
+f = ds[(ds.index >= min_yr) & (ds.index <= mx_yr)]
+columns = ds.columns
+column_list = ds.columns.tolist()
+
+# -- For Multiple years --
+# Name = "Linear Regression for Non-drought years: "
+# wetyrs = [2005, 2008, 2009, 2010, 2016, 2017, 2019]
+# dryyrs = [2002, 2003, 2004, 2006, 2007, 2011, 2012, 2013, 2014, 2015, 2018]
+# #f = ds[(ds.index == wetyrs)]
+
+# f = pd.DataFrame()
+# for i in dryyrs:
+#         wut = ds[(ds.index == i)]
+#         f = f.append(wut)
+# print(f)
+# ------------------------
+
+stats = pd.DataFrame()
+# for i in range(1, 12, 1):
+for i in column_list:
+        df = f[i]
+        #print(df)
+        y=np.array(df.values, dtype=float)
+        x=np.array(pd.to_datetime(df).index.values, dtype=float)
+        slope, intercept, r_value, p_value, std_err =sp.linregress(x,y)
+        # print('Georegion Number: ', i, '\n', 
+        #        'slope = ', slope, '\n', 
+        #        'intercept = ', intercept, '\n', 
+        #        'r^2 = ', r_value, '\n', 
+        #        'p-value = ', p_value, '\n', 
+        #        'std error = ', std_err)
+        
+        # row1 = pd.DataFrame([slope], index=[i], columns=['slope'])
+        # row2 = pd.DataFrame([intercept], index=[i], columns=['intercept'])
+        # stats = stats.append(row1)
+        # stats = stats.append(row2)
+        # stats['intercept'] = intercept
+        stats = stats.append({'slope': slope, 
+                        #       'int':intercept, 
+                              'rsq':r_value*r_value, 
+                              'p_val':p_value, 
+                              'std_err':std_err,
+                              'mean': np.mean(y)}, 
+                              ignore_index=True)
+        xf = np.linspace(min(x),max(x),100)
+        xf1 = xf.copy()
+        #xf1 = pd.to_datetime(xf1)
+        yf = (slope*xf)+intercept
+        # fig, ax = plt.subplots(1, 1)
+        # ax.plot(xf1, yf,label='Linear fit', lw=3)
+        # df.plot(ax=ax,marker='o', ls='')
+        # ax.set_ylim(max(y),0)
+        ax.legend()
+
+
+# stats = stats.append(slope)
+#        stats[i] = stats[i].append(slope)
+
+#   df = df.append({'A': i}, ignore_index=True)
+stats.index = betterlabels
+stats1 = stats.transpose()
+# del stats1['Reservation']
+print(stats1)
+
+# Data visualization
+xf = np.linspace(min(x),max(x),100)
+xf1 = xf.copy()
+#xf1 = pd.to_datetime(xf1)
+yf = (slope*xf)+intercept
+f, ax = plt.subplots(1, 1)
+ax.plot(xf1, yf,label='Linear fit', lw=3)
+ds.plot(ax=ax,marker='o', ls='', label=betterlabels)
+ax.set_xlim(min_yr, mx_yr)
+ax.set_title(data_type)
 ax.legend()
 
 # %%
