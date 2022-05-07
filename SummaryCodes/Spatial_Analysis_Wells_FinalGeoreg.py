@@ -23,6 +23,7 @@ import matplotlib.pyplot as plt
 import matplotlib.lines as mlines
 from matplotlib.colors import ListedColormap
 import datetime
+from matplotlib.transforms import Bbox
 import seaborn as sns
 import numpy as np
 import pandas as pd
@@ -676,13 +677,13 @@ wd3 = wd3.sort_values(by=['GEOREGI_NU'])
 # wdc2 = pd.pivot_table(wd2, index=["In_year"], columns=["GEO_Region"], values=['WELL_DEPTH'], dropna=False, aggfunc=len)
 # wdc3 = pd.pivot_table(wd3, index=["In_year"], columns=["GEO_Region"], values=['WELL_DEPTH'], dropna=False, aggfunc=len)
 
-# wdc1 = pd.pivot_table(wd1, index=["In_year"], columns=["Regulation"], values=['WELL_DEPTH'], dropna=False, aggfunc=len)
-# wdc2 = pd.pivot_table(wd2, index=["In_year"], columns=["Regulation"], values=['WELL_DEPTH'], dropna=False, aggfunc=len)
-# wdc3 = pd.pivot_table(wd3, index=["In_year"], columns=["Regulation"], values=['WELL_DEPTH'], dropna=False, aggfunc=len)
+wdc1 = pd.pivot_table(wd1, index=["In_year"], columns=["Regulation"], values=['WELL_DEPTH'], dropna=False, aggfunc=len)
+wdc2 = pd.pivot_table(wd2, index=["In_year"], columns=["Regulation"], values=['WELL_DEPTH'], dropna=False, aggfunc=len)
+wdc3 = pd.pivot_table(wd3, index=["In_year"], columns=["Regulation"], values=['WELL_DEPTH'], dropna=False, aggfunc=len)
 
-wdc1 = pd.pivot_table(wd1, index=["In_year"], columns=["Water_CAT"], values=['WELL_DEPTH'], dropna=False, aggfunc=len)
-wdc2 = pd.pivot_table(wd2, index=["In_year"], columns=["Water_CAT"], values=['WELL_DEPTH'], dropna=False, aggfunc=len)
-wdc3 = pd.pivot_table(wd3, index=["In_year"], columns=["Water_CAT"], values=['WELL_DEPTH'], dropna=False, aggfunc=len)
+# wdc1 = pd.pivot_table(wd1, index=["In_year"], columns=["Water_CAT"], values=['WELL_DEPTH'], dropna=False, aggfunc=len)
+# wdc2 = pd.pivot_table(wd2, index=["In_year"], columns=["Water_CAT"], values=['WELL_DEPTH'], dropna=False, aggfunc=len)
+# wdc3 = pd.pivot_table(wd3, index=["In_year"], columns=["Water_CAT"], values=['WELL_DEPTH'], dropna=False, aggfunc=len)
 
 # %%
 st_wdc1 = pd.pivot_table(wd1, index=["In_year"], values=['WELL_DEPTH'], dropna=False, aggfunc=len)
@@ -793,6 +794,74 @@ ax.legend(fontsize = fsize)
 
 plt.savefig(outputpath+name+'_WaterSource')
 
+# %%
+# Plot all of the different depths 3 in a line
+ds1 = wdc1
+ds2 = wdc2
+ds3 = wdc3
+
+name = 'New Wells by Drilling Depths over Time'
+ylabel = "Well Count (#)"
+minyear=1975
+maxyear=2020
+#min_y = -15
+#max_y = 7
+fsize = 14
+
+columns = ds1.columns
+labels = ds1.columns.tolist()
+print(labels)
+
+# For the actual figure
+fig, ax = plt.subplots(1,3,figsize=(15,5))
+#fig.tight_layout()
+fig.suptitle(name, fontsize=18, y=1.00)
+fig.supylabel(ylabel, fontsize = 14, x=0.08)
+
+ax[0].plot(ds3[labels[0]], label='CAP', color=c_2)
+ax[0].plot(ds3[labels[3]], label='Non-CAP', color=c_3)
+ax[0].plot(ds3[labels[1]], label='Groundwater ', color=c_7)
+ax[0].plot(ds3[labels[4]], label='Surface Water', color=c_4)
+ax[0].plot(ds3[labels[2]], label='Mixed GW/SW', color=c_5)
+
+ax[1].plot(ds2[labels[0]], label='CAP', color=c_2)
+ax[1].plot(ds2[labels[3]], label='Non-CAP', color=c_3)
+ax[1].plot(ds2[labels[1]], label='Groundwater ', color=c_7)
+ax[1].plot(ds2[labels[4]], label='Surface Water', color=c_4)
+ax[1].plot(ds2[labels[2]], label='Mixed GW/SW', color=c_5)
+
+ax[2].plot(ds1[labels[0]], label='CAP', color=c_2)
+ax[2].plot(ds1[labels[3]], label='Non-CAP', color=c_3)
+ax[2].plot(ds1[labels[1]], label='Groundwater ', color=c_7)
+ax[2].plot(ds1[labels[4]], label='Surface Water', color=c_4)
+ax[2].plot(ds1[labels[2]], label='Mixed GW/SW', color=c_5)
+
+ax[0].set_xlim(minyear,maxyear)
+ax[1].set_xlim(minyear,maxyear)
+ax[2].set_xlim(minyear,maxyear)
+
+#ax[0].set_ylim(min_y,max_y)
+#ax[1].set_ylim(min_y,max_y)
+#ax[2].set_ylim(min_y,max_y)
+
+ax[0].set_title('Shallow (<200 ft)', loc='center')
+ax[1].set_title('Midrange (200-500ft)', loc='center')
+ax[2].set_title('Deep (> 500ft)', loc='center')
+
+
+ax[0].grid(True)
+ax[1].grid(True)
+ax[2].grid(True)
+
+#ax[0,0].set(title=name, xlabel='Year', ylabel='Change from Baseline (cm)')
+#ax[0,0].set_title(name, loc='right')
+#ax[1,0].set_ylabel("Change from 2004-2009 Baseline (cm)", loc='top', fontsize = fsize)
+ax[2].legend(loc = [1.05, 0.3], fontsize = fsize)
+
+fig.set_dpi(600.0)
+
+plt.savefig(outputpath+name+'_watercat_3horizontalpanel', bbox_inches='tight')
+
 # %% Plots for Regulated vs. Unregulated Lumping
 ds = wdc1
 name = 'Number of Deep Wells (greater than '+ str(deep) +' ft)'
@@ -873,14 +942,14 @@ ax.set_xlim(minyear,maxyear)
 ax.grid(True)
 ax.legend()
 
-plt.savefig(outputpath+name+'_regulation')
+plt.savefig(outputpath+name+'_regulation', bbox_inches='tight')
 # %%
 # Plot all of the different depths 3 in a line
 ds1 = wdc1
 ds2 = wdc2
 ds3 = wdc3
 
-name = 'Well Depths over Time'
+name = 'New Wells by Drilling Depths over Time'
 ylabel = "Well Count (#)"
 minyear=1975
 maxyear=2020
@@ -888,15 +957,15 @@ maxyear=2020
 #max_y = 7
 fsize = 14
 
-columns = ds.columns
-labels = ds.columns.tolist()
+columns = ds1.columns
+labels = ds1.columns.tolist()
 print(labels)
 
 # For the actual figure
-fig, ax = plt.subplots(1,3,figsize=(18,9))
+fig, ax = plt.subplots(1,3,figsize=(15,5))
 #fig.tight_layout()
-fig.suptitle(name, fontsize=20, y=0.91)
-fig.supylabel(ylabel, fontsize = 14, x=0.07)
+fig.suptitle(name, fontsize=18, y=1.00)
+fig.supylabel(ylabel, fontsize = 14, x=0.08)
 ax[0].plot(ds3[labels[0]], label='Regulated', color=c_2)
 ax[0].plot(ds3[labels[1]], label='Unregulated', color=c_7)
 ax[1].plot(ds2[labels[0]], label='Regulated', color=c_2)
@@ -912,6 +981,11 @@ ax[2].set_xlim(minyear,maxyear)
 #ax[1].set_ylim(min_y,max_y)
 #ax[2].set_ylim(min_y,max_y)
 
+ax[0].set_title('Shallow (<200 ft)', loc='center')
+ax[1].set_title('Midrange (200-500ft)', loc='center')
+ax[2].set_title('Deep (> 500ft)', loc='center')
+
+
 ax[0].grid(True)
 ax[1].grid(True)
 ax[2].grid(True)
@@ -921,7 +995,12 @@ ax[2].grid(True)
 #ax[1,0].set_ylabel("Change from 2004-2009 Baseline (cm)", loc='top', fontsize = fsize)
 ax[2].legend(loc = [1.05, 0.3], fontsize = fsize)
 
-# plt.savefig(outputpath+name+'_4panel')
+fig.set_dpi(600.0)
+
+plt.savefig(outputpath+name+'_3horizontalpanel', bbox_inches='tight')
+
+# %%
+# Plot the well counts on the same graph
 # %%
 # Plot all of the deep wells in 4 panel
 ds = wdc1
@@ -1318,6 +1397,50 @@ ax[1].legend(loc = [1.05, 0.3], fontsize = fsize)
 ax[2].legend(loc = [1.05, 0.3], fontsize = fsize)
 
 plt.savefig(outputpath+name)
+
+# %%
+ds = new_wells_watercat
+name = 'New Wells over Time'
+ylabel = "Well Count (#)"
+minyear=1980
+maxyear=2020
+min_y = 0
+max_y = 100
+fsize = 14
+
+columns = ds.columns
+labels = ds.columns.tolist()
+print(labels)
+
+# For the actual figure
+fig, ax = plt.subplots(figsize=(14,9))
+#fig.tight_layout()
+fig.suptitle(name, fontsize=20, y=0.91)
+#fig.supylabel(ylabel, fontsize = 14, x=0.09)
+
+# ax.plot(ds[labels[0]], label='Regulated', color=c_2) 
+# ax.plot(ds[labels[1]], label='Unregulated', color=c_9) 
+
+ax.plot(ds[labels[0]], label='CAP', color=c_2) 
+ax.plot(ds[labels[4]], label='Surface Water', color=c_4) 
+ax.plot(ds[labels[2]], label='Mixed', color=c_5) 
+ax.plot(ds[labels[3]], label='Regulated GW', color=c_3) 
+ax.plot(ds[labels[1]], label='Unregulated GW', color=c_7) 
+
+ax.set_xlim(minyear,maxyear)
+
+#ax[0].set_ylim(min_y,max_y)
+#ax[1].set_ylim(min_y,max_y)
+#ax[2].set_ylim(min_y,max_y)
+
+ax.grid(True)
+
+#ax[0,0].set(title=name, xlabel='Year', ylabel='Change from Baseline (cm)')
+#ax[0,0].set_title(name, loc='right')
+ax.set_ylabel("Well Count (#)", fontsize = fsize)
+ax.legend(loc = [1.05, 0.40], fontsize = fsize)
+
+plt.savefig(outputpath+name+"Timeseries", bbox_inches='tight')
 
 # %% ---- Fancier Analyses ----
 # Calculating well densities
