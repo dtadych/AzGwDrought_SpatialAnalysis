@@ -11,6 +11,7 @@
 #  - Plotting a single grid cell based on lat/lon: Line 336
 #  - Calculating the average based off a mask (not weighted): Line 510
 # %%
+from cProfile import label
 from calendar import calendar
 from importlib.resources import path
 from itertools import count
@@ -61,6 +62,11 @@ georeg = gp.read_file(filepath)
 filename = "AZ_counties.shp"
 filepath = os.path.join('/Users/danielletadych/Documents/PhD_Materials/github_repos/AzGwDrought_SpatialAnalysis/MergedData/Shapefiles', filename)
 counties = gp.read_file(filepath)
+
+# %% Read in the mask shapefile
+filename = "Ag_NonAG.shp"
+filepath = os.path.join('/Users/danielletadych/Documents/PhD_Materials/github_repos/AzGwDrought_SpatialAnalysis/MergedData/Shapefiles/Final_Georegions/', filename)
+agreg = gp.read_file(filepath)
 
 # %% Look at that sweet sweet data
 metadata = grace_dataset.attrs
@@ -163,15 +169,19 @@ xgrid = np.arange(lon_min-0.5, lon_max+0.5, 1.)
 ygrid = np.arange(lat_min, lat_max+1, 1.)
 plt.show()
 
+# %% Trying to think of how to lump these attribute tables
+
 
 # %% ---- Remapping using EASYMORE Package ----
 # Prepping the data
 # reprojecting coordinate system
 #reproject = counties.to_crs(epsg=4326)
-reproject = georeg.to_crs(epsg=4326)
+# reproject = georeg.to_crs(epsg=4326)
+reproject = agreg.to_crs(epsg=4326)
 reproject.crs
 # %%
-reproject.to_file("georeg_reproject.shp")
+# reproject.to_file("georeg_reproject.shp")
+reproject.to_file("agreg_reproject.shp")
 # %%
 reproject.plot()
 
@@ -194,7 +204,7 @@ esmr = easymore()
 
 # specifying EASYMORE objects
 # name of the case; the temporary, remapping and remapped file names include case name
-esmr.case_name                = 'easymore_GRACE_georeg'              
+esmr.case_name                = 'easymore_GRACE_AZ_irrAg'              
 # temporary path that the EASYMORE generated GIS files and remapped file will be saved
 esmr.temp_dir                 = '../temporary/'
 
@@ -211,7 +221,8 @@ esmr.temp_dir                 = '../temporary/'
 #esmr.target_shp = '/Users/danielletadych/Documents/PhD_Materials/github_repos/AzGwDrought_SpatialAnalysis/MergedData/Shapefiles/AZ_counties.shp'
 #esmr.target_shp = '/Users/danielletadych/Documents/PhD_Materials/github_repos/AzGwDrought_SpatialAnalysis/MergedData/Output_files/Georegions_AGU.shp'
 #esmr.target_shp = 'Georegions_reproject.shp'
-esmr.target_shp = 'georeg_reproject_fixed.shp'
+# esmr.target_shp = 'georeg_reproject_fixed.shp'
+esmr.target_shp = 'Ag_NonAG_reproject_fixedgeom.shp'
 #esmr.target_shp = 'counties_reproject.shp'
 # name of netCDF file(s); multiple files can be specified with *
 # esmr.source_nc                = '../data/Source_nc_ERA5/ERA5_NA_*.nc'
@@ -273,12 +284,14 @@ shp_target.plot(column= 'value', edgecolor='k',linewidth = 1, ax = axes , legend
 #plt.savefig('../fig/Example1_B.png')
 
 # %% Now, read in the remapped csv
-filename = 'easymore_GRACE_georeg_remapped_lwe_thickness__2002-04-18-00-00-00.csv'
+# filename = 'easymore_GRACE_georeg_remapped_lwe_thickness__2002-04-18-00-00-00.csv'
+filename = 'easymore_GRACE_AZ_irrAg_remapped_lwe_thickness__2002-04-18-00-00-00.csv'
 filepath = os.path.join(outputpath, filename)
 grace_remapped = pd.read_csv(filepath)
 grace_remapped.head()
 # %% Gotta fix those headers
-ID_key = shp_target[['GEO_Region', 'ID_t']]
+# ID_key = shp_target[['GEO_Region', 'ID_t']]
+ID_key = shp_target[['GRACE_Cat', 'ID_t']]
 ID_key
 
 # %%
@@ -294,7 +307,7 @@ del grace_remapped['Unnamed: 0'] # tbh not really sure why this column is here b
 # %%
 grace_remapped
 # %%
-georeg_list = ID_key['GEO_Region'].values.tolist()
+georeg_list = ID_key['GRACE_Cat'].values.tolist()
 georeg_list
 
 # %%
@@ -421,7 +434,8 @@ ax[1,0].legend(loc = [0.55, 0.6], fontsize=14)
 ax[1,1].legend(loc = [0.45, 0.75], fontsize=14)
 
 plt.savefig(outputpath+name)
-#%% For Plotting the Yearly average
+
+#%% For Plotting the Yearly average of Georegions
 ds = grace_yearlyavg
 name = "Yearly Average (Intra-annual) Change from 2004-2009 Baseline"
 minyear=2002
@@ -689,6 +703,201 @@ one_point.plot.line(hue='lat',
 ax.set(title="Liquid Water Equivalent thickness for Cochise/Wilcox Area (cm)")
 plt.xlabel('Days since January 1, 2002')
 plt.ylabel('LWE (cm)')
+
+# %% Plotting the pixels on the same graphs
+# Lower right of Phoenix AMA
+# 33.111207, -111.748979
+platitude = grace_dataset['lwe_thickness']['lat'].values[492]
+plongitude = grace_dataset['lwe_thickness']['lon'].values[272]
+
+phoenix = lwe2.sel(lat = platitude, lon = plongitude)
+phoenix
+
+wlatitude = grace_dataset['lwe_thickness']['lat'].values[486]
+wlongitude = grace_dataset['lwe_thickness']['lon'].values[281]
+
+wilcox = lwe2.sel(lat = wlatitude, lon = wlongitude)
+wilcox
+
+ylatitude = grace_dataset['lwe_thickness']['lat'].values[490]
+ylongitude = grace_dataset['lwe_thickness']['lon'].values[261]
+
+yuma = lwe2.sel(lat = ylatitude, lon = ylongitude)
+yuma
+
+ulatitude = grace_dataset['lwe_thickness']['lat'].values[500]
+ulongitude = grace_dataset['lwe_thickness']['lon'].values[262]
+
+upperco = lwe2.sel(lat = ulatitude, lon = ulongitude)
+upperco
+
+f, ax = plt.subplots(figsize=(12, 6))
+phoenix.plot.line(hue='lat',
+                    # marker="o",
+                    ax=ax,
+                    color="red",
+                    # markerfacecolor="blue",
+                    # markeredgecolor="blue"
+                    label = 'Phoenix AMA - GW Regulated'
+                    )
+
+# wilcox.plot.line(hue='lat',
+#                     # marker="o",
+#                     ax=ax,
+#                     color="blue",
+#                     # markerfacecolor="blue",
+#                     # markeredgecolor="blue"
+#                     label = 'Wilcox - GW Unregulated'
+#                     )
+
+# yuma.plot.line(hue='lat',
+#                     # marker="o",
+#                     ax=ax,
+#                     color="green",
+#                     # markerfacecolor="blue",
+#                     # markeredgecolor="blue"
+#                     label = 'Yuma - SW Dominated'
+#                     )
+
+# upperco.plot.line(hue='lat',
+#                     # marker="o",
+#                     ax=ax,
+#                     color="teal",
+#                     # markerfacecolor="blue",
+#                     # markeredgecolor="blue"
+#                     label = 'Upper Co (Fort Mojave Area) - Mixed'
+#                     )
+
+ax.set(title="Individual GRACE Pixels from the Baseline")
+ax.legend()
+ax.grid(zorder = 0)
+plt.xlabel('Year')
+plt.ylabel('LWE (cm)')
+
+# plt.savefig('Individual_Pixels_Phoenix_Wilcox')
+
+# %%
+platitude = grace_dataset['lwe_thickness']['lat'].values[492]
+plongitude = grace_dataset['lwe_thickness']['lon'].values[272]
+
+print("The current latitude is ", platitude, 'and longitude is -', 180 - plongitude)
+
+phoenix = lwe2.sel(lat = platitude, lon = plongitude)
+phoenix
+
+phoenix.plot()
+
+phoenix_df = pd.DataFrame(phoenix)
+phoenix_df
+
+phoenix_df = phoenix_df.reset_index()
+phoenix_df
+
+phoenix_df['index'] = datetimeindex
+phoenix_df
+
+phoenix_df.set_index('index', inplace=True)
+phoenix_df
+
+# Extract the year from the date column and create a new column year
+phoenix_df['year'] = pd.DatetimeIndex(phoenix_df.index).year
+phoenix_df.head()
+
+phoenix_df_year = pd.pivot_table(phoenix_df, index=["year"], values=[0], dropna=False, aggfunc=np.mean)
+phoenix_df_year
+
+del phoenix_df['year']
+
+# %%
+ylatitude = grace_dataset['lwe_thickness']['lat'].values[490]
+ylongitude = grace_dataset['lwe_thickness']['lon'].values[261]
+
+print("The current latitude is ", platitude, 'and longitude is -', 180 - plongitude)
+
+yuma = lwe2.sel(lat = ylatitude, lon = ylongitude)
+yuma
+
+yuma.plot()
+
+yuma_df = pd.DataFrame(yuma)
+yuma_df
+
+yuma_df = yuma_df.reset_index()
+yuma_df
+
+yuma_df['index'] = datetimeindex
+yuma_df
+
+yuma_df.set_index('index', inplace=True)
+yuma_df
+
+# Extract the year from the date column and create a new column year
+yuma_df['year'] = pd.DatetimeIndex(yuma_df.index).year
+yuma_df.head()
+
+yuma_df_year = pd.pivot_table(yuma_df, index=["year"], values=[0], dropna=False, aggfunc=np.mean)
+yuma_df_year
+
+# %%
+wlatitude = grace_dataset['lwe_thickness']['lat'].values[486]
+wlongitude = grace_dataset['lwe_thickness']['lon'].values[281]
+
+wilcox = lwe2.sel(lat = wlatitude, lon = wlongitude)
+wilcox
+
+print("The current latitude is ", wlatitude, 'and longitude is -', 180 - wlongitude)
+
+wilcox.plot()
+
+wilcox_df = pd.DataFrame(wilcox)
+wilcox_df
+
+wilcox_df = wilcox_df.reset_index()
+wilcox_df
+
+wilcox_df['index'] = datetimeindex
+wilcox_df
+
+wilcox_df.set_index('index', inplace=True)
+wilcox_df
+
+# Extract the year from the date column and create a new column year
+wilcox_df['year'] = pd.DatetimeIndex(wilcox_df.index).year
+wilcox_df.head()
+
+wilcox_df_year = pd.pivot_table(wilcox_df, index=["year"], values=[0], dropna=False, aggfunc=np.mean)
+wilcox_df_year
+
+#%%
+ulatitude = grace_dataset['lwe_thickness']['lat'].values[500]
+ulongitude = grace_dataset['lwe_thickness']['lon'].values[262]
+
+upperco = lwe2.sel(lat = ulatitude, lon = ulongitude)
+upperco
+
+print("The current latitude is ", ulatitude, 'and longitude is -', 180 - ulongitude)
+
+upperco.plot()
+
+upperco_df = pd.DataFrame(upperco)
+upperco_df
+
+upperco_df = upperco_df.reset_index()
+upperco_df
+
+upperco_df['index'] = datetimeindex
+upperco_df
+
+upperco_df.set_index('index', inplace=True)
+upperco_df
+
+# Extract the year from the date column and create a new column year
+upperco_df['year'] = pd.DatetimeIndex(upperco_df.index).year
+upperco_df.head()
+
+upperco_df_year = pd.pivot_table(upperco_df, index=["year"], values=[0], dropna=False, aggfunc=np.mean)
+upperco_df_year
+
 # %%
 # ---- Plotting Averages Based off Shape File Mask ----
 # Check the cooridnate systems
@@ -741,6 +950,7 @@ cm_df
 cm_df.set_index('index', inplace=True)
 cm_df
 
+# %%
 # Extract the year from the date column and create a new column year
 cm_df['year'] = pd.DatetimeIndex(cm_df.index).year
 cm_df.head()
@@ -756,8 +966,37 @@ cm_df_year.plot(label="AZ mean (not weighted)")
 #global_mean.plot(label="global Mean")
 plt.legend()
 
+# %% Plotting single points with the state average
+f, ax = plt.subplots(figsize=(12, 6))
+
+ax.plot(cm_df_year, color='#2F2F2F', label='Arizona Average')
+ax.plot(phoenix_df_year, color='red', label = 'Phoenix AMA - GW Regulated')
+ax.plot(yuma_df_year, color='green', label = 'Yuma Area - Colorado River Water')
+ax.plot(wilcox_df_year, color='orange', label = 'Wilcox Area - GW Unregulated')
+ax.plot(upperco_df_year, color='teal', label = 'Upper CO River Area - Mixed SW and GW')
+
+ax.set(title="Individual GRACE Pixels - Change in Liquid Water Equivalent from the 2004-2009 Baseline")
+ax.legend()
+ax.set_xlim(2010,2020)
+ax.grid(zorder = 0)
+plt.xlabel('Year')
+plt.ylabel('LWE Change (cm)')
+
 # %%
-# Plot all of them
+f, ax = plt.subplots(figsize=(12,6))
+ax.scatter(phoenix_df.index, phoenix_df[0], color='red')
+ax.plot(phoenix_df_year, color='red')
+ax.axvspan("2017-06-10T12:00:00.000Z", "2018-06-16T00:00:00.000Z", color='grey', alpha=0.5, lw=0, label="Satellite relaunch gap")
+ax.set(title="Change in Liquid Water Equivalent from the 2004-2009 Baseline in Phoenix AMA")
+ax.legend(loc = 'upper right')
+ax.grid(zorder = 0)
+plt.xlabel('Year')
+plt.ylabel('LWE Change (cm)')
+# ax.set_xlim("2010-01-16T12:00:00.000Z","2021-10-16T12:00:00.000Z")
+# if you go by years, the gap is from 2017.43 to 2018.61
+
+# %%
+# Plot all of the georegions and state average
 ds = grace_yearlyavg
 name = "Annual Change from the 2004-2009 Baseline"
 ylabel = "Liquid Water Equivalent (cm)"
@@ -845,6 +1084,65 @@ ax[0,1].legend(loc = [0.05, 0.05], fontsize = fsize)
 ax[1,0].legend(loc = [0.05, 0.04], fontsize = fsize)
 ax[1,1].legend(loc = [0.05, 0.18], fontsize = fsize)
 
-plt.savefig(outputpath+name+'_AZavg_drought')
+# plt.savefig(outputpath+name+'_AZavg_drought')
+
+# %%
+# Plot ag verus non-ag with the state
+ds = grace_yearlyavg
+name = "Annual Change from the 2004-2009 Baseline - Agriculture Regions"
+ylabel = "Liquid Water Equivalent (cm)"
+minyear=2010
+maxyear=2020
+min_y = -13
+max_y = 5
+fsize = 14
+
+# For the actual figure
+fig, ax = plt.subplots(figsize=(12,6))
+#fig.tight_layout()
+fig.suptitle(name, fontsize=14, y=0.91)
+fig.supylabel(ylabel, fontsize = 14, x=0.07)
+#ax[1,1].plot(ds['Reservation'], label='Reservation', color='#8d5a99')
+ax.plot(ds['Ag'], label='Agriculture', color='green') 
+ax.plot(ds['Non_Ag'], label='Non-Agriculture', color='#cb9859',lw=2) 
+
+#Plotting Arizona Average
+ax.plot(cm_df_year, '-.',color='#2F2F2F', label='Arizona Average', zorder=0)
+
+ax.set_xlim(minyear,maxyear)
+ax.set_ylim(min_y,max_y)
+ax.grid(True)
+#ax[0,0].set(title=name, xlabel='Year', ylabel='Change from Baseline (cm)')
+#ax[0,0].set_title(name, loc='right')
+#ax[1,0].set_ylabel("Change from 2004-2009 Baseline (cm)", loc='top', fontsize = fsize)
+
+# Drought Year Shading
+a = 2010.5
+b = 2015.5
+c = 2017.5
+d = 2018.5
+e = 2005.5
+f = 2008.5
+p = 2002.5
+q = 2003.5
+drought_color = '#ffa6b8'
+wet_color = '#b8d3f2'
+
+ax.axvspan(a, b, color=drought_color, alpha=0.5, lw=0, label="Drought")
+ax.axvspan(c, d, color=drought_color, alpha=0.5, lw=0)
+ax.axvspan(e, f, color=drought_color, alpha=0.5, lw=0)
+ax.axvspan(p, q, color=drought_color, alpha=0.5, lw=0)
+
+
+
+# Wet years (2005 and 2010)
+g = 2004.5
+h = 2009.5
+ax.axvspan(g, e, color=wet_color, alpha=0.5, lw=0, label="Wet Years")
+ax.axvspan(h, a, color=wet_color, alpha=0.5, lw=0)
+
+ax.legend(loc = [0.05, 0.15], fontsize = fsize)
+
+# plt.savefig(outputpath+name+'_AZavg_drought_noag')
 # %% Now let's run some statistics
 

@@ -156,7 +156,7 @@ Wells55_GWSI_MasterDB.to_csv('../MergedData/Output_files/Master_ADWR_database_no
 Wells55_GWSI_MasterDB.to_file('../MergedData/Output_files/Master_ADWR_database_nocancelled.shp')
 
 # %%
-#  Only water wells
+#  - Only water wells 
 Wells55_GWSI_MasterDB = pd.merge(gwsi_gdf, wells55_water, suffixes=['_gwsi','_wells55'], how="outer", 
                                           on=['OBJECTID','Combo_ID',"REGISTRY_I", 'WELL_DEPTH', 'geometry', 'Original_DB'])
 
