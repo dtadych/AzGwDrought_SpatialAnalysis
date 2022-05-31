@@ -132,7 +132,7 @@ cat_wl = combo.groupby(['Water_CAT']).mean()
 cat_wl
 
 # %% 
-cat_wl2 = cat_wl
+cat_wl2 = cat_wl.copy()
 cat_wl2
 
 # %% Skip this if you're checking water levels based on regulation
@@ -238,41 +238,57 @@ max_y = 300
 fsize = 14
 
 fig, ax = plt.subplots(figsize = (16,9))
-#ax.plot(ds[1.0], label='Reservation', color=c_1)
-# ax.plot(ds['CAP'], label='CAP', color=c_2)
-ax.plot(ds['No_CAP'], label='GW Regulated', color=c_3) 
-ax.plot(ds['GW'], label='GW Unregulated', color=c_7) 
+ax.plot(ds['CAP'], label='CAP', color=c_2)
+ax.plot(ds['No_CAP'], label='Regulated GW', color=c_3) 
+ax.plot(ds['GW'], label='Unregulated GW', color=c_7) 
 # ax.plot(ds['Mix'], label='Mixed SW/GW', color=c_5) 
 # ax.plot(ds['SW'], label='Surface Water', color=c_4) 
 
 ax.set_xlim(minyear,maxyear)
 ax.set_ylim(max_y,min_y)
-ax.grid(True)
+# ax.grid(True)
+ax.grid(visible=True,which='major')
+ax.grid(which='minor',color='#EEEEEE', lw=0.8)
 ax.set_title(name, fontsize=20)
 ax.set_xlabel('Year', fontsize=fsize)
 ax.set_ylabel('Water Level (ft)',fontsize=fsize)
 ax.legend(loc = [1.04, 0.40], fontsize = fsize)
-# # Drought Year Shading
-# a = 2011
-# b = 2015.999
-# c = 2018.001
-# d = 2018.999
-# e = 2006
-# f = 2007.999
-# plt.axvspan(a, b, color='#ffa6b8', alpha=0.5, lw=0, label="Drought")
-# plt.axvspan(c, d, color='#ffa6b8', alpha=0.5, lw=0)
-# plt.axvspan(e, f, color='#ffa6b8', alpha=0.5, lw=0)
+# Drought Year Shading
+a = 1975
+b = 1977.5
+c = 1980.5
+d = 1981.5
+e = 1988.5
+f = 1990.5
+g = 1995.5
+h = 1997.5
+i = 1998.5
+j = 2004.5
+k = 2005.5
+l = 2009.5
+m = 2010.5
+n = 2018.5
+plt.axvspan(a, b, color=drought_color, alpha=0.5, lw=0, label="Drought")
+plt.axvspan(c, d, color=drought_color, alpha=0.5, lw=0)
+plt.axvspan(e, f, color=drought_color, alpha=0.5, lw=0)
+plt.axvspan(g, h, color=drought_color, alpha=0.5, lw=0)
+plt.axvspan(i, j, color=drought_color, alpha=0.5, lw=0)
+plt.axvspan(k, l, color=drought_color, alpha=0.5, lw=0)
+plt.axvspan(m, n, color=drought_color, alpha=0.5, lw=0)
+
 # # Wet years (2005 and 2010)
 # g = 2005
 # h = 2010
 # ax.axvspan(g, e, color=wet_color, alpha=0.5, lw=0, label="Wet Years")
 # ax.axvspan(h, a, color=wet_color, alpha=0.5, lw=0)
+ax.minorticks_on()
 
 fig.set_dpi(600.0)
 
-plt.savefig(outputpath+name+'_byGW', bbox_inches='tight')
+# plt.savefig(outputpath+name+'_Drought', bbox_inches='tight')
+# plt.savefig(outputpath+name+'_byGW', bbox_inches='tight')
 # plt.savefig(outputpath+name+'_bySW', bbox_inches='tight')
-
+# plt.savefig(outputpath+name+'_5', bbox_inches='tight')
 
 #%% Plotting individual divisions
 ds = cat_wl2
@@ -2344,19 +2360,20 @@ mx_yr = 2020
 Name = str(min_yr) + " to " + str(mx_yr) + " Linear Regression:"
 print(Name)
 
-#f = ds[(ds.index >= min_yr) & (ds.index <= mx_yr)]
+f = ds[(ds.index >= min_yr) & (ds.index <= mx_yr)]
 
 # -- For Multiple years --
-Name = "Linear Regression for Non-drought years: "
-wetyrs = [2005, 2008, 2009, 2010, 2016, 2017, 2019]
-dryyrs = [2002, 2003, 2004, 2006, 2007, 2011, 2012, 2013, 2014, 2015, 2018]
-#f = ds[(ds.index == wetyrs)]
+# Name = "Linear Regression for Non-drought years: "
+# wetyrs = [2005, 2008, 2009, 2010, 2016, 2017, 2019]
+# dryyrs = [2002, 2003, 2004, 2006, 2007, 2011, 2012, 2013, 2014, 2015, 2018]
+# #f = ds[(ds.index == wetyrs)]
 
-f = pd.DataFrame()
-for i in dryyrs:
-        wut = ds[(ds.index == i)]
-        f = f.append(wut)
-print(f)
+# f = pd.DataFrame()
+# for i in dryyrs:
+#         wut = ds[(ds.index == i)]
+#         f = f.append(wut)
+# print(f)
+# -----------------------
 
 stats = pd.DataFrame()
 for i in range(1, 12, 1):
@@ -2400,10 +2417,135 @@ for i in range(1, 12, 1):
 #        stats[i] = stats[i].append(slope)
 
 #   df = df.append({'A': i}, ignore_index=True)
-stats.index = col.values()
 stats1 = stats.transpose()
-del stats1['Reservation']
 stats1
+
+# %%
+# For Water Levels
+ds = cat_wl2
+data_type = "Water Levels"
+min_yr = 1997
+mx_yr = 2020
+betterlabels = ['CAP','Unregulated Groundwater','Mixed GW/SW','Regulated Groundwater','Surface Water'] 
+Name = str(min_yr) + " to " + str(mx_yr) + " Linear Regression for " + data_type
+print(Name)
+
+f = ds[(ds.index >= min_yr) & (ds.index <= mx_yr)]
+columns = ds.columns
+column_list = ds.columns.tolist()
+# -- For Multiple years --
+Name = "Linear Regression during Wet and Normal years for " + data_type
+# wetyrs = [2005, 2008, 2009, 2010, 2016, 2017, 2019]
+# dryyrs = [2002, 2003, 2004, 2006, 2007, 2011, 2012, 2013, 2014, 2015, 2018]
+dryyrs = [1975,1976,1977
+          ,1981,1989,1990
+          ,1996,1997,
+          1999,2000,2001,2002,2003,2004
+          ,2006,2007,2008,2009
+          ,2011, 2012, 2013, 2014, 2015, 2016,2017,2018]
+wetyrs = [1978,1979,1980,1982,1983,1984,1984,1986,1987,1988
+          , 1991,1992,1993,1994,1995,
+          1998,2005,2010,2019]
+
+#f = ds[(ds.index == wetyrs)]
+
+f = pd.DataFrame()
+for i in wetyrs:
+        wut = ds[(ds.index == i)]
+        f = f.append(wut)
+# print(f)
+columns = ds.columns
+column_list = ds.columns.tolist()
+# ------------------------
+
+stats = pd.DataFrame()
+for i in column_list:
+        df = f[i]
+        #print(df)
+        y=np.array(df.values, dtype=float)
+        x=np.array(pd.to_datetime(df).index.values, dtype=float)
+        slope, intercept, r_value, p_value, std_err =sp.linregress(x,y)
+        # print('Georegion Number: ', i, '\n', 
+        #        'slope = ', slope, '\n', 
+        #        'intercept = ', intercept, '\n', 
+        #        'r^2 = ', r_value, '\n', 
+        #        'p-value = ', p_value, '\n', 
+        #        'std error = ', std_err)      
+        stats = stats.append({'slope': slope, 
+                              'int':intercept, 
+                              'rsq':r_value*r_value, 
+                              'p_val':p_value, 
+                              'std_err':std_err, 
+                              'mean': np.mean(y),
+                              'var': np.var(y),
+                              'sum': np.sum(y)
+                              },
+                              ignore_index=True)
+        # xf = np.linspace(min(x),max(x),100)
+        # xf1 = xf.copy()
+        # xf1 = pd.to_datetime(xf1)
+        # yf = (slope*xf)+intercept
+        # fig, ax = plt.subplots(1, 1)
+        # ax.plot(xf1, yf,label='Linear fit', lw=3)
+        # df.plot(ax=ax,marker='o', ls='')
+        # ax.set_ylim(max(y),0)
+        # ax.legend()
+
+
+stats.index = betterlabels
+stats1 = stats.transpose()
+print(stats1)
+
+# -- Data visualization --
+xf = np.linspace(min(x),max(x),100)
+xf1 = xf.copy()
+m1 = round(stats1.loc['slope','CAP'], 2)
+m2 = round(stats1.loc['slope','Unregulated Groundwater'], 2)
+m3 = round(stats1.loc['slope','Mixed GW/SW'], 2)
+m4 = round(stats1.loc['slope','Regulated Groundwater'], 2)
+m5 = round(stats1.loc['slope','Surface Water'], 2)
+yint1 = round(stats1.loc['int','CAP'], 2)
+yint2 = round(stats1.loc['int','Unregulated Groundwater'], 2)
+yint3 = round(stats1.loc['int','Mixed GW/SW'], 2)
+yint4 = round(stats1.loc['int','Regulated Groundwater'], 2)
+yint5 = round(stats1.loc['int','Surface Water'], 2)
+pval1 = round(stats1.loc['p_val', 'CAP'], 4)
+pval2 = round(stats1.loc['p_val', 'Unregulated Groundwater'], 4)
+pval3 = round(stats1.loc['p_val', 'Mixed GW/SW'], 4)
+pval4 = round(stats1.loc['p_val', 'Regulated Groundwater'], 4)
+pval5 = round(stats1.loc['p_val', 'Surface Water'], 4)
+
+yf1 = (m1*xf)+yint1
+yf2 = (m2*xf)+yint2
+yf3 = (m3*xf)+yint3
+yf4 = (m4*xf)+yint4
+yf5 = (m5*xf)+yint5
+
+fig, ax = plt.subplots(1, 1)
+ax.plot(xf1, yf1,"-.",color='grey',label='Linear Trendline', lw=1)
+ax.plot(xf1, yf2,"-.",color='grey', lw=1)
+ax.plot(xf1, yf3,"-.",color='grey', lw=1)
+ax.plot(xf1, yf4,"-.",color='grey', lw=1)
+ax.plot(xf1, yf5,"-.",color='grey', lw=1)
+
+f.plot(ax=ax,marker='o', ls='', label=betterlabels)
+# ax.set_xlim(min_yr, mx_yr)
+ax.set_ylim(300,75)
+ax.set_title(data_type)
+plt.figtext(0.95, 0.5, 'CAP equation: y = '+str(m1)+'x + '+str(yint1))
+plt.figtext(0.98, 0.45, 'p-value = ' + str(pval1))
+plt.figtext(0.95, 0.4, 'Unreg GW equation: y = '+str(m2)+'x + '+str(yint2))
+plt.figtext(0.98, 0.35, 'p-value = ' + str(pval2))
+plt.figtext(0.95, 0.3, 'Mix equation: y = '+str(m3)+'x + '+str(yint3))
+plt.figtext(0.98, 0.25, 'p-value = ' + str(pval3))
+plt.figtext(0.95, 0.2, 'Reg GW (No_CAP) equation: y = '+str(m4)+'x + '+str(yint4))
+plt.figtext(0.98, 0.15, 'p-value = ' + str(pval4))
+plt.figtext(0.95, 0.1, 'SW equation: y = '+str(m5)+'x + '+str(yint5))
+plt.figtext(0.98, 0.05, 'p-value = ' + str(pval5))
+
+ax.legend(loc = [1.065, 0.55])
+plt.savefig(outputpath+'Stats/Water_CAT/'+Name, bbox_inches = 'tight')
+stats1.to_csv(outputpath+'Stats/Water_CAT/'+Name+'.csv')
 
 # %% 2. For New Wells
 ds = new_wells_reg2
@@ -2411,26 +2553,33 @@ data_type = "New Wells"
 betterlabels = ['Regulated','Unregulated'] 
 min_yr = 1993
 mx_yr = 2019
-Name = str(min_yr) + " to " + str(mx_yr) + " Linear Regression for " + data_type
+# Name = str(min_yr) + " to " + str(mx_yr) + " Linear Regression for " + data_type
 print(Name)
 
-f = ds[(ds.index >= min_yr) & (ds.index <= mx_yr)]
-columns = ds.columns
-column_list = ds.columns.tolist()
-
-# -- For Multiple years --
-# Name = "Linear Regression during Drought years for " + data_type
-# wetyrs = [2005, 2008, 2009, 2010, 2016, 2017, 2019]
-# dryyrs = [2002, 2003, 2004, 2006, 2007, 2011, 2012, 2013, 2014, 2015, 2018]
-# #f = ds[(ds.index == wetyrs)]
-
-# f = pd.DataFrame()
-# for i in dryyrs:
-#         wut = ds[(ds.index == i)]
-#         f = f.append(wut)
-# # print(f)
+# f = ds[(ds.index >= min_yr) & (ds.index <= mx_yr)]
 # columns = ds.columns
 # column_list = ds.columns.tolist()
+
+# -- For Multiple years --
+Name = "Linear Regression during Drought years for " + data_type
+# wetyrs = [2005, 2008, 2009, 2010, 2016, 2017, 2019]
+# dryyrs = [2002, 2003, 2004, 2006, 2007, 2011, 2012, 2013, 2014, 2015, 2018]
+dryyrs = [1975,1976,1977
+          ,1981,1989,1990
+          ,1996,1997,
+          1999,2000,2001,2002,2003,2004
+          ,2006,2007,2008,2009
+          ,2011, 2012, 2013, 2014, 2015, 2016,2017,2018]
+
+#f = ds[(ds.index == wetyrs)]
+
+f = pd.DataFrame()
+for i in dryyrs:
+        wut = ds[(ds.index == i)]
+        f = f.append(wut)
+# print(f)
+columns = ds.columns
+column_list = ds.columns.tolist()
 # ------------------------
 
 stats = pd.DataFrame()
