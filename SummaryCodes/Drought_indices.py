@@ -33,6 +33,21 @@ datapath = '../MergedData'
 outputpath = '../MergedData/Output_files/'
 shapepath = '../MergedData/Shapefiles/Final_Georegions/'
 
+# %% Creating colors
+c_1 = '#8d5a99' # Reservation
+c_2 = "#d7191c" # Regulated with CAP (Water Category Color)
+c_3 = '#e77a47' # Regulated without CAP (Water Category Color)
+c_4 = '#2cbe21' # Lower CO River - SW (Water Category Color)
+c_5 = '#2f8c73' # Upper CO River - Mixed (Water Category Color)
+c_6 = '#6db7e8' # SE - GW
+c_7 = '#165782' # NW - GW (Water Category color)
+c_8 = '#229ce8' # SC - GW
+c_9 = '#1f78b4' # NE - GW
+c_10 = '#41bf9e' # N - Mixed
+c_11 = '#7adec4' # C - Mixed
+drought_color = '#ffa6b8'
+wet_color = '#b8d3f2'
+
 # %% Read in the file
 filename = 'nClimDiv_AZ_GHCN.txt'
 filepath = os.path.join(datapath, filename)
@@ -51,7 +66,82 @@ nclimdata
 
 # %%
 nclimdata = nclimdata.rename(columns = {'   PDSI':'PDSI', '   PHDI':'PHDI'})
+# %%
+nclimdata = nclimdata.rename(columns={'    PCP':'Precip'})
+precip = nclimdata[['date','Precip']]
+precip['year'] = precip['date'].dt.year
+yearly_precip = pd.pivot_table(precip, index=["year"], values=['Precip'], dropna=False, aggfunc=np.sum)
+yearly_precip.plot()
 
+# %%
+ds = yearly_precip
+minyear=1975
+maxyear=2020
+name = "Average Precipitation for AZ from " + str(minyear) + " to " + str(maxyear)
+min_y = -6
+max_y = 6
+fsize = 12
+
+fig, ax = plt.subplots(figsize = (9,5))
+ax.plot(ds['Precip']
+        # , label='Precip'
+        , color='#e77a47'
+        , lw=2
+        ) 
+
+# ax.plot(ds['wet'],label='wet',color='black',zorder = 5)
+# ax.plot(ds['dry'],label='Cutoff Value',color='black', zorder=5)
+# a = 1975
+# b = 1977.5
+# c = 1980.5
+# d = 1981.5
+# e = 1988.5
+# f = 1990.5
+# g = 1995.5
+# h = 1997.5
+# i = 1998.5
+# j = 2004.5
+# k = 2005.5
+# l = 2009.5
+# m = 2010.5
+# n = 2018.5
+# plt.axvspan(a, b, color=drought_color, alpha=0.5, lw=0, label="Drought")
+# plt.axvspan(c, d, color=drought_color, alpha=0.5, lw=0)
+# plt.axvspan(e, f, color=drought_color, alpha=0.5, lw=0)
+# plt.axvspan(g, h, color=drought_color, alpha=0.5, lw=0)
+# plt.axvspan(i, j, color=drought_color, alpha=0.5, lw=0)
+# plt.axvspan(k, l, color=drought_color, alpha=0.5, lw=0)
+# plt.axvspan(m, n, color=drought_color, alpha=0.5, lw=0)
+
+a = 1988.5
+b = 1989.5
+c = 1995.5
+d = 1996.5
+e = 2001.5
+f = 2003.5
+g = 2005.5
+h = 2007.5
+i = 2011.5
+j = 2014.5
+k = 2017.5
+l= 2018.5
+plt.axvspan(a, b, color=drought_color, alpha=0.5, lw=0, label="Drought")
+plt.axvspan(c, d, color=drought_color, alpha=0.5, lw=0)
+plt.axvspan(e, f, color=drought_color, alpha=0.5, lw=0)
+plt.axvspan(g, h, color=drought_color, alpha=0.5, lw=0)
+plt.axvspan(i, j, color=drought_color, alpha=0.5, lw=0)
+plt.axvspan(k, l, color=drought_color, alpha=0.5, lw=0)
+
+ax.set_xlim(minyear,maxyear)
+# ax.set_ylim(min_y,max_y)
+ax.minorticks_on()
+ax.grid(visible=True,which='major')
+ax.grid(which='minor',color='#EEEEEE', lw=0.8)
+ax.set_title(name, fontsize=14)
+ax.set_xlabel('Year', fontsize=fsize)
+ax.set_ylabel('Index Values',fontsize=fsize)
+ax.legend(loc = [1.04, 0.40], fontsize = fsize)
+fig.set_dpi(600.0)
 # %%
 pdsi = nclimdata[['date','PDSI','PHDI']]
 pdsi
@@ -80,14 +170,14 @@ drought_color = '#ffa6b8'
 wet_color = '#b8d3f2'
 
 # %%
-value = 1
+value = 3
 yearly_pdsi['wet'] = value
 yearly_pdsi['dry'] = -value
 yearly_pdsi
 #  PDSI
 ds = yearly_pdsi
-minyear=1975
-maxyear=2020
+minyear=1999
+maxyear=2019
 name = "Average PDSI and PHDI for AZ from " + str(minyear) + " to " + str(maxyear)
 min_y = -6
 max_y = 6
@@ -106,24 +196,46 @@ ax.plot(ds['PHDI'], label='PHDI'
         , lw=1
         ) 
 # ax.plot(ds['wet'],label='wet',color='black',zorder = 5)
-# ax.plot(ds['dry'],label='Cutoff Value',color='black', zorder=5)
-a = 1975
-b = 1977.5
-c = 1980.5
-d = 1981.5
-e = 1988.5
-f = 1990.5
-g = 1995.5
-h = 1997.5
-i = 1998.5
-j = 2004.5
-k = 2005.5
-l = 2009.5
-m = 2010.5
+ax.plot(ds['dry'],label='Cutoff Value',color='black', zorder=5)
+# a = 1975
+# b = 1977.5
+# c = 1980.5
+# d = 1981.5
+# e = 1988.5
+# f = 1990.5
+# g = 1995.5
+# h = 1997.5
+# i = 1998.5
+# j = 2004.5
+# k = 2005.5
+# l = 2009.5
+# m = 2010.5
+# n = 2018.5
+# plt.axvspan(a, b, color=drought_color, alpha=0.5, lw=0, label="Drought")
+# plt.axvspan(c, d, color=drought_color, alpha=0.5, lw=0)
+# plt.axvspan(e, f, color=drought_color, alpha=0.5, lw=0)
+# plt.axvspan(g, h, color=drought_color, alpha=0.5, lw=0)
+# plt.axvspan(i, j, color=drought_color, alpha=0.5, lw=0)
+# plt.axvspan(k, l, color=drought_color, alpha=0.5, lw=0)
+# plt.axvspan(m, n, color=drought_color, alpha=0.5, lw=0)
+
+a = 1988.5
+b = 1989.5
+c = 1995.5
+d = 1996.5
+# e = 1999.5
+# f = 2000.5
+g = 2001.5
+h = 2003.5
+i = 2005.5
+j = 2007.5
+k = 2011.5
+l = 2014.5
+m = 2017.5
 n = 2018.5
-plt.axvspan(a, b, color=drought_color, alpha=0.5, lw=0, label="Drought")
+plt.axvspan(a, b, color=drought_color, alpha=0.5, lw=0, label="Severe Drought")
 plt.axvspan(c, d, color=drought_color, alpha=0.5, lw=0)
-plt.axvspan(e, f, color=drought_color, alpha=0.5, lw=0)
+# plt.axvspan(e, f, color=drought_color, alpha=0.5, lw=0)
 plt.axvspan(g, h, color=drought_color, alpha=0.5, lw=0)
 plt.axvspan(i, j, color=drought_color, alpha=0.5, lw=0)
 plt.axvspan(k, l, color=drought_color, alpha=0.5, lw=0)
@@ -139,10 +251,11 @@ ax.set_xlabel('Year', fontsize=fsize)
 ax.set_ylabel('Index Values',fontsize=fsize)
 ax.legend(loc = [1.04, 0.40], fontsize = fsize)
 fig.set_dpi(600.0)
+plt.savefig(outputpath+name+'cutoffval_'+str(value))
 
 
 # %%
-value = 1
+value = 3
 print("Drought is considered > -", value)
 yearly_pdsi['wet'] = value
 yearly_pdsi['dry'] = -value
@@ -152,6 +265,8 @@ drought = yearly_pdsi[yearly_pdsi['PHDI']<=-value]
 wet = yearly_pdsi[yearly_pdsi['PHDI']>=value]
 drought = drought[drought.index >= 1975]
 wet = wet[wet.index >= 1975]
+
+drought
 
 print()
 print("Drought Year Info:")
@@ -196,6 +311,7 @@ ax.set_xlabel('Year', fontsize=fsize)
 ax.set_ylabel('Index Values',fontsize=fsize)
 # ax.legend(loc = [1.04, 0.40], fontsize = fsize)
 fig.set_dpi(600.0)
+plt.savefig(outputpath+name+'cutoffval_'+str(value))
 
 #%%
 # value = 1.5
@@ -241,6 +357,28 @@ ax.plot(ds['wet'],color='black',zorder = 5)
 ax.plot(ds['dry'],color='black', zorder=5)
 ax.plot(drought['PDSI'],'o',label='dry',color='red', zorder=5)
 ax.plot(wet['PDSI'],'o',label='wet',color='blue', zorder=5)
+
+a = 1988.5
+b = 1989.5
+c = 1995.5
+d = 1996.5
+# e = 1999.5
+# f = 2000.5
+g = 2001.5
+h = 2003.5
+i = 2005.5
+j = 2007.5
+k = 2011.5
+l = 2014.5
+m = 2017.5
+n = 2018.5
+plt.axvspan(a, b, color=drought_color, alpha=0.5, lw=0, label="Drought")
+plt.axvspan(c, d, color=drought_color, alpha=0.5, lw=0)
+# plt.axvspan(e, f, color=drought_color, alpha=0.5, lw=0)
+plt.axvspan(g, h, color=drought_color, alpha=0.5, lw=0)
+plt.axvspan(i, j, color=drought_color, alpha=0.5, lw=0)
+plt.axvspan(k, l, color=drought_color, alpha=0.5, lw=0)
+plt.axvspan(m, n, color=drought_color, alpha=0.5, lw=0)
 
 ax.set_xlim(minyear,maxyear)
 ax.set_ylim(min_y,max_y)
