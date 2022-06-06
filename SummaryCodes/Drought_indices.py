@@ -106,7 +106,7 @@ ax.plot(ds['PHDI'], label='PHDI'
         , lw=1
         ) 
 # ax.plot(ds['wet'],label='wet',color='black',zorder = 5)
-ax.plot(ds['dry'],label='Cutoff Value',color='black', zorder=5)
+# ax.plot(ds['dry'],label='Cutoff Value',color='black', zorder=5)
 a = 1975
 b = 1977.5
 c = 1980.5
