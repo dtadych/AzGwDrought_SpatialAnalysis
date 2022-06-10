@@ -114,7 +114,7 @@ ax.plot(ds['Precip']
 # plt.axvspan(m, n, color=drought_color, alpha=0.5, lw=0)
 
 a = 1988.5
-b = 1989.5
+b = 1990.5
 c = 1995.5
 d = 1996.5
 e = 2001.5

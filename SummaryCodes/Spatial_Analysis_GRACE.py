@@ -17,6 +17,7 @@ from importlib.resources import path
 from itertools import count
 import os
 from pydoc import cli
+from tkinter import Label
 from typing import Mapping
 #import affine
 from geopandas.tools.sjoin import sjoin
@@ -204,7 +205,8 @@ esmr = easymore()
 
 # specifying EASYMORE objects
 # name of the case; the temporary, remapping and remapped file names include case name
-esmr.case_name                = 'easymore_GRACE_AZ_irrAg'              
+# esmr.case_name                = 'easymore_GRACE_AZ_irrAg'
+esmr.case_name                = 'easymore_GRACE_georeg'              
 # temporary path that the EASYMORE generated GIS files and remapped file will be saved
 esmr.temp_dir                 = '../temporary/'
 
@@ -221,8 +223,8 @@ esmr.temp_dir                 = '../temporary/'
 #esmr.target_shp = '/Users/danielletadych/Documents/PhD_Materials/github_repos/AzGwDrought_SpatialAnalysis/MergedData/Shapefiles/AZ_counties.shp'
 #esmr.target_shp = '/Users/danielletadych/Documents/PhD_Materials/github_repos/AzGwDrought_SpatialAnalysis/MergedData/Output_files/Georegions_AGU.shp'
 #esmr.target_shp = 'Georegions_reproject.shp'
-# esmr.target_shp = 'georeg_reproject_fixed.shp'
-esmr.target_shp = 'Ag_NonAG_reproject_fixedgeom.shp'
+esmr.target_shp = 'georeg_reproject_fixed.shp'
+# esmr.target_shp = 'Ag_NonAG_reproject_fixedgeom.shp'
 #esmr.target_shp = 'counties_reproject.shp'
 # name of netCDF file(s); multiple files can be specified with *
 # esmr.source_nc                = '../data/Source_nc_ERA5/ERA5_NA_*.nc'
@@ -284,14 +286,14 @@ shp_target.plot(column= 'value', edgecolor='k',linewidth = 1, ax = axes , legend
 #plt.savefig('../fig/Example1_B.png')
 
 # %% Now, read in the remapped csv
-# filename = 'easymore_GRACE_georeg_remapped_lwe_thickness__2002-04-18-00-00-00.csv'
-filename = 'easymore_GRACE_AZ_irrAg_remapped_lwe_thickness__2002-04-18-00-00-00.csv'
+filename = 'easymore_GRACE_georeg_remapped_lwe_thickness__2002-04-18-00-00-00.csv'
+# filename = 'easymore_GRACE_AZ_irrAg_remapped_lwe_thickness__2002-04-18-00-00-00.csv'
 filepath = os.path.join(outputpath, filename)
 grace_remapped = pd.read_csv(filepath)
 grace_remapped.head()
 # %% Gotta fix those headers
-# ID_key = shp_target[['GEO_Region', 'ID_t']]
-ID_key = shp_target[['GRACE_Cat', 'ID_t']]
+ID_key = shp_target[['GEO_Region', 'ID_t']]
+# ID_key = shp_target[['GRACE_Cat', 'ID_t']]
 ID_key
 
 # %%
@@ -307,7 +309,9 @@ del grace_remapped['Unnamed: 0'] # tbh not really sure why this column is here b
 # %%
 grace_remapped
 # %%
-georeg_list = ID_key['GRACE_Cat'].values.tolist()
+georeg_list = ID_key['GEO_Region'].values.tolist()
+
+# georeg_list = ID_key['GRACE_Cat'].values.tolist()
 georeg_list
 
 # %%
@@ -777,10 +781,10 @@ plt.ylabel('LWE (cm)')
 # plt.savefig('Individual_Pixels_Phoenix_Wilcox')
 
 # %%
-platitude = grace_dataset['lwe_thickness']['lat'].values[492]
-plongitude = grace_dataset['lwe_thickness']['lon'].values[272]
+platitude = lwe2['lat'].values[492]
+plongitude = lwe2['lon'].values[272]
 
-print("The current latitude is ", platitude, 'and longitude is -', 180 - plongitude)
+print("The current latitude is ", platitude, 'and longitude is', plongitude)
 
 phoenix = lwe2.sel(lat = platitude, lon = plongitude)
 phoenix
@@ -809,10 +813,10 @@ phoenix_df_year
 del phoenix_df['year']
 
 # %%
-ylatitude = grace_dataset['lwe_thickness']['lat'].values[490]
-ylongitude = grace_dataset['lwe_thickness']['lon'].values[261]
+ylatitude = lwe2['lat'].values[490]
+ylongitude = lwe2['lon'].values[261]
 
-print("The current latitude is ", platitude, 'and longitude is -', 180 - plongitude)
+print("The current latitude is ", platitude, 'and longitude is ', plongitude)
 
 yuma = lwe2.sel(lat = ylatitude, lon = ylongitude)
 yuma
@@ -839,16 +843,17 @@ yuma_df_year = pd.pivot_table(yuma_df, index=["year"], values=[0], dropna=False,
 yuma_df_year
 
 # %%
-wlatitude = grace_dataset['lwe_thickness']['lat'].values[486]
-wlongitude = grace_dataset['lwe_thickness']['lon'].values[281]
+wlatitude = lwe2['lat'].values[486]
+wlongitude = lwe2['lon'].values[281]
 
 wilcox = lwe2.sel(lat = wlatitude, lon = wlongitude)
 wilcox
 
-print("The current latitude is ", wlatitude, 'and longitude is -', 180 - wlongitude)
+print("The current latitude is ", wlatitude, 'and longitude is', wlongitude)
 
 wilcox.plot()
 
+# %%
 wilcox_df = pd.DataFrame(wilcox)
 wilcox_df
 
@@ -869,13 +874,13 @@ wilcox_df_year = pd.pivot_table(wilcox_df, index=["year"], values=[0], dropna=Fa
 wilcox_df_year
 
 #%%
-ulatitude = grace_dataset['lwe_thickness']['lat'].values[500]
-ulongitude = grace_dataset['lwe_thickness']['lon'].values[262]
+ulatitude = lwe2['lat'].values[500]
+ulongitude = lwe2['lon'].values[262]
 
 upperco = lwe2.sel(lat = ulatitude, lon = ulongitude)
 upperco
 
-print("The current latitude is ", ulatitude, 'and longitude is -', 180 - ulongitude)
+print("The current latitude is ", ulatitude, 'and longitude is', ulongitude)
 
 upperco.plot()
 
@@ -898,6 +903,73 @@ upperco_df.head()
 upperco_df_year = pd.pivot_table(upperco_df, index=["year"], values=[0], dropna=False, aggfunc=np.mean)
 upperco_df_year
 
+#%% North Mixed Pixel 36.324261, -112.156770
+nlatitude = lwe2['lat'].values[505]
+nlongitude = lwe2['lon'].values[271]
+
+north = lwe2.sel(lat = nlatitude, lon = nlongitude)
+north
+
+print("The current latitude is ", nlatitude, 'and longitude is ', nlongitude)
+# %%
+pixel = north
+pixel.plot()
+
+pixel_df = pd.DataFrame(pixel)
+pixel_df
+
+pixel_df = pixel_df.reset_index()
+pixel_df
+
+pixel_df['index'] = datetimeindex
+pixel_df
+
+pixel_df.set_index('index', inplace=True)
+pixel_df
+
+# Extract the year from the date column and create a new column year
+pixel_df['year'] = pd.DatetimeIndex(pixel_df.index).year
+pixel_df.head()
+
+pixel_df_year = pd.pivot_table(pixel_df, index=["year"], values=[0], dropna=False, aggfunc=np.mean)
+
+north_df_year = pixel_df_year.copy()
+north_df_year.plot()
+
+# %% Pixel Checking Northeast: 34.337216, -111.371860
+
+nelatitude = lwe2['lat'].values[497]
+nelongitude = lwe2['lon'].values[274]
+
+northe = lwe2.sel(lat = nelatitude, lon = nelongitude)
+northe
+
+print("The current latitude is ", nelatitude, 'and longitude is',  nelongitude)
+
+# %%
+pixel = northe
+pixel.plot()
+
+pixel_df = pd.DataFrame(pixel)
+pixel_df
+
+pixel_df = pixel_df.reset_index()
+pixel_df
+
+pixel_df['index'] = datetimeindex
+pixel_df
+
+pixel_df.set_index('index', inplace=True)
+pixel_df
+
+# Extract the year from the date column and create a new column year
+pixel_df['year'] = pd.DatetimeIndex(pixel_df.index).year
+pixel_df.head()
+
+pixel_df_year = pd.pivot_table(pixel_df, index=["year"], values=[0], dropna=False, aggfunc=np.mean)
+
+northe_df_year = pixel_df_year.copy()
+northe_df_year.plot()
 # %%
 # ---- Plotting Averages Based off Shape File Mask ----
 # Check the cooridnate systems
@@ -974,10 +1046,12 @@ ax.plot(phoenix_df_year, color='red', label = 'Phoenix AMA - GW Regulated')
 ax.plot(yuma_df_year, color='green', label = 'Yuma Area - Colorado River Water')
 ax.plot(wilcox_df_year, color='orange', label = 'Wilcox Area - GW Unregulated')
 ax.plot(upperco_df_year, color='teal', label = 'Upper CO River Area - Mixed SW and GW')
+ax.plot(north_df_year, color=c_10, label = 'North - Mixed SW and GW')
+
 
 ax.set(title="Individual GRACE Pixels - Change in Liquid Water Equivalent from the 2004-2009 Baseline")
 ax.legend()
-ax.set_xlim(2010,2020)
+ax.set_xlim(2002,2020)
 ax.grid(zorder = 0)
 plt.xlabel('Year')
 plt.ylabel('LWE Change (cm)')
@@ -1144,5 +1218,256 @@ ax.axvspan(h, a, color=wet_color, alpha=0.5, lw=0)
 ax.legend(loc = [0.05, 0.15], fontsize = fsize)
 
 # plt.savefig(outputpath+name+'_AZavg_drought_noag')
-# %% Now let's run some statistics
 
+# %%
+ds = grace_yearlyavg
+
+f, ax = plt.subplots(figsize=(12, 6))
+
+ax.plot(cm_df_year, color='#2F2F2F', label='Arizona Average')
+ax.plot(phoenix_df_year, color='red', label = 'Phoenix AMA - GW Regulated')
+ax.plot(yuma_df_year, color='green', label = 'Yuma Area - Colorado River Water')
+ax.plot(wilcox_df_year, color='orange', label = 'Wilcox Area - GW Unregulated')
+ax.plot(upperco_df_year, color='teal', label = 'Upper CO River Area - Mixed SW and GW')
+ax.plot(north_df_year, color=c_10, label = 'North - Mixed SW and GW')
+ax.plot(ds['Northeast - GW Dominated'], color=c_9, label='Northeast - GW Dominated')
+ax.plot(ds['South central - GW Dominated'], color=c_8, label='South central - GW Dominated')
+ax.plot(ds['Southeast - GW Dominated'], color=c_6, label='Southeast - GW Dominated')
+
+ax.set(title="Change in Liquid Water Equivalent from the 2004-2009 Baseline")
+ax.legend()
+ax.set_xlim(2002,2020)
+ax.grid(zorder = 0)
+plt.xlabel('Year')
+plt.ylabel('LWE Change (cm)')
+
+# %%
+ds = grace_yearlyavg
+maxyr = 2020
+minyr = 2002
+name = "Change in Liquid Water Equivalent from the 2004-2009 Baseline"
+
+f, ax = plt.subplots(figsize=(12, 8))
+
+ax.plot(cm_df_year, color='black', label='Arizona Average', lw = 4)
+ax.plot(phoenix_df_year, '-.', color='red', label = 'Phoenix AMA - Regulated GW')
+ax.plot(yuma_df_year, '-.', color='green', label = 'Yuma Area - Colorado River Water')
+# ax.plot(wilcox_df_year, '-.', color='orange', label = 'Wilcox Area - GW Unregulated')
+ax.plot(upperco_df_year, '-.', color='teal', label = 'Upper CO River Area - Mixed SW and GW')
+ax.plot(north_df_year, '-.', color=c_10, label = 'North - Mixed SW and GW')
+ax.plot(ds['Northeast - GW Dominated'], color=c_9, label='Northeast - GW Dominated')
+# ax.plot(northe_df_year, '-.',color=c_9, label = 'Northeast - GW Dominated')
+ax.plot(ds['South central - GW Dominated'], color=c_8, label='South central - GW Dominated')
+ax.plot(ds['Southeast - GW Dominated'], color=c_6, label='Southeast - GW Dominated')
+
+a = 1988+0.5
+b = 1989+0.5
+c = 1995+0.5
+d = 1996+0.5
+# e = 1999
+# f = 2000
+g = 2001+0.5
+h = 2003+0.5
+i = 2005+0.5
+j = 2007+0.5
+k = 2011+0.5
+l = 2014+0.5
+m = 2017+0.5
+n = 2018+0.5
+plt.axvspan(a, b, color=drought_color, alpha=0.5, lw=0, label="Severe Drought")
+plt.axvspan(c, d, color=drought_color, alpha=0.5, lw=0)
+# plt.axvspan(e, f, color=drought_color, alpha=0.5, lw=0)
+plt.axvspan(g, h, color=drought_color, alpha=0.5, lw=0)
+plt.axvspan(i, j, color=drought_color, alpha=0.5, lw=0)
+plt.axvspan(k, l, color=drought_color, alpha=0.5, lw=0)
+plt.axvspan(m, n, color=drought_color, alpha=0.5, lw=0)
+
+# ax.axvspan(2017, 2018, color='grey', alpha=0.5, lw=0, label="Satellite relaunch gap")
+
+# ax.minorticks_on()
+ax.grid(visible=True,which='major')
+# ax.grid(which='minor',color='#EEEEEE', lw=0.8)
+
+ax.set(title=name)
+ax.legend(loc='lower left')
+ax.set_xlim(minyr,maxyr)
+# ax.grid(zorder = 0)
+plt.xlabel('Year')
+plt.ylabel('LWE Change (cm)')
+fig.set_dpi(600.0)
+
+plt.savefig(outputpath+name+str(minyr)+'_'+str(maxyr))
+
+
+# %% Comparing shapes to pixels
+ds = grace_yearlyavg
+
+f, ax = plt.subplots(figsize=(12, 8))
+
+ax.plot(cm_df_year, color='grey', label='Arizona Average', lw = 4)
+# ax.plot(phoenix_df_year, '-.', color='black', label = 'Phoenix AMA (Pixel)',lw = 2,zorder = 3)
+# ax.plot(ds['Regulated with CAP'], color=c_2, label='Regulated with CAP',lw=3)
+# ax.plot(yuma_df_year, '-.', color='black', label = 'Yuma Area (Pixel)')
+# ax.plot(ds['Lower Colorado River - SW Dominated'], color=c_4, label='Lower Colorado River - SW Dominated')
+# ax.plot(wilcox_df_year, '-.', color='black', label = 'Wilcox Area (Pixel)')
+# ax.plot(ds['Southeast - GW Dominated'], color=c_6, label='Southeast - GW Dominated')
+# ax.plot(upperco_df_year, '-.', color='black', label = 'Upper CO River Area - Mixed SW and GW')
+# ax.plot(ds['Upper Colorado River - Mixed'], color=c_5, label='Upper Colorado River - Mixed')
+ax.plot(north_df_year, '-.', color='black', label = 'North (Pixel)')
+ax.plot(ds['Norh - Mixed'], color=c_10, label='North - Mixed')
+# ax.plot(northe_df_year, '-.',color='black', label = 'Northeast (Pixel)')
+# ax.plot(ds['Northeast - GW Dominated'], color=c_9, label='Northeast - GW Dominated')
+# ax.plot(ds['South central - GW Dominated'], color=c_8, label='South central - GW Dominated')
+
+# ax.axvspan(2017, 2018, color='grey', alpha=0.5, lw=0, label="Satellite relaunch gap")
+
+# ax.minorticks_on()
+ax.grid(visible=True,which='major')
+# ax.grid(which='minor',color='#EEEEEE', lw=0.8)
+name = "Comparing Pixels to Remapped values"
+ax.set(title=name)
+ax.legend(loc='lower left')
+ax.set_xlim(2002,2020)
+# ax.grid(zorder = 0)
+plt.xlabel('Year')
+plt.ylabel('LWE Change (cm)')
+fig.set_dpi(600.0)
+plt.savefig(outputpath+name+'_6')
+
+# %% Subtracting off the Arizona Average
+Pixel_df_year = phoenix_df_year.copy()
+Pixel_df_year = Pixel_df_year.rename(columns = {0:'Phoenix'})
+Pixel_df_year['Yuma'] = yuma_df_year[0]
+Pixel_df_year['Wilcox'] = wilcox_df_year[0]
+Pixel_df_year['Upper_Co'] = upperco_df_year[0]
+Pixel_df_year['North'] = north_df_year[0]
+Pixel_df_year['Northeast'] = northe_df_year[0]
+Pixel_df_year
+
+# %%
+Pixel_anom = Pixel_df_year.copy()
+for i in Pixel_anom.columns:
+    Pixel_anom[i] = Pixel_anom[i]-cm_df_year[0]
+Pixel_anom
+Pixel_anom.plot()
+# %%
+maxyr = 2020
+minyr = 2002
+name = "LWE minus Arizona Average (Changes from Arizona Average) - Pixels"
+
+f, ax = plt.subplots(figsize=(12, 8))
+
+ax.plot(Pixel_anom, label=Pixel_anom.columns)
+ax.grid(visible=True,which='major')
+# ax.grid(which='minor',color='#EEEEEE', lw=0.8)
+
+ax.set(title=name)
+ax.legend(loc='lower left')
+ax.set_xlim(minyr,maxyr)
+# ax.grid(zorder = 0)
+plt.xlabel('Year')
+plt.ylabel('LWE Change (cm)')
+fig.set_dpi(600.0)
+plt.savefig(outputpath+name)
+# %%
+remap_anom = grace_yearlyavg.copy()
+for i in remap_anom.columns:
+    remap_anom[i] = remap_anom[i]-cm_df_year[0]
+remap_anom
+remap_anom.plot()
+# %%
+ds = remap_anom
+name = "LWE minus Arizona Average (Changes from Arizona Average) - Remapped Values"
+ylabel = "Liquid Water Equivalent (cm)"
+minyear=2002
+maxyear=2020
+min_y = -5
+max_y = 3
+fsize = 14
+
+# For the actual figure
+fig, ax = plt.subplots(2,2,figsize=(20,12))
+#fig.tight_layout()
+fig.suptitle(name, fontsize=20, y=0.91)
+fig.supylabel(ylabel, fontsize = 14, x=0.09)
+#ax[1,1].plot(ds['Reservation'], label='Reservation', color='#8d5a99')
+ax[0,0].plot(ds['Regulated with CAP'], label='Regulated with CAP', color=c_2) 
+ax[0,1].plot(ds['Regulated with CAP'], label='Regulated with CAP', color=c_2) 
+ax[1,0].plot(ds['Regulated without CAP'], label='Regulated without CAP', color=c_3) 
+ax[1,1].plot(ds['Regulated without CAP'], label='Regulated without CAP', color=c_3) 
+ax[0,0].plot(ds['Lower Colorado River - SW Dominated'], color=c_4, label='Lower Colorado River - SW Dominated')
+ax[0,1].plot(ds['Upper Colorado River - Mixed'], color=c_5, label='Upper Colorado River - Mixed')
+ax[0,1].plot(ds['Norh - Mixed'], color=c_10, label='North - Mixed')
+ax[0,1].plot(ds['Central - Mixed'], color=c_11, label='Central - Mixed')
+ax[1,0].plot(ds['Northwest - GW Dominated'], color=c_7, label='Northwest - GW Dominated')
+ax[1,1].plot(ds['Northeast - GW Dominated'], color=c_9, label='Northeast - GW Dominated')
+ax[1,0].plot(ds['South central - GW Dominated'], color=c_8, label='South central - GW Dominated')
+ax[1,1].plot(ds['Southeast - GW Dominated'], color=c_6, label='Southeast - GW Dominated')
+
+a = 1988.5
+b = 1989.5
+c = 1995.5
+d = 1996.5
+e = 2001.5
+f = 2003.5
+g = 2005.5
+h = 2007.5
+i = 2011.5
+j = 2014.5
+k = 2017.5
+l= 2018.5
+
+
+ax[0,0].axvspan(a, b, color=drought_color, alpha=0.5, lw=0, label="Drought")
+ax[0,0].axvspan(c, d, color=drought_color, alpha=0.5, lw=0)
+ax[0,0].axvspan(e, f, color=drought_color, alpha=0.5, lw=0)
+ax[0,0].axvspan(g, h, color=drought_color, alpha=0.5, lw=0)
+ax[0,0].axvspan(i, j, color=drought_color, alpha=0.5, lw=0)
+ax[0,0].axvspan(k, l, color=drought_color, alpha=0.5, lw=0)
+
+ax[1,0].axvspan(a, b, color=drought_color, alpha=0.5, lw=0, label="Drought")
+ax[1,0].axvspan(c, d, color=drought_color, alpha=0.5, lw=0)
+ax[1,0].axvspan(e, f, color=drought_color, alpha=0.5, lw=0)
+ax[1,0].axvspan(g, h, color=drought_color, alpha=0.5, lw=0)
+ax[1,0].axvspan(i, j, color=drought_color, alpha=0.5, lw=0)
+ax[1,0].axvspan(k, l, color=drought_color, alpha=0.5, lw=0)
+
+ax[0,1].axvspan(a, b, color=drought_color, alpha=0.5, lw=0, label="Drought")
+ax[0,1].axvspan(c, d, color=drought_color, alpha=0.5, lw=0)
+ax[0,1].axvspan(e, f, color=drought_color, alpha=0.5, lw=0)
+ax[0,1].axvspan(g, h, color=drought_color, alpha=0.5, lw=0)
+ax[0,1].axvspan(i, j, color=drought_color, alpha=0.5, lw=0)
+ax[0,1].axvspan(k, l, color=drought_color, alpha=0.5, lw=0)
+
+ax[1,1].axvspan(a, b, color=drought_color, alpha=0.5, lw=0, label="Drought")
+ax[1,1].axvspan(c, d, color=drought_color, alpha=0.5, lw=0)
+ax[1,1].axvspan(e, f, color=drought_color, alpha=0.5, lw=0)
+ax[1,1].axvspan(g, h, color=drought_color, alpha=0.5, lw=0)
+ax[1,1].axvspan(i, j, color=drought_color, alpha=0.5, lw=0)
+ax[1,1].axvspan(k, l, color=drought_color, alpha=0.5, lw=0)
+
+ax[0,0].set_xlim(minyear,maxyear)
+ax[0,1].set_xlim(minyear,maxyear)
+ax[1,0].set_xlim(minyear,maxyear)
+ax[1,1].set_xlim(minyear,maxyear)
+ax[0,0].set_ylim(min_y,max_y)
+ax[0,1].set_ylim(min_y,max_y)
+ax[1,0].set_ylim(min_y,max_y)
+ax[1,1].set_ylim(min_y,max_y)
+ax[0,0].grid(True)
+ax[0,1].grid(True)
+ax[1,0].grid(True)
+ax[1,1].grid(True)
+
+ax[0,0].legend(loc = [0.05, 0.04], fontsize = fsize)
+ax[0,1].legend(loc = [0.05, 0.04], fontsize = fsize)
+ax[1,0].legend(loc = [0.05, 0.04], fontsize = fsize)
+ax[1,1].legend(loc = [0.05, 0.04], fontsize = fsize)
+
+fig.set_dpi(600)
+
+# fig.legend(loc = [0.5, 0.4], fontsize = 12)
+
+plt.savefig(outputpath+name)
+
+# %%
