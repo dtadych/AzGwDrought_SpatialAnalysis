@@ -1,4 +1,5 @@
-# The purpose of this script is to create a code to spatially analyze all the wells in the combined database based on management. 
+# The purpose of this script is to create a code to spatially analyze all the wells in 
+# the combined database based on management. 
 # Written by Danielle Tadych
 # Goals:
 # - create columns with the different management regions
@@ -9,8 +10,28 @@
 
 # Potential workflow
 # - import master database and shape files
-# - Create columns of the different management options
-# - Create an if statement of if a well falls within a certain region, then it can equal the name of the shape it falls under
+# - Create columns of the different management options (did this in QGIS)
+# - Create an if statement of if a well falls within a certain region, then it can equal 
+#       the name of the shape it falls under
+
+# WORKFLOW THAT ACTUALLY HAPPENED
+# 1. Read in the master ADWR database static database, water level database, and 
+#       georegions shapefile created in QGIS
+# 2. Overlayed region shapefile on static well database shapefile
+# 3. Exported a dataframe (registry list) of combined ID's with the columns we want 
+#       (regulation, etc.)
+# 4. Joined the registry list with the timeseries database so every well has water 
+#       levels and is tagged with a category we want
+# 5. Create pivot tables averaging water levels based on categories (e.g. regulation, 
+#       access to SW, or georegion (finer scale))
+# 6. Export pivot tables into .csv's for easy analyzing later
+#       * Note: after reading in packages, skip to line 197 to avoid redoing steps 1-5
+# 6. Graphs for days (starting around line 214)
+# 7. Statistical analyses
+#       - Linear Regression (~line 929)
+#       - Pearson/Spearman Correlation (~line 212)
+#       - lagged Correlation analyses
+
 
 # %%
 from cProfile import label
@@ -31,14 +52,13 @@ from shapely.geometry import box
 import geopandas as gp
 #import earthpy as et
 import scipy.stats as sp
-# %%
-# Load in the master database
 
-# Wells55_GWSI_MasterDB.to_file('../MergedData/Output_files/Master_ADWR_database.shp')
+# Data paths
 datapath = '../MergedData'
 outputpath = '../MergedData/Output_files/'
 shapepath = '../MergedData/Shapefiles/Final_Georegions/'
-# %%
+
+# %%  Load in the master databases
 filename_mdb_nd = 'Master_ADWR_database_noduplicates.shp'
 filepath = os.path.join(outputpath, filename_mdb_nd)
 print(filepath)
@@ -123,6 +143,15 @@ combo.set_index('Combo_ID', inplace=True)
 combo = combo.sort_values(by=['GEOREGI_NU'])
 combo
 
+# %% Exporting the combo table
+# combo.to_csv('../MergedData/Output_files/Final_WaterLevels_adjusted.csv')
+
+# %% Reading in so we don't have to redo the combining
+filepath = '../MergedData/Output_files/Final_WaterLevels_adjusted.csv'
+combo = pd.read_csv(filepath, index_col=0)
+combo.head()
+
+
 # %% Now for aggregating by category for the timeseries
 # cat_wl = combo.groupby(['GEO_Region', 'GEOREGI_NU']).mean()
 # cat_wl = combo.groupby(['GEOREGI_NU']).mean()
@@ -163,9 +192,25 @@ cat_wl2.set_index('index', inplace=True)
 cat_wl2.info()
 
 # %% Going to export all these as CSV's
-#cat_wl.to_csv('../MergedData/Output_files/Final_Categories_WL_adjusted.csv')
-#combo.to_csv('../MergedData/Output_files/Final_WaterLevels_adjusted.csv')
-cat_wl2.to_csv('../MergedData/Output_files/Waterlevels_Regulation.csv')
+# cat_wl.to_csv('../MergedData/Output_files/Final_Categories_WL_adjusted.csv')
+# cat_wl2.to_csv('../MergedData/Output_files/Waterlevels_Regulation.csv')
+# cat_wl2.to_csv('../MergedData/Output_files/Waterlevels_Waterlevels_AccesstoSW.csv')
+
+# %%  ==== Reading in the data we created above ====
+# For regulation
+filepath = '../MergedData/Output_files/Waterlevels_Regulation.csv'
+cat_wl2_reg = pd.read_csv(filepath, index_col=0)
+cat_wl2_reg.head()
+
+# For Access to SW
+filepath = '../MergedData/Output_files/Waterlevels_AccesstoSW.csv'
+cat_wl2_SW = pd.read_csv(filepath, index_col=0)
+cat_wl2_SW.head()
+
+# For georegion number
+filepath = '../MergedData/Output_files/Final_Categories_WL_adjusted.csv'
+cat_wl2_georeg = pd.read_csv(filepath, index_col=0)
+cat_wl2_georeg.head()
 
 # %% Creating dictionary of labels
 labels = cat_wl2.columns.tolist()
@@ -188,8 +233,8 @@ c_11 = '#7adec4' # C - Mixed
 drought_color = '#ffa6b8'
 wet_color = '#b8d3f2'
 
-#%% Plot by Groundwater Regulation (line 129)
-ds = cat_wl2
+#%% Plot by Groundwater Regulation
+ds = cat_wl2_reg
 minyear=1975
 maxyear=2020
 name = "Average Depth to Water from " + str(minyear) + " to " + str(maxyear) + ' by Groundwater Regulation'
@@ -231,11 +276,11 @@ plt.axvspan(k, l, color=drought_color, alpha=0.5, lw=0)
 fig.set_dpi(600.0)
 
 # plt.savefig(outputpath+name+'_byregulation', bbox_inches='tight')
-plt.savefig(outputpath+name+'_byregulation_Drought', bbox_inches='tight')
+# plt.savefig(outputpath+name+'_byregulation_Drought', bbox_inches='tight')
 
 
 #%% Plot by access to surfacewater
-ds = cat_wl2
+ds = cat_wl2_SW
 minyear=1975
 maxyear=2020
 name = "Average Depth to Water from " + str(minyear) + " to " + str(maxyear) + " by Access to SW"
@@ -260,27 +305,24 @@ ax.set_xlabel('Year', fontsize=fsize)
 ax.set_ylabel('Depth to Water (ft)',fontsize=fsize)
 ax.legend(loc = [1.04, 0.40], fontsize = fsize)
 # Drought Year Shading
-a = 1975
-b = 1977.5
-c = 1980.5
-d = 1981.5
-e = 1988.5
-f = 1990.5
-g = 1995.5
-h = 1997.5
-i = 1998.5
-j = 2004.5
-k = 2005.5
-l = 2009.5
-m = 2010.5
-n = 2018.5
+a = 1988.5
+b = 1990.5
+c = 1995.5
+d = 1996.5
+e = 2001.5
+f = 2003.5
+g = 2005.5
+h = 2007.5
+i = 2011.5
+j = 2014.5
+k = 2017.5
+l= 2018.5
 plt.axvspan(a, b, color=drought_color, alpha=0.5, lw=0, label="Drought")
 plt.axvspan(c, d, color=drought_color, alpha=0.5, lw=0)
 plt.axvspan(e, f, color=drought_color, alpha=0.5, lw=0)
 plt.axvspan(g, h, color=drought_color, alpha=0.5, lw=0)
 plt.axvspan(i, j, color=drought_color, alpha=0.5, lw=0)
 plt.axvspan(k, l, color=drought_color, alpha=0.5, lw=0)
-plt.axvspan(m, n, color=drought_color, alpha=0.5, lw=0)
 
 # # Wet years (2005 and 2010)
 # g = 2005
@@ -291,7 +333,7 @@ ax.minorticks_on()
 
 fig.set_dpi(600.0)
 
-# plt.savefig(outputpath+name+'_Drought', bbox_inches='tight')
+plt.savefig(outputpath+name+'_Drought', bbox_inches='tight')
 # plt.savefig(outputpath+name+'_byGW', bbox_inches='tight')
 # plt.savefig(outputpath+name+'_bySW', bbox_inches='tight')
 # plt.savefig(outputpath+name+'_5', bbox_inches='tight')
