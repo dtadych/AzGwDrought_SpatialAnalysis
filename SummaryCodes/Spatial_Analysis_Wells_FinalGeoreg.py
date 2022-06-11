@@ -233,6 +233,9 @@ c_11 = '#7adec4' # C - Mixed
 drought_color = '#ffa6b8'
 wet_color = '#b8d3f2'
 
+reg_colors = [c_2,c_7]
+SW_colors = [c_2,c_3,c_4,c_5,c_7]
+
 #%% Plot by Groundwater Regulation
 ds = cat_wl2_reg
 minyear=1975
@@ -339,7 +342,7 @@ plt.savefig(outputpath+name+'_Drought', bbox_inches='tight')
 # plt.savefig(outputpath+name+'_5', bbox_inches='tight')
 
 #%% Plotting individual divisions
-ds = cat_wl2
+ds = cat_wl2_georeg
 minyear=1975
 maxyear=2020
 name = "Average Depth to Water from " + str(minyear) + " to " + str(maxyear)
@@ -1218,17 +1221,75 @@ ax.legend()
 drought_indices = pd.read_csv('../MergedData/Output_files/Yearly_DroughtIndices.csv')
 drought_indices = drought_indices.set_index('In_year')
 drought_indices
+
+# %% Figure out which water level database you want
+# cat_wl2 = cat_wl2_reg.copy()
+cat_wl2 = cat_wl2_SW.copy()
 # %% Water Analysis period
 wlanalysis_period = cat_wl2[cat_wl2.index>=1975]
 wlanalysis_period
 
 # %%
-fig, ax = plt.subplots(1, 1)
-ax.scatter(drought_indices['PDSI'], wlanalysis_period['CAP'],color='grey', lw=1)
+wlanalysis_period['Status'] = 'Other'
+wlanalysis_period
 
-# %% Test Analysis
+# %% 
+Drought_years = [1989,1990,1996,2002,2003,2006,2007,2012,2014,2018]
+
+# %%
+for i in Drought_years:
+        wlanalysis_period.loc[i, 'Status'] = 'Severe'
+
+wlanalysis_period
+
+# %% Severe drought dataframe and normal
+severe = wlanalysis_period[wlanalysis_period['Status']=='Severe']
+severe
+
+other = wlanalysis_period[wlanalysis_period['Status']=='Other']
+other
+
+del severe['Status']
+del other['Status']
+
+# %% Boxplot Stuff
+df = severe
+df2 = severe
+name = 'severe'
+# labels = df.columns.tolist()
+betterlabels = ['CAP','Regulated Groundwater','Surface Water','Unregulated Groundwater','Mixed GW/SW'] 
+
+fig, ax1 = plt.subplots(nrows=1, ncols=1, figsize=(8, 4))
+
+bplot = ax1.boxplot(df,
+                     vert=True,  
+                     patch_artist=True,  
+                     labels=betterlabels
+                     )
+
+# colors = reg_colors
+# colors = SW_colors
+colors = [c_2,c_3,c_4,c_7,c_5]
+
+
+for patch, color in zip(bplot['boxes'], colors):
+    patch.set_facecolor(color)
+
+ax1.set_title(name)
+plt.xticks(rotation=30)
+ax1.set_ylabel('Depth to Water (ft)')
+ax1.grid(visible=True)
+fig.set_dpi(600.0)
+
+# %% Test Analysis against PDSI
 wlanalysis_period['PDSI'] = drought_indices['PDSI']
 wlanalysis_period
+
+# %%
+fig, ax = plt.subplots(1, 1)
+ax.scatter(drought_indices['PDSI'], wlanalysis_period['R'], lw=1)
+
+
 # %% Running the test
 # x_simple = pd.DataFrame([(-2,4),(-1,1),(0,3),(1,2),(2,0)],
 #                         columns=["X","Y"])
@@ -1257,7 +1318,7 @@ ax.plot(ds['R'].shift(lag), label='GW Regulated', color=c_2)
 ax2 = ax.twinx()
 ax2.set_ylabel('PDSI')
 ax2.set_ylim(-7, 10)
-ax2.plot(ds['PDSI'], '-.',label='PDSI', color='grey', lw = 3, zorder=0) 
+# ax2.plot(ds['PDSI'], '-.',label='PDSI', color='grey', lw = 3, zorder=0) 
 
 ax.set_xlim(minyear,maxyear)
 ax.set_ylim(max_y,min_y)
@@ -1295,7 +1356,7 @@ fig.set_dpi(600.0)
 
 # plt.savefig(outputpath+name+'_byregulation', bbox_inches='tight')
 # plt.savefig(outputpath+name+'_byregulation_Drought', bbox_inches='tight')
-plt.savefig(outputpath+name+'_GWReg_Drought', bbox_inches='tight')
+# plt.savefig(outputpath+name+'_GWReg_Drought', bbox_inches='tight')
 
 
 # %%
