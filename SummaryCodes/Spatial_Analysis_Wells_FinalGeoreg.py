@@ -293,8 +293,8 @@ fsize = 14
 
 fig, ax = plt.subplots(figsize = (16,9))
 ax.plot(ds['CAP'], label='CAP', color=c_2)
-ax.plot(ds['No_CAP'], label='Regulated GW', color=c_3) 
-ax.plot(ds['GW'], label='Unregulated GW', color=c_7) 
+# ax.plot(ds['No_CAP'], label='Regulated GW', color=c_3) 
+# ax.plot(ds['GW'], label='Unregulated GW', color=c_7) 
 ax.plot(ds['Mix'], label='Mixed SW/GW', color=c_5) 
 ax.plot(ds['SW'], label='Surface Water', color=c_4) 
 
@@ -336,9 +336,9 @@ ax.minorticks_on()
 
 fig.set_dpi(600.0)
 
-plt.savefig(outputpath+name+'_Drought', bbox_inches='tight')
+# plt.savefig(outputpath+name+'_Drought', bbox_inches='tight')
 # plt.savefig(outputpath+name+'_byGW', bbox_inches='tight')
-# plt.savefig(outputpath+name+'_bySW', bbox_inches='tight')
+plt.savefig(outputpath+name+'_bySW', bbox_inches='tight')
 # plt.savefig(outputpath+name+'_5', bbox_inches='tight')
 
 #%% Plotting individual divisions
@@ -1254,8 +1254,8 @@ del other['Status']
 
 # %% Boxplot Stuff
 df = severe
-df2 = severe
-name = 'severe'
+df2 = other
+name = 'Severe'
 # labels = df.columns.tolist()
 betterlabels = ['CAP','Regulated Groundwater','Surface Water','Unregulated Groundwater','Mixed GW/SW'] 
 
@@ -1280,6 +1280,42 @@ plt.xticks(rotation=30)
 ax1.set_ylabel('Depth to Water (ft)')
 ax1.grid(visible=True)
 fig.set_dpi(600.0)
+ax1.set_ylim(300,0)
+
+plt.savefig(outputpath+'Stats/Water_CAT/'+name+"Reverse_axes", bbox_inches = 'tight')
+
+# %%
+name = 'Normal-Wet'
+# labels = df.columns.tolist()
+betterlabels = ['CAP','Regulated Groundwater','Surface Water','Unregulated Groundwater','Mixed GW/SW'] 
+
+fig, ax1 = plt.subplots(nrows=1, ncols=1, figsize=(8, 4))
+
+bplot = ax1.boxplot(df2,
+                     vert=True,  
+                     patch_artist=True,  
+                     labels=betterlabels
+                     )
+
+# colors = reg_colors
+# colors = SW_colors
+colors = [c_2,c_3,c_4,c_7,c_5]
+
+
+for patch, color in zip(bplot['boxes'], colors):
+    patch.set_facecolor(color)
+
+ax1.set_title(name)
+plt.xticks(rotation=30)
+ax1.set_ylabel('Depth to Water (ft)')
+ax1.grid(visible=True)
+fig.set_dpi(600.0)
+ax1.set_ylim(300,0)
+ax1.set_ylim(0,300)
+
+plt.savefig(outputpath+'Stats/Water_CAT/'+name, bbox_inches = 'tight')
+# plt.savefig(outputpath+'Stats/Water_CAT/'+name+'Reverse_axes', bbox_inches = 'tight')
+
 
 # %% Test Analysis against PDSI
 wlanalysis_period['PDSI'] = drought_indices['PDSI']
@@ -1296,29 +1332,73 @@ ax.scatter(drought_indices['PDSI'], wlanalysis_period['R'], lw=1)
 # my_r = x_simple.corr(method="spearman")
 # print(my_r)
 
-rho, pval = sp.spearmanr(wlanalysis_period.shift(1), drought_indices['PDSI'])
+rho, pval = sp.spearmanr(wlanalysis_period.shift(-1), drought_indices['PDSI'])
 print("rho = ", rho, '; p-value - ',pval)
+
+# %%
+ds = wlanalysis_period
+columns = ds.columns
+column_list = ds.columns.tolist()
+print(column_list)
+# %%
+lag = 1
+
+for i in column_list:
+        print(i,' r:')
+        print(wlanalysis_period[i].corr(drought_indices['PDSI'].shift(lag), method='pearson'))
+
+# %%
+lag = 0
+rho, pval = sp.spearmanr(wlanalysis_period, wlanalysis_period['PDSI'].shift(lag))
+print("rho = ", rho, '; p-value - ',pval)
+
+# %%
+
+for c in column_list:
+ correlation, pvalue = sp.spearmanr(wlanalysis_period[c], drought_indices['PDSI']) 
+ print(f'{c}: {correlation : .4f}, significant: {pvalue}')
+# %%
+lag = 4
+wlanalysis_period['PDSI'] = drought_indices['PDSI'].shift(lag)
+# wlanalysis_period
+
+print(column_list)
+rho, pval = sp.spearmanr(wlanalysis_period, wlanalysis_period['PDSI'])
+
+plt.figure(figsize=(10,6))
+heatmap = sns.heatmap(pval, vmin=-1, 
+                     vmax=1, annot=True)
+plt.title("Spearman Correlation pval")
 
 # %% Plotting to see if there's a relationship
 #%% Plot just the regulated
 ds = wlanalysis_period
-minyear=1993
+minyear=1975
 maxyear=2020
 lag = -4
 name = "Average DTW and PDSI from " + str(minyear) + " to " + str(maxyear) + ' lagged by ' + str(lag)
-min_y = 100
-max_y = 250
+min_y = 0
+max_y = 300
 fsize = 14
 
 fig, ax = plt.subplots(figsize = (16,9))
-ax.plot(ds['R'].shift(lag), label='GW Regulated', color=c_2) 
+# ax.plot(ds['R'].shift(lag), label='GW Regulated', color=c_2) 
 # ax.plot(ds['U'].shift(lag), label='GW Unregulated', color=c_7)
+
+ax.plot(ds['CAP'].shift(lag), label='CAP', color=c_2)
+# ax.plot(ds['No_CAP'].shift(lag), label='Regulated Groundwater', color=c_3)
+ax.plot(ds['SW'].shift(lag), label='Surface Water', color=c_4)
+# ax.plot(ds['GW'].shift(lag), label='Unregulated Groundwater', color=c_7)
+ax.plot(ds['Mix'].shift(lag), label='Mixed SW/GW', color=c_5)
+# colors = [c_2,c_3,c_4,c_7,c_5]
+
+
 
 # Secondary Axis
 ax2 = ax.twinx()
 ax2.set_ylabel('PDSI')
 ax2.set_ylim(-7, 10)
-# ax2.plot(ds['PDSI'], '-.',label='PDSI', color='grey', lw = 3, zorder=0) 
+ax2.plot(ds['PDSI'], '-.',label='PDSI', color='grey', lw = 3, zorder=0) 
 
 ax.set_xlim(minyear,maxyear)
 ax.set_ylim(max_y,min_y)
@@ -1357,13 +1437,16 @@ fig.set_dpi(600.0)
 # plt.savefig(outputpath+name+'_byregulation', bbox_inches='tight')
 # plt.savefig(outputpath+name+'_byregulation_Drought', bbox_inches='tight')
 # plt.savefig(outputpath+name+'_GWReg_Drought', bbox_inches='tight')
+# plt.savefig(outputpath+name+'_GW_Drought', bbox_inches='tight')
+plt.savefig(outputpath+name+'_SW_Drought', bbox_inches='tight')
+# plt.savefig(outputpath+name+'_AllAccess_Drought', bbox_inches='tight')
 
 
 # %%
 def display_correlation(df):
     r = df.corr(method="spearman")
     plt.figure(figsize=(10,6))
-    heatmap = sns.heatmap(df.corr(), vmin=-1, 
+    heatmap = sns.heatmap(df.corr(method='spearman'), vmin=-1, 
                       vmax=1, annot=True)
     plt.title("Spearman Correlation")
     return(r)
@@ -1375,17 +1458,25 @@ def display_corr_pairs(df,color="cyan"):
                                         "{:.2f}".format(rho)) if ax!=None else None
                             )      
 
-    r = display_correlation(df)
-    rho = df.corr(method="pearson")
+    rho = display_correlation(df)
+    r = df.corr(method="pearson")
     g = sns.PairGrid(df,corner=True)
     g.map_diag(plt.hist,color="yellow")
     g.map_lower(sns.scatterplot,color="magenta")
     set_title(g.axes,r,rho)
     plt.subplots_adjust(hspace = 0.6)
     plt.show()   
+
+# %%
+df = wlanalysis_period
+print('Spearman',df.corr(method='spearman'))
+print('Pearson',df.corr(method='pearson'))
 # %%
 display_correlation(wlanalysis_period)
 # %%
+lag = 4
+wlanalysis_period['PDSI'] = drought_indices['PDSI'].shift(lag)
+
 display_corr_pairs(wlanalysis_period)
 
 # %%
