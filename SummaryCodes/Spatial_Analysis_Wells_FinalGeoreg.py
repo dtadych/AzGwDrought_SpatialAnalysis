@@ -52,6 +52,41 @@ from shapely.geometry import box
 import geopandas as gp
 #import earthpy as et
 import scipy.stats as sp
+from scipy.stats import kendalltau, pearsonr, spearmanr
+
+# Some functions for analysis
+def kendall_pval(x,y):
+        return kendalltau(x,y)[1]
+    
+def pearsonr_pval(x,y):
+        return pearsonr(x,y)[1]
+    
+def spearmanr_pval(x,y):
+        return spearmanr(x,y)[1]
+
+def display_correlation(df):
+    r = df.corr(method="spearman")
+    plt.figure(figsize=(10,6))
+    heatmap = sns.heatmap(df.corr(method='spearman'), vmin=-1, 
+                      vmax=1, annot=True)
+    plt.title("Spearman Correlation")
+    return(r)
+
+def display_corr_pairs(df,color="cyan"):
+    s = set_title = np.vectorize(lambda ax,r,rho: ax.title.set_text("r = " + 
+                                        "{:.2f}".format(r) + 
+                                        '\n $\\rho$ = ' + 
+                                        "{:.2f}".format(rho)) if ax!=None else None
+                            )      
+
+    rho = display_correlation(df)
+    r = df.corr(method="pearson")
+    g = sns.PairGrid(df,corner=True)
+    g.map_diag(plt.hist,color="yellow")
+    g.map_lower(sns.scatterplot,color="magenta")
+    set_title(g.axes,r,rho)
+    plt.subplots_adjust(hspace = 0.6)
+    plt.show()  
 
 # Data paths
 datapath = '../MergedData'
@@ -250,7 +285,7 @@ fig, ax = plt.subplots(figsize = (16,9))
 ax.plot(ds['R'], label='GW Regulated', color=c_2) 
 ax.plot(ds['U'], label='GW Unregulated', color=c_7) 
 ax.set_xlim(minyear,maxyear)
-ax.set_ylim(max_y,min_y)
+ax.set_ylim(min_y,max_y)
 ax.grid(True)
 ax.set_title(name, fontsize=20)
 ax.set_xlabel('Year', fontsize=fsize)
@@ -299,7 +334,7 @@ ax.plot(ds['Mix'], label='Mixed SW/GW', color=c_5)
 ax.plot(ds['SW'], label='Surface Water', color=c_4) 
 
 ax.set_xlim(minyear,maxyear)
-ax.set_ylim(max_y,min_y)
+ax.set_ylim(min_y,max_y)
 # ax.grid(True)
 ax.grid(visible=True,which='major')
 ax.grid(which='minor',color='#EEEEEE', lw=0.8)
@@ -381,7 +416,7 @@ ax.axvspan(g, e, color=wet_color, alpha=0.5, lw=0, label="Wet Years")
 ax.axvspan(h, a, color=wet_color, alpha=0.5, lw=0)
 
 ax.set_xlim(minyear,maxyear)
-ax.set_ylim(max_y,min_y)
+ax.set_ylim(min_y,max_y)
 ax.grid(True)
 ax.set(title=name, xlabel='Year', ylabel='Depth to Water (ft)')
 ax.legend(loc = [1.04, 0.40])
@@ -392,7 +427,7 @@ fig, ax = plt.subplots(figsize = (16,9))
 ax.plot(ds[2.0], label='Regulated with CAP', color=c_2) 
 ax.plot(ds[3.0], label='Regulated without CAP', color=c_3) 
 ax.set_xlim(minyear,maxyear)
-ax.set_ylim(max_y,min_y)
+ax.set_ylim(min_y,max_y)
 ax.grid(True)
 ax.set(title=name, xlabel='Year', ylabel='Depth to Water (ft)')
 ax.legend(loc = [1.04, 0.40])
@@ -419,7 +454,7 @@ ax.plot(ds[5.0], color=c_5, label='Upper Colorado River - Mixed')
 ax.plot(ds[10.0], color=c_10, label='North - Mixed')
 ax.plot(ds[11.0], color=c_11, label='Central - Mixed')
 ax.set_xlim(minyear,maxyear)
-ax.set_ylim(max_y,min_y)
+ax.set_ylim(min_y,max_y)
 ax.grid(True)
 ax.set(title=name, xlabel='Year', ylabel='Depth to Water (ft)')
 ax.legend(loc = [1.04, 0.40])
@@ -448,7 +483,7 @@ ax.plot(ds[9.0], color=c_9, label='Northeast - GW Dominated')
 ax.plot(ds[8.0], color=c_8, label='South central - GW Dominated')
 ax.plot(ds[6.0], color=c_6, label='Southeast - GW Dominated')
 ax.set_xlim(minyear,maxyear)
-ax.set_ylim(max_y,min_y)
+ax.set_ylim(min_y,max_y)
 ax.grid(True)
 ax.set(title=name, xlabel='Year', ylabel='Depth to Water (ft)')
 ax.legend(loc = [1.04, 0.40])
@@ -515,10 +550,10 @@ ax[0,0].set_xlim(minyear,maxyear)
 ax[0,1].set_xlim(minyear,maxyear)
 ax[1,0].set_xlim(minyear,maxyear)
 ax[1,1].set_xlim(minyear,maxyear)
-ax[0,0].set_ylim(max_y,min_y)
-ax[0,1].set_ylim(max_y,min_y)
-ax[1,0].set_ylim(max_y,min_y)
-ax[1,1].set_ylim(max_y,min_y)
+ax[0,0].set_ylim(min_y,max_y)
+ax[0,1].set_ylim(min_y,max_y)
+ax[1,0].set_ylim(min_y,max_y)
+ax[1,1].set_ylim(min_y,max_y)
 ax[0,0].grid(True)
 ax[0,1].grid(True)
 ax[1,0].grid(True)
@@ -611,10 +646,10 @@ ax[p1].set_xlim(minyear,maxyear)
 ax[p2].set_xlim(minyear,maxyear)
 ax[p3].set_xlim(minyear,maxyear)
 ax[p4].set_xlim(minyear,maxyear)
-ax[p1].set_ylim(max_y,min_y)
-ax[p2].set_ylim(max_y,min_y)
-ax[p3].set_ylim(max_y,min_y)
-ax[p4].set_ylim(max_y,min_y)
+ax[p1].set_ylim(min_y,max_y)
+ax[p2].set_ylim(min_y,max_y)
+ax[p3].set_ylim(min_y,max_y)
+ax[p4].set_ylim(min_y,max_y)
 ax[p1].grid(True)
 ax[p2].grid(True)
 ax[p3].grid(True)
@@ -708,10 +743,10 @@ ax[p1].set_xlim(minyear,maxyear)
 ax[p2].set_xlim(minyear,maxyear)
 ax[p3].set_xlim(minyear,maxyear)
 ax[p4].set_xlim(minyear,maxyear)
-ax[p1].set_ylim(max_y,min_y)
-ax[p2].set_ylim(max_y,min_y)
-ax[p3].set_ylim(max_y,min_y)
-ax[p4].set_ylim(max_y,min_y)
+ax[p1].set_ylim(min_y,max_y)
+ax[p2].set_ylim(min_y,max_y)
+ax[p3].set_ylim(min_y,max_y)
+ax[p4].set_ylim(min_y,max_y)
 ax[p1].grid(True)
 ax[p2].grid(True)
 ax[p3].grid(True)
@@ -805,10 +840,10 @@ ax[p1].set_xlim(minyear,maxyear)
 ax[p2].set_xlim(minyear,maxyear)
 ax[p3].set_xlim(minyear,maxyear)
 # ax[p4].set_xlim(minyear,maxyear)
-ax[p1].set_ylim(max_y,min_y)
-ax[p2].set_ylim(max_y,min_y)
-ax[p3].set_ylim(max_y,min_y)
-# ax[p4].set_ylim(max_y,min_y)
+ax[p1].set_ylim(min_y,max_y)
+ax[p2].set_ylim(min_y,max_y)
+ax[p3].set_ylim(min_y,max_y)
+ax[p4].set_ylim(min_y,max_y)
 ax[p1].grid(True)
 ax[p2].grid(True)
 ax[p3].grid(True)
@@ -999,7 +1034,7 @@ for i in range(1, 12, 1):
         fig, ax = plt.subplots(1, 1)
         ax.plot(xf1, yf,label='Linear fit', lw=3)
         df.plot(ax=ax,marker='o', ls='')
-        ax.set_ylim(max(y),0)
+        ax.set_ylim(0,max(y))
         ax.legend()
 
 
@@ -1014,7 +1049,7 @@ stats1
 # For Depth to Water by SW Access
 ds = cat_wl2
 data_type = "Depth to Water"
-min_yr = 1997
+min_yr = 1975
 mx_yr = 2020
 betterlabels = ['CAP','Unregulated Groundwater','Mixed GW/SW','Regulated Groundwater','Surface Water'] 
 Name = str(min_yr) + " to " + str(mx_yr) + " Linear Regression for " + data_type
@@ -1024,25 +1059,25 @@ f = ds[(ds.index >= min_yr) & (ds.index <= mx_yr)]
 columns = ds.columns
 column_list = ds.columns.tolist()
 # -- For Multiple years --
-Name = "Linear Regression during Wet and Normal years for " + data_type
+# Name = "Linear Regression during Wet and Normal years for " + data_type
 # wetyrs = [2005, 2008, 2009, 2010, 2016, 2017, 2019]
 # dryyrs = [2002, 2003, 2004, 2006, 2007, 2011, 2012, 2013, 2014, 2015, 2018]
-dryyrs = [1975,1976,1977
-          ,1981,1989,1990
-          ,1996,1997,
-          1999,2000,2001,2002,2003,2004
-          ,2006,2007,2008,2009
-          ,2011, 2012, 2013, 2014, 2015, 2016,2017,2018]
-wetyrs = [1978,1979,1980,1982,1983,1984,1984,1986,1987,1988
-          , 1991,1992,1993,1994,1995,
-          1998,2005,2010,2019]
+# dryyrs = [1975,1976,1977
+#           ,1981,1989,1990
+#           ,1996,1997,
+#           1999,2000,2001,2002,2003,2004
+#           ,2006,2007,2008,2009
+#           ,2011, 2012, 2013, 2014, 2015,2017,2018]
+# wetyrs = [1978,1979,1980,1982,1983,1984,1984,1986,1987,1988
+#           , 1991,1992,1993,1994,1995,
+#           1998,2005,2010,2019]
 
 #f = ds[(ds.index == wetyrs)]
 
-f = pd.DataFrame()
-for i in wetyrs:
-        wut = ds[(ds.index == i)]
-        f = f.append(wut)
+# f = pd.DataFrame()
+# for i in wetyrs:
+#         wut = ds[(ds.index == i)]
+#         f = f.append(wut)
 # print(f)
 columns = ds.columns
 column_list = ds.columns.tolist()
@@ -1078,7 +1113,7 @@ for i in column_list:
         # fig, ax = plt.subplots(1, 1)
         # ax.plot(xf1, yf,label='Linear fit', lw=3)
         # df.plot(ax=ax,marker='o', ls='')
-        # ax.set_ylim(max(y),0)
+        # ax.set_ylim(0,max(y))
         # ax.legend()
 
 
@@ -1099,6 +1134,12 @@ yint2 = round(stats1.loc['int','Unregulated Groundwater'], 2)
 yint3 = round(stats1.loc['int','Mixed GW/SW'], 2)
 yint4 = round(stats1.loc['int','Regulated Groundwater'], 2)
 yint5 = round(stats1.loc['int','Surface Water'], 2)
+rsq1 = round(stats1.loc['rsq', 'CAP'], 4)
+rsq2 = round(stats1.loc['rsq', 'Unregulated Groundwater'], 4)
+rsq3 = round(stats1.loc['rsq', 'Mixed GW/SW'], 4)
+rsq4 = round(stats1.loc['rsq', 'Regulated Groundwater'], 4)
+rsq5 = round(stats1.loc['rsq', 'Surface Water'], 4)
+
 pval1 = round(stats1.loc['p_val', 'CAP'], 4)
 pval2 = round(stats1.loc['p_val', 'Unregulated Groundwater'], 4)
 pval3 = round(stats1.loc['p_val', 'Mixed GW/SW'], 4)
@@ -1111,31 +1152,85 @@ yf3 = (m3*xf)+yint3
 yf4 = (m4*xf)+yint4
 yf5 = (m5*xf)+yint5
 
-fig, ax = plt.subplots(1, 1)
-ax.plot(xf1, yf1,"-.",color='grey',label='Linear Trendline', lw=1)
-ax.plot(xf1, yf2,"-.",color='grey', lw=1)
-ax.plot(xf1, yf3,"-.",color='grey', lw=1)
-ax.plot(xf1, yf4,"-.",color='grey', lw=1)
-ax.plot(xf1, yf5,"-.",color='grey', lw=1)
+fig, ax = plt.subplots(1, 1, figsize = (12,7))
+# fig, ax = plt.subplots(figsize = (16,9))
 
-f.plot(ax=ax,marker='o', ls='', label=betterlabels)
+ax.plot(xf1, yf1,"-.",color=c_2,label='Linear Trendline', lw=1)
+ax.plot(xf1, yf2,"-.",color=c_3, lw=1)
+ax.plot(xf1, yf3,"-.",color=c_7, lw=1)
+ax.plot(xf1, yf4,"-.",color=c_5, lw=1)
+ax.plot(xf1, yf5,"-.",color=c_4, lw=1)
+
+# f.plot(ax=ax,marker='o', ls='', label=betterlabels)
+# Trying to draw lines with better shit 
+
+ds = cat_wl2_SW
+minyear=1975
+maxyear=2020
+min_y = 75
+max_y = 300
+fsize = 14
+
+ax.plot(ds['CAP'], label='CAP', color=c_2)
+ax.plot(ds['No_CAP'], label='Regulated GW', color=c_3) 
+ax.plot(ds['SW'], label='Surface Water', color=c_4) 
+ax.plot(ds['Mix'], label='Mixed SW/GW', color=c_5)
+ax.plot(ds['GW'], label='Unregulated GW', color=c_7)  
+
+ax.set_xlim(minyear,maxyear)
+ax.set_ylim(min_y,max_y)
+# ax.grid(True)
+ax.grid(visible=True,which='major')
+ax.grid(which='minor',color='#EEEEEE', lw=0.8)
+ax.set_title(name, fontsize=20)
+ax.set_xlabel('Year', fontsize=fsize)
+ax.set_ylabel('Depth to Water (ft)',fontsize=fsize)
+ax.legend(loc = [1.04, 0.40], fontsize = fsize)
+# # Drought Year Shading
+# a = 1988.5
+# b = 1990.5
+# c = 1995.5
+# d = 1996.5
+# e = 2001.5
+# f = 2003.5
+# g = 2005.5
+# h = 2007.5
+# i = 2011.5
+# j = 2014.5
+# k = 2017.5
+# l= 2018.5
+# plt.axvspan(a, b, color=drought_color, alpha=0.5, lw=0, label="Drought")
+# plt.axvspan(c, d, color=drought_color, alpha=0.5, lw=0)
+# plt.axvspan(e, f, color=drought_color, alpha=0.5, lw=0)
+# plt.axvspan(g, h, color=drought_color, alpha=0.5, lw=0)
+# plt.axvspan(i, j, color=drought_color, alpha=0.5, lw=0)
+# plt.axvspan(k, l, color=drought_color, alpha=0.5, lw=0)
+
+ax.minorticks_on()
+
+fig.set_dpi(600.0)
+
 # ax.set_xlim(min_yr, mx_yr)
-ax.set_ylim(300,75)
-ax.set_title(data_type)
-plt.figtext(0.95, 0.5, 'CAP equation: y = '+str(m1)+'x + '+str(yint1))
-plt.figtext(0.98, 0.45, 'p-value = ' + str(pval1))
-plt.figtext(0.95, 0.4, 'Unreg GW equation: y = '+str(m2)+'x + '+str(yint2))
-plt.figtext(0.98, 0.35, 'p-value = ' + str(pval2))
-plt.figtext(0.95, 0.3, 'Mix equation: y = '+str(m3)+'x + '+str(yint3))
-plt.figtext(0.98, 0.25, 'p-value = ' + str(pval3))
-plt.figtext(0.95, 0.2, 'Reg GW (No_CAP) equation: y = '+str(m4)+'x + '+str(yint4))
-plt.figtext(0.98, 0.15, 'p-value = ' + str(pval4))
-plt.figtext(0.95, 0.1, 'SW equation: y = '+str(m5)+'x + '+str(yint5))
-plt.figtext(0.98, 0.05, 'p-value = ' + str(pval5))
+ax.set_ylim(75,300)
+ax.set_title(Name)
+vertshift = -0.1
+# plt.figtext(0.95, 0.5 - vertshift, 'CAP equation: y = '+str(m1)+'x + '+str(yint1))
+# plt.figtext(0.98, 0.45 - vertshift, 'rsq = '+ str(rsq1) + '; p-value = ' + str(pval1))
+# plt.figtext(0.95, 0.4 - vertshift, 'Unregulated GW equation: y = '+str(m2)+'x + '+str(yint2))
+# plt.figtext(0.98, 0.35 - vertshift, 'rsq = '+ str(rsq2) +'; p-value = ' + str(pval2))
+# plt.figtext(0.95, 0.3 - vertshift, 'Mixed SW/GW equation: y = '+str(m3)+'x + '+str(yint3))
+# plt.figtext(0.98, 0.25 - vertshift, 'rsq = '+ str(rsq3) +'; p-value = ' + str(pval3))
+# plt.figtext(0.95, 0.2 - vertshift, 'Regulated GW equation: y = '+str(m4)+'x + '+str(yint4))
+# plt.figtext(0.98, 0.15 - vertshift, 'rsq = '+ str(rsq4) +'; p-value = ' + str(pval4))
+# plt.figtext(0.95, 0.1 - vertshift, 'SW equation: y = '+str(m5)+'x + '+str(yint5))
+# plt.figtext(0.98, 0.05 - vertshift, 'rsq = '+ str(rsq5) +'; p-value = ' + str(pval5))
 
-ax.legend(loc = [1.065, 0.55])
-plt.savefig(outputpath+'Stats/Water_CAT/'+Name, bbox_inches = 'tight')
-stats1.to_csv(outputpath+'Stats/Water_CAT/'+Name+'.csv')
+ax.legend(
+        # loc = [1.065, 0.75]
+        )
+# plt.savefig(outputpath+'Stats/Water_CAT/'+Name, bbox_inches = 'tight')
+# plt.savefig(outputpath+'Stats/Water_CAT/'+Name+'_GW', bbox_inches = 'tight')
+# stats1.to_csv(outputpath+'Stats/Water_CAT/'+Name+'_GW.csv')
 
 # %% For Depth to Water by regulation
 ds = cat_wl2
@@ -1179,7 +1274,7 @@ for i in column_list:
         # fig, ax = plt.subplots(1, 1)
         # ax.plot(xf1, yf,label='Linear fit', lw=3)
         # df.plot(ax=ax,marker='o', ls='')
-        # ax.set_ylim(max(y),0)
+        # ax.set_ylim(0,max(y))
         # ax.legend()
 
 
@@ -1214,9 +1309,7 @@ ax.legend()
 # plt.savefig(outputpath+'Stats/'+Name, bbox_inches = 'tight')
 # stats1.to_csv(outputpath+'Stats/'+Name+'.csv')
 
-
-
-# %% ====== Going to run the Spearman's rho coeficient analysis ======
+# %% ====== Going to run the Spearman's rho coeficient analysis on drought ======
 # First read in the drought indice
 drought_indices = pd.read_csv('../MergedData/Output_files/Yearly_DroughtIndices.csv')
 drought_indices = drought_indices.set_index('In_year')
@@ -1227,22 +1320,178 @@ drought_indices
 cat_wl2 = cat_wl2_SW.copy()
 # %% Water Analysis period
 wlanalysis_period = cat_wl2[cat_wl2.index>=1975]
+wlanalysis_period["UGW"]=wlanalysis_period['GW']
+del wlanalysis_period['GW']
 wlanalysis_period
+
+# %% Checking for normality
+ds = wlanalysis_period
+columns = ds.columns
+column_list = ds.columns.tolist()
+for i in column_list:
+ fig, ax = plt.subplots(1,1)
+ ax.hist(wlanalysis_period[i], bins=30)
+ ax.set_title(i)
+
+# %% If running a shifted correlation analysis,
+#    change this to however many # years; 0 is no lag
+lag = 0
 
 # %%
-wlanalysis_period['Status'] = 'Other'
-wlanalysis_period
+print('Kendall Correlation coefficient')
+for i in column_list:
+        print(' '+i+':')
+# To normalize the data 
+        # df1 = cat_wl2[i].pct_change()
+        # df2 = drought_indices.PDSI.pct_change()
+        df1 = wlanalysis_period[i]
+        df2 = drought_indices.PDSI.shift(lag)
+        print('  tau = ',round(df1.corr(df2, method='kendall'),3))
+        print('  pval = ',round(df1.corr(df2, method=kendall_pval),4))
 
-# %% 
+# %%
+print('Spearman Correlation coefficient')
+for i in column_list:
+        print(' '+i+':')
+        # df1 = cat_wl2[i].pct_change()
+        # df2 = drought_indices.PDSI.pct_change()
+        df1 = wlanalysis_period[i]
+        df2 = drought_indices.PDSI.shift(lag)
+        print('  rho = ',round(df1.corr(df2, method='spearman'),3))
+        print('  pval = ',round(df1.corr(df2, method=spearmanr_pval),4))
+
+# %%
+print('Pearson Correlation coefficient')
+for i in column_list:
+        print(' '+i+':')
+        # df1 = cat_wl2[i].pct_change()
+        # df2 = drought_indices.PDSI.pct_change()
+        df1 = wlanalysis_period[i]
+        df2 = drought_indices.PDSI.shift(lag)
+        r = df1.corr(df2, method='pearson')
+        print('  rsq = ',round(r*r,3))
+        print('  pval = ',round(df1.corr(df2, method=pearsonr_pval),4))
+
+# %% Scatterplot of correlation values
+ds = wlanalysis_period
+name = 'Comparing PDSI with Depth to Water readings'
+columns = ds.columns
+column_list = ds.columns.tolist()
+betterlabels = ['CAP','Regulated Groundwater','Surface Water','Mixed GW/SW','Unregulated Groundwater'] 
+# betterlabels = ['GW Regulated','GW Unregulated'] 
+
+fig, ax = plt.subplots(figsize = (9,6))
+x = drought_indices['PDSI']
+color_num = [2,3,4,5,7]
+for i,j,k in zip(column_list,SW_colors, betterlabels):
+        y = ds[i]
+        ax.scatter(x,y
+                , label=k #i
+                , color=j
+                )
+        # Trendline: 1=Linear, 2=polynomial
+        z = np.polyfit(x, y, 1)
+        p = np.poly1d(z)
+        plt.plot(x, p(x),'-'
+                , color=j
+                # ,label=(k+' Trendline')
+                )
+
+
+ax.set_xlabel('PDSI')
+ax.set_ylabel('Depth to water (ft)')
+ax.set_title(name)
+fig.set_dpi(600)
+plt.legend(loc = [1.05, 0.40])
+
+plt.savefig(outputpath+name, bbox_inches='tight') 
+
+
+# %% Plotting with PDSI against time to see if there's a relationship with Access to SW
+ds = cat_wl2_SW
+minyear=1975
+maxyear=2020
+lag = -4
+# name = "Average DTW and PDSI from " + str(minyear) + " to " + str(maxyear) + ' lagged by ' + str(lag)
+name = "Average DTW and PDSI from " + str(minyear) + " to " + str(maxyear)
+
+min_y = 0
+max_y = 300
+fsize = 14
+
+fig, ax = plt.subplots(figsize = (9,6))
+# ax.plot(ds['R'].shift(lag), label='GW Regulated', color=c_2) 
+# ax.plot(ds['U'].shift(lag), label='GW Unregulated', color=c_7)
+
+ax.plot(ds['CAP'], label='CAP', color=c_2)
+ax.plot(ds['No_CAP'], label='Regulated Groundwater', color=c_3)
+ax.plot(ds['SW'], label='Surface Water', color=c_4)
+ax.plot(ds['GW'], label='Unregulated Groundwater', color=c_7)
+ax.plot(ds['Mix'], label='Mixed SW/GW', color=c_5)
+# colors = [c_2,c_3,c_4,c_7,c_5]
+
+# Secondary Axis
+ax2 = ax.twinx()
+ax2.set_ylabel('PDSI')
+ax2.set_ylim(-7, 10)
+ax2.plot(drought_indices['PDSI'], '-.',label='PDSI', color='grey', lw = 3, zorder=0) 
+
+ax.set_xlim(minyear,maxyear)
+ax.set_ylim(min_y,max_y)
+# ax.grid(True)
+ax.grid(visible=True,which='major')
+ax.grid(which='minor',color='#EEEEEE', lw=0.8)
+
+ax.set_title(name, fontsize=20)
+ax.set_xlabel('Year', fontsize=fsize)
+ax.set_ylabel('Depth to Water (ft)',fontsize=fsize)
+
+# # Drought Year Shading
+a = 1988.5
+b = 1990.5
+c = 1995.5
+d = 1996.5
+e = 2001.5
+f = 2003.5
+g = 2005.5
+h = 2007.5
+i = 2011.5
+j = 2014.5
+k = 2017.5
+l= 2018.5
+plt.axvspan(a, b, color=drought_color, alpha=0.5, lw=0, label="Severe Drought")
+plt.axvspan(c, d, color=drought_color, alpha=0.5, lw=0)
+plt.axvspan(e, f, color=drought_color, alpha=0.5, lw=0)
+plt.axvspan(g, h, color=drought_color, alpha=0.5, lw=0)
+plt.axvspan(i, j, color=drought_color, alpha=0.5, lw=0)
+plt.axvspan(k, l, color=drought_color, alpha=0.5, lw=0)
+
+ax.legend(loc = [1.09, 0.45], fontsize = fsize)
+ax2.legend(loc = [1.09, 0.30], fontsize = fsize)
+
+fig.set_dpi(600.0)
+
+# plt.savefig(outputpath+name+'_byregulation', bbox_inches='tight')
+# plt.savefig(outputpath+name+'_byregulation_Drought', bbox_inches='tight')
+# plt.savefig(outputpath+name+'_GWReg_Drought', bbox_inches='tight')
+# plt.savefig(outputpath+name+'_GW_Drought', bbox_inches='tight')
+# plt.savefig(outputpath+name+'_SW_Drought', bbox_inches='tight')
+plt.savefig(outputpath+name+'_AllAccess_Drought', bbox_inches='tight') 
+
+
+# %% Now to do a box plot
+wlanalysis_period['Status'] = 'Other'
+# wlanalysis_period
+
 Drought_years = [1989,1990,1996,2002,2003,2006,2007,2012,2014,2018]
 
-# %%
+
 for i in Drought_years:
         wlanalysis_period.loc[i, 'Status'] = 'Severe'
 
 wlanalysis_period
 
-# %% Severe drought dataframe and normal
+# Severe drought dataframe and normal
 severe = wlanalysis_period[wlanalysis_period['Status']=='Severe']
 severe
 
@@ -1252,7 +1501,7 @@ other
 del severe['Status']
 del other['Status']
 
-# %% Boxplot Stuff
+# Boxplot Stuff
 df = severe
 df2 = other
 name = 'Severe'
@@ -1280,7 +1529,7 @@ plt.xticks(rotation=30)
 ax1.set_ylabel('Depth to Water (ft)')
 ax1.grid(visible=True)
 fig.set_dpi(600.0)
-ax1.set_ylim(300,0)
+ax1.set_ylim(0,300)
 
 plt.savefig(outputpath+'Stats/Water_CAT/'+name+"Reverse_axes", bbox_inches = 'tight')
 
@@ -1310,177 +1559,139 @@ plt.xticks(rotation=30)
 ax1.set_ylabel('Depth to Water (ft)')
 ax1.grid(visible=True)
 fig.set_dpi(600.0)
-ax1.set_ylim(300,0)
 ax1.set_ylim(0,300)
 
 plt.savefig(outputpath+'Stats/Water_CAT/'+name, bbox_inches = 'tight')
 # plt.savefig(outputpath+'Stats/Water_CAT/'+name+'Reverse_axes', bbox_inches = 'tight')
 
+# %% Running a regression on PDSI and access to SW because yolo
+ds = cat_wl2
+data_type = "Depth to Water and PDSI"
+min_yr = 1975
+mx_yr = 2020
+betterlabels = ['CAP','Unregulated Groundwater','Mixed GW/SW','Regulated Groundwater','Surface Water'] 
+Name = str(min_yr) + " to " + str(mx_yr) + " Linear Regression for " + data_type
+print(Name)
 
-# %% Test Analysis against PDSI
-wlanalysis_period['PDSI'] = drought_indices['PDSI']
-wlanalysis_period
-
-# %%
-fig, ax = plt.subplots(1, 1)
-ax.scatter(drought_indices['PDSI'], wlanalysis_period['R'], lw=1)
-
-
-# %% Running the test
-# x_simple = pd.DataFrame([(-2,4),(-1,1),(0,3),(1,2),(2,0)],
-#                         columns=["X","Y"])
-# my_r = x_simple.corr(method="spearman")
-# print(my_r)
-
-rho, pval = sp.spearmanr(wlanalysis_period.shift(-1), drought_indices['PDSI'])
-print("rho = ", rho, '; p-value - ',pval)
-
-# %%
-ds = wlanalysis_period
+f = ds[(ds.index >= min_yr) & (ds.index <= mx_yr)]
 columns = ds.columns
 column_list = ds.columns.tolist()
-print(column_list)
-# %%
-lag = 1
+# -- For Multiple years --
+# Name = "Linear Regression during Wet and Normal years for " + data_type
+# wetyrs = [2005, 2008, 2009, 2010, 2016, 2017, 2019]
+# dryyrs = [2002, 2003, 2004, 2006, 2007, 2011, 2012, 2013, 2014, 2015, 2018]
+# dryyrs = [1975,1976,1977
+#           ,1981,1989,1990
+#           ,1996,1997,
+#           1999,2000,2001,2002,2003,2004
+#           ,2006,2007,2008,2009
+#           ,2011, 2012, 2013, 2014, 2015, 2016,2017,2018]
+# wetyrs = [1978,1979,1980,1982,1983,1984,1984,1986,1987,1988
+#           , 1991,1992,1993,1994,1995,
+#           1998,2005,2010,2019]
 
+#f = ds[(ds.index == wetyrs)]
+
+# f = pd.DataFrame()
+# for i in wetyrs:
+#         wut = ds[(ds.index == i)]
+#         f = f.append(wut)
+# print(f)
+columns = ds.columns
+column_list = ds.columns.tolist()
+# ------------------------
+
+stats = pd.DataFrame()
 for i in column_list:
-        print(i,' r:')
-        print(wlanalysis_period[i].corr(drought_indices['PDSI'].shift(lag), method='pearson'))
+        df = f[i]
+        #print(df)
+        y=np.array(df.values, dtype=float)
+        x=np.array(drought_indices['PDSI'].values, dtype=float)
+        slope, intercept, r_value, p_value, std_err =sp.linregress(x,y)
+        # print('Georegion Number: ', i, '\n', 
+        #        'slope = ', slope, '\n', 
+        #        'intercept = ', intercept, '\n', 
+        #        'r^2 = ', r_value, '\n', 
+        #        'p-value = ', p_value, '\n', 
+        #        'std error = ', std_err)      
+        stats = stats.append({'slope': slope, 
+                              'int':intercept, 
+                              'rsq':r_value*r_value, 
+                              'p_val':p_value, 
+                              'std_err':std_err, 
+                              'mean': np.mean(y),
+                              'var': np.var(y),
+                              'sum': np.sum(y)
+                              },
+                              ignore_index=True)
+        # xf = np.linspace(min(x),max(x),100)
+        # xf1 = xf.copy()
+        # xf1 = pd.to_datetime(xf1)
+        # yf = (slope*xf)+intercept
+        # fig, ax = plt.subplots(1, 1)
+        # ax.plot(xf1, yf,label='Linear fit', lw=3)
+        # df.plot(ax=ax,marker='o', ls='')
+        # ax.set_ylim(0,max(y))
+        # ax.legend()
+
+
+stats.index = betterlabels
+stats1 = stats.transpose()
+print(stats1)
+
+# -- Data visualization --
+xf = np.linspace(min(x),max(x),100)
+xf1 = xf.copy()
+m1 = round(stats1.loc['slope','CAP'], 2)
+m2 = round(stats1.loc['slope','Unregulated Groundwater'], 2)
+m3 = round(stats1.loc['slope','Mixed GW/SW'], 2)
+m4 = round(stats1.loc['slope','Regulated Groundwater'], 2)
+m5 = round(stats1.loc['slope','Surface Water'], 2)
+yint1 = round(stats1.loc['int','CAP'], 2)
+yint2 = round(stats1.loc['int','Unregulated Groundwater'], 2)
+yint3 = round(stats1.loc['int','Mixed GW/SW'], 2)
+yint4 = round(stats1.loc['int','Regulated Groundwater'], 2)
+yint5 = round(stats1.loc['int','Surface Water'], 2)
+pval1 = round(stats1.loc['p_val', 'CAP'], 4)
+pval2 = round(stats1.loc['p_val', 'Unregulated Groundwater'], 4)
+pval3 = round(stats1.loc['p_val', 'Mixed GW/SW'], 4)
+pval4 = round(stats1.loc['p_val', 'Regulated Groundwater'], 4)
+pval5 = round(stats1.loc['p_val', 'Surface Water'], 4)
+
+yf1 = (m1*xf)+yint1
+yf2 = (m2*xf)+yint2
+yf3 = (m3*xf)+yint3
+yf4 = (m4*xf)+yint4
+yf5 = (m5*xf)+yint5
+
+fig, ax = plt.subplots(1, 1)
+ax.plot(xf1, yf1,"-.",color='grey',label='Linear Trendline', lw=1)
+ax.plot(xf1, yf2,"-.",color='grey', lw=1)
+ax.plot(xf1, yf3,"-.",color='grey', lw=1)
+ax.plot(xf1, yf4,"-.",color='grey', lw=1)
+ax.plot(xf1, yf5,"-.",color='grey', lw=1)
+
+f.plot(ax=ax,marker='o', ls='', label=betterlabels)
+# ax.set_xlim(min_yr, mx_yr)
+ax.set_ylim(75,300)
+ax.set_title(data_type)
+plt.figtext(0.95, 0.5, 'CAP equation: y = '+str(m1)+'x + '+str(yint1))
+plt.figtext(0.98, 0.45, 'p-value = ' + str(pval1))
+plt.figtext(0.95, 0.4, 'Unreg GW equation: y = '+str(m2)+'x + '+str(yint2))
+plt.figtext(0.98, 0.35, 'p-value = ' + str(pval2))
+plt.figtext(0.95, 0.3, 'Mix equation: y = '+str(m3)+'x + '+str(yint3))
+plt.figtext(0.98, 0.25, 'p-value = ' + str(pval3))
+plt.figtext(0.95, 0.2, 'Reg GW (No_CAP) equation: y = '+str(m4)+'x + '+str(yint4))
+plt.figtext(0.98, 0.15, 'p-value = ' + str(pval4))
+plt.figtext(0.95, 0.1, 'SW equation: y = '+str(m5)+'x + '+str(yint5))
+plt.figtext(0.98, 0.05, 'p-value = ' + str(pval5))
+
+ax.legend(loc = [1.065, 0.55])
+# plt.savefig(outputpath+'Stats/Water_CAT/'+Name, bbox_inches = 'tight')
+# stats1.to_csv(outputpath+'Stats/Water_CAT/'+Name+'.csv')
 
 # %%
-lag = 0
-rho, pval = sp.spearmanr(wlanalysis_period, wlanalysis_period['PDSI'].shift(lag))
-print("rho = ", rho, '; p-value - ',pval)
-
-# %%
-
-for c in column_list:
- correlation, pvalue = sp.spearmanr(wlanalysis_period[c], drought_indices['PDSI']) 
- print(f'{c}: {correlation : .4f}, significant: {pvalue}')
-# %%
-lag = 4
-wlanalysis_period['PDSI'] = drought_indices['PDSI'].shift(lag)
-# wlanalysis_period
-
-print(column_list)
-rho, pval = sp.spearmanr(wlanalysis_period, wlanalysis_period['PDSI'])
-
-plt.figure(figsize=(10,6))
-heatmap = sns.heatmap(pval, vmin=-1, 
-                     vmax=1, annot=True)
-plt.title("Spearman Correlation pval")
-
-# %% Plotting to see if there's a relationship
-#%% Plot just the regulated
-ds = wlanalysis_period
-minyear=1975
-maxyear=2020
-lag = -4
-name = "Average DTW and PDSI from " + str(minyear) + " to " + str(maxyear) + ' lagged by ' + str(lag)
-min_y = 0
-max_y = 300
-fsize = 14
-
-fig, ax = plt.subplots(figsize = (16,9))
-# ax.plot(ds['R'].shift(lag), label='GW Regulated', color=c_2) 
-# ax.plot(ds['U'].shift(lag), label='GW Unregulated', color=c_7)
-
-ax.plot(ds['CAP'].shift(lag), label='CAP', color=c_2)
-# ax.plot(ds['No_CAP'].shift(lag), label='Regulated Groundwater', color=c_3)
-ax.plot(ds['SW'].shift(lag), label='Surface Water', color=c_4)
-# ax.plot(ds['GW'].shift(lag), label='Unregulated Groundwater', color=c_7)
-ax.plot(ds['Mix'].shift(lag), label='Mixed SW/GW', color=c_5)
-# colors = [c_2,c_3,c_4,c_7,c_5]
-
-
-
-# Secondary Axis
-ax2 = ax.twinx()
-ax2.set_ylabel('PDSI')
-ax2.set_ylim(-7, 10)
-ax2.plot(ds['PDSI'], '-.',label='PDSI', color='grey', lw = 3, zorder=0) 
-
-ax.set_xlim(minyear,maxyear)
-ax.set_ylim(max_y,min_y)
-# ax.grid(True)
-ax.grid(visible=True,which='major')
-ax.grid(which='minor',color='#EEEEEE', lw=0.8)
-
-ax.set_title(name, fontsize=20)
-ax.set_xlabel('Year', fontsize=fsize)
-ax.set_ylabel('Depth to Water (ft)',fontsize=fsize)
-ax.legend(loc = [1.05, 0.40], fontsize = fsize)
-ax2.legend(loc = [1.05, 0.35], fontsize = fsize)
-
-# # Drought Year Shading
-a = 1988.5
-b = 1990.5
-c = 1995.5
-d = 1996.5
-e = 2001.5
-f = 2003.5
-g = 2005.5
-h = 2007.5
-i = 2011.5
-j = 2014.5
-k = 2017.5
-l= 2018.5
-plt.axvspan(a, b, color=drought_color, alpha=0.5, lw=0, label="Drought")
-plt.axvspan(c, d, color=drought_color, alpha=0.5, lw=0)
-plt.axvspan(e, f, color=drought_color, alpha=0.5, lw=0)
-plt.axvspan(g, h, color=drought_color, alpha=0.5, lw=0)
-plt.axvspan(i, j, color=drought_color, alpha=0.5, lw=0)
-plt.axvspan(k, l, color=drought_color, alpha=0.5, lw=0)
-
-fig.set_dpi(600.0)
-
-# plt.savefig(outputpath+name+'_byregulation', bbox_inches='tight')
-# plt.savefig(outputpath+name+'_byregulation_Drought', bbox_inches='tight')
-# plt.savefig(outputpath+name+'_GWReg_Drought', bbox_inches='tight')
-# plt.savefig(outputpath+name+'_GW_Drought', bbox_inches='tight')
-plt.savefig(outputpath+name+'_SW_Drought', bbox_inches='tight')
-# plt.savefig(outputpath+name+'_AllAccess_Drought', bbox_inches='tight')
-
-
-# %%
-def display_correlation(df):
-    r = df.corr(method="spearman")
-    plt.figure(figsize=(10,6))
-    heatmap = sns.heatmap(df.corr(method='spearman'), vmin=-1, 
-                      vmax=1, annot=True)
-    plt.title("Spearman Correlation")
-    return(r)
-
-def display_corr_pairs(df,color="cyan"):
-    s = set_title = np.vectorize(lambda ax,r,rho: ax.title.set_text("r = " + 
-                                        "{:.2f}".format(r) + 
-                                        '\n $\\rho$ = ' + 
-                                        "{:.2f}".format(rho)) if ax!=None else None
-                            )      
-
-    rho = display_correlation(df)
-    r = df.corr(method="pearson")
-    g = sns.PairGrid(df,corner=True)
-    g.map_diag(plt.hist,color="yellow")
-    g.map_lower(sns.scatterplot,color="magenta")
-    set_title(g.axes,r,rho)
-    plt.subplots_adjust(hspace = 0.6)
-    plt.show()   
-
-# %%
-df = wlanalysis_period
-print('Spearman',df.corr(method='spearman'))
-print('Pearson',df.corr(method='pearson'))
-# %%
-display_correlation(wlanalysis_period)
-# %%
-lag = 4
-wlanalysis_period['PDSI'] = drought_indices['PDSI'].shift(lag)
-
-display_corr_pairs(wlanalysis_period)
-
-# %%
-# For Depth to Water by SW Access
+# Subtracting off the trend for access to SW
 ds = cat_wl2
 data_type = "Depth to Water"
 min_yr = 1975
@@ -1553,7 +1764,7 @@ for i in column_list:
         # fig, ax = plt.subplots(1, 1)
         # ax.plot(xf1, yf,label='Linear fit', lw=3)
         # df.plot(ax=ax,marker='o', ls='')
-        # ax.set_ylim(max(y),0)
+        # ax.set_ylim(0,max(y))
         # ax.legend()
 
 df2=df2.set_index(np.array(pd.to_datetime(df).index.values, dtype=float))
@@ -1606,10 +1817,10 @@ ax.plot(xf1, yf4,"-.",color='grey', lw=1)
 ax.plot(xf1, yf5,"-.",color='grey', lw=1)
 
 # f.plot(ax=ax,marker='o', ls='', label=betterlabels)
-df2.plot(ax=ax,marker='o', ls='', label=betterlabels)
+# df2.plot(ax=ax,marker='o', ls='', label=betterlabels)
 
 # ax.set_xlim(min_yr, mx_yr)
-# ax.set_ylim(300,75)
+# ax.set_ylim(75,300)
 ax.set_title(data_type)
 plt.figtext(0.95, 0.5, 'CAP equation: y = '+str(m1)+'x + '+str(yint1))
 plt.figtext(0.98, 0.45, 'p-value = ' + str(pval1))
@@ -1651,7 +1862,7 @@ ax.plot(ds['Mix'], label='Mixed SW/GW', color=c_5)
 ax.plot(ds['SW'], label='Surface Water', color=c_4) 
 
 ax.set_xlim(minyear,maxyear)
-# ax.set_ylim(max_y,min_y)
+# ax.set_ylim(min_y,max_y)
 # ax.grid(True)
 ax.grid(visible=True,which='major')
 ax.grid(which='minor',color='#EEEEEE', lw=0.8)
@@ -1695,8 +1906,6 @@ plt.savefig(outputpath+name+'_Drought', bbox_inches='tight')
 # plt.savefig(outputpath+name+'_byGW', bbox_inches='tight')
 # plt.savefig(outputpath+name+'_bySW', bbox_inches='tight')
 # plt.savefig(outputpath+name, bbox_inches='tight')
-
-# %% === Shifted correlation analysis ===
 
 
 # %%
