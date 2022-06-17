@@ -188,10 +188,23 @@ filepath = '../MergedData/Output_files/Final_WaterLevels_adjusted.csv'
 combo = pd.read_csv(filepath, index_col=0)
 combo.head()
 
-combo['GEOREGI_NU'] = pd.to_numeric(combo['GEOREGI_NU'])
+# %% in order to filter deep/mid/shallow wells
+shallow = 200
+deep = 500
+
+wd1 = combo[(combo["WELL_DEPTH"] > deep)]
+wd2 = combo[(combo["WELL_DEPTH"] <= deep) & (combo["WELL_DEPTH"] >= shallow)]
+wd3 = combo[(combo["WELL_DEPTH"] < shallow)]
+
+# %% in order to make it where we can actually group these bitches
+whatever = [combo,wd1,wd2,wd3]
+for i in whatever:
+        del i['WELL_DEPTH']
 
 # %% Now for aggregating by category for the timeseries
-# cat_wl = combo.groupby(['GEO_Region', 'GEOREGI_NU']).mean()
+# to narrow by depth database
+combo = wd1
+
 cat_wl_georeg = combo.groupby(['GEOREGI_NU']).mean()
 cat_wl_reg = combo.groupby(['Regulation']).mean()
 cat_wl_SW = combo.groupby(['Water_CAT']).mean()
@@ -199,40 +212,36 @@ cat_wl_SW = combo.groupby(['Water_CAT']).mean()
 cat_wl_georeg.info()
 
 # %% 
-cat_wl2 = cat_wl.copy()
-cat_wl2
+cat_wl2_georeg = cat_wl_georeg.copy()
+cat_wl2_reg = cat_wl_reg.copy()
+cat_wl2_SW = cat_wl_SW.copy()
 
-# %% Skip this if you're checking Depth to Water based on regulation
-cat_wl2 = cat_wl.sort_values(by=['GEOREGI_NU'])
-cat_wl2
+cat_wl2_georeg = cat_wl2_georeg.sort_values(by=['GEOREGI_NU'])
+cat_wl2_SW = cat_wl2_SW.sort_values(by=['GEOREGI_NU'])
 
-# %% Clean up the dataframe for graphing
-del cat_wl2['GEOREGI_NU']
+
+# Clean up the dataframe for graphing
+del cat_wl2_reg['GEOREGI_NU']
+del cat_wl2_SW['GEOREGI_NU']
 # cat_wl2 = cat_wl2[1:]
 # del cat_wl2['GEO_Region']
-cat_wl2
-# %%
-# cat_wl2 = cat_wl2.set_index("GEOREGI_NU")
-# %%
-cat_wl2 = cat_wl2.transpose()
-cat_wl2.info()
 
-# %% Trying to fix the year issue
-cat_wl2.reset_index(inplace=True)
-cat_wl2.info()
-# %%
-cat_wl2['index'] = pd.to_numeric(cat_wl2['index'])
-cat_wl2.info()
-# %%
-cat_wl2['index'] = cat_wl2['index'].astype(int)
-# %%
-cat_wl2.set_index('index', inplace=True)
-cat_wl2.info()
-
+databases = [cat_wl2_georeg,cat_wl2_reg,cat_wl2_SW]
+for i in databases:
+        f = i.transpose()
+        # print(i)
+        f.reset_index(inplace=True)
+        f['index'] = pd.to_numeric(f['index'])
+        f['index'] = f['index'].astype(int)
+        f.set_index('index', inplace=True)
+        i = f
+        i.info()
+        
+        
 # %% Going to export all these as CSV's
-cat_wl2.to_csv('../MergedData/Output_files/Waterlevels_georegions.csv')
-# cat_wl2.to_csv('../MergedData/Output_files/Waterlevels_Regulation.csv')
-# cat_wl2.to_csv('../MergedData/Output_files/Waterlevels_Waterlevels_AccesstoSW.csv')
+# cat_wl2_georeg.to_csv('../MergedData/Output_files/Waterlevels_georegions.csv')
+# cat_wl2_reg.to_csv('../MergedData/Output_files/Waterlevels_Regulation.csv')
+# cat_wl2_SW.to_csv('../MergedData/Output_files/Waterlevels_Waterlevels_AccesstoSW.csv')
 
 # %%  ==== Reading in the data we created above ====
 # For regulation
