@@ -26,8 +26,8 @@
 #       access to SW, or georegion (finer scale))
 # 6. Export pivot tables into .csv's for easy analyzing later
 #       * Note: after reading in packages, skip to line 197 to avoid redoing steps 1-5
-# 6. Graphs for days (starting around line 214)
-# 7. Statistical analyses
+# 7. Graphs for days (starting around line 214)
+# 8. Statistical analyses
 #       - Linear Regression (~line 929)
 #       - Pearson/Spearman Correlation (~line 212)
 #       - lagged Correlation analyses
@@ -53,6 +53,8 @@ import geopandas as gp
 #import earthpy as et
 import scipy.stats as sp
 from scipy.stats import kendalltau, pearsonr, spearmanr
+import pymannkendall as mk
+
 
 # Some functions for analysis
 def kendall_pval(x,y):
@@ -149,13 +151,13 @@ print(str(filename_mdb_nd) + " and " + str(filename_georeg) + " join complete.")
 
 # %% Exporting or reading in the static geodatabase instead of rerunning
 # static_geo.to_csv('../MergedData/Output_files/Final_Static_geodatabase_allwells.csv')
-# filename = "Final_Static_geodatabase_allwells.csv"
-# filepath = os.path.join(outputpath, filename)
-# static_geo = gp.read_file(filepath)
-# static_geo
+filename = "Final_Static_geodatabase_allwells.csv"
+filepath = os.path.join(outputpath, filename)
+static_geo = pd.read_csv(filepath)
+static_geo
 
 # %% Create a dataframe of Final_Region and Well ID's
-reg_list = static_geo[['Combo_ID', 'GEO_Region', 'GEOREGI_NU','Water_CAT', 'Loc','Regulation']]
+reg_list = static_geo[['Combo_ID', 'GEO_Region', 'GEOREGI_NU','Water_CAT', 'Loc','Regulation','WELL_DEPTH']]
 reg_list
 
 # %% Converting Combo_ID to int
@@ -186,14 +188,15 @@ filepath = '../MergedData/Output_files/Final_WaterLevels_adjusted.csv'
 combo = pd.read_csv(filepath, index_col=0)
 combo.head()
 
+combo['GEOREGI_NU'] = pd.to_numeric(combo['GEOREGI_NU'])
 
 # %% Now for aggregating by category for the timeseries
 # cat_wl = combo.groupby(['GEO_Region', 'GEOREGI_NU']).mean()
-# cat_wl = combo.groupby(['GEOREGI_NU']).mean()
-cat_wl = combo.groupby(['Regulation']).mean()
-# cat_wl = combo.groupby(['Water_CAT']).mean()
+cat_wl_georeg = combo.groupby(['GEOREGI_NU']).mean()
+cat_wl_reg = combo.groupby(['Regulation']).mean()
+cat_wl_SW = combo.groupby(['Water_CAT']).mean()
 
-cat_wl
+cat_wl_georeg.info()
 
 # %% 
 cat_wl2 = cat_wl.copy()
@@ -205,7 +208,7 @@ cat_wl2
 
 # %% Clean up the dataframe for graphing
 del cat_wl2['GEOREGI_NU']
-cat_wl2 = cat_wl2[1:]
+# cat_wl2 = cat_wl2[1:]
 # del cat_wl2['GEO_Region']
 cat_wl2
 # %%
@@ -227,7 +230,7 @@ cat_wl2.set_index('index', inplace=True)
 cat_wl2.info()
 
 # %% Going to export all these as CSV's
-# cat_wl.to_csv('../MergedData/Output_files/Final_Categories_WL_adjusted.csv')
+cat_wl2.to_csv('../MergedData/Output_files/Waterlevels_georegions.csv')
 # cat_wl2.to_csv('../MergedData/Output_files/Waterlevels_Regulation.csv')
 # cat_wl2.to_csv('../MergedData/Output_files/Waterlevels_Waterlevels_AccesstoSW.csv')
 
@@ -242,11 +245,23 @@ filepath = '../MergedData/Output_files/Waterlevels_AccesstoSW.csv'
 cat_wl2_SW = pd.read_csv(filepath, index_col=0)
 cat_wl2_SW.head()
 
+# %%
 # For georegion number
-filepath = '../MergedData/Output_files/Final_Categories_WL_adjusted.csv'
+filepath = '../MergedData/Output_files/Waterlevels_georegions.csv'
 cat_wl2_georeg = pd.read_csv(filepath, index_col=0)
-cat_wl2_georeg.head()
+# cat_wl2_georeg.head()
+# %%
+cat_wl2_georeg = cat_wl2_georeg.transpose()
+cat_wl2_georeg
+# %%
+cat_wl2_georeg.reset_index(inplace=True)
+cat_wl2_georeg['index'] = pd.to_numeric(cat_wl2_georeg['index'])
+cat_wl2_georeg.set_index('index', inplace=True)
+cat_wl2_georeg.info()
 
+# %%
+cat_wl2_georeg = cat_wl2_georeg.transpose()
+cat_wl2_georeg
 # %% Creating dictionary of labels
 labels = cat_wl2.columns.tolist()
 # georeg = georeg.sort_values(by=['GEOREGI_NU'])
@@ -269,6 +284,7 @@ drought_color = '#ffa6b8'
 wet_color = '#b8d3f2'
 
 reg_colors = [c_2,c_7]
+georeg_colors = [c_1,c_2,c_3,c_4,c_5,c_6,c_7,c_8,c_9,c_10,c_11]
 SW_colors = [c_2,c_3,c_4,c_5,c_7]
 
 #%% Plot by Groundwater Regulation
@@ -399,21 +415,24 @@ ax.plot(ds[9.0], color=c_9, label='Northeast - GW Dominated')
 ax.plot(ds[8.0], color=c_8, label='South central - GW Dominated')
 ax.plot(ds[6.0], color=c_6, label='Southeast - GW Dominated')
 # Drought Year Shading
-a = 2011
-b = 2015.999
-c = 2018.001
-d = 2018.999
-e = 2006
-f = 2007.999
+a = 1988.5
+b = 1990.5
+c = 1995.5
+d = 1996.5
+e = 2001.5
+f = 2003.5
+g = 2005.5
+h = 2007.5
+i = 2011.5
+j = 2014.5
+k = 2017.5
+l= 2018.5
 plt.axvspan(a, b, color=drought_color, alpha=0.5, lw=0, label="Drought")
 plt.axvspan(c, d, color=drought_color, alpha=0.5, lw=0)
 plt.axvspan(e, f, color=drought_color, alpha=0.5, lw=0)
-
-# Wet years (2005 and 2010)
-g = 2005
-h = 2010
-ax.axvspan(g, e, color=wet_color, alpha=0.5, lw=0, label="Wet Years")
-ax.axvspan(h, a, color=wet_color, alpha=0.5, lw=0)
+plt.axvspan(g, h, color=drought_color, alpha=0.5, lw=0)
+plt.axvspan(i, j, color=drought_color, alpha=0.5, lw=0)
+plt.axvspan(k, l, color=drought_color, alpha=0.5, lw=0)
 
 ax.set_xlim(minyear,maxyear)
 ax.set_ylim(min_y,max_y)
@@ -799,8 +818,8 @@ plt.savefig(outputpath+name+'_4panel_drought', bbox_inches = 'tight') # bbox_inc
 
 # plt.savefig(outputpath+name+'_3panel_drought')
 
-# %% Plot in a three panel graph, 1 column
-ds = cat_wl2
+# %% Plot georegions in a three panel graph, 1 column
+ds = cat_wl2_georeg
 minyear=1971
 maxyear=2020
 name = "Average Depth to Water for " + str(minyear) + " to " + str(maxyear)
@@ -1085,7 +1104,8 @@ column_list = ds.columns.tolist()
 
 stats = pd.DataFrame()
 for i in column_list:
-        df = f[i]
+        # df = f[i]
+        df = f[i].pct_change()
         #print(df)
         y=np.array(df.values, dtype=float)
         x=np.array(pd.to_datetime(df).index.values, dtype=float)
@@ -1214,16 +1234,16 @@ fig.set_dpi(600.0)
 ax.set_ylim(75,300)
 ax.set_title(Name)
 vertshift = -0.1
-# plt.figtext(0.95, 0.5 - vertshift, 'CAP equation: y = '+str(m1)+'x + '+str(yint1))
-# plt.figtext(0.98, 0.45 - vertshift, 'rsq = '+ str(rsq1) + '; p-value = ' + str(pval1))
-# plt.figtext(0.95, 0.4 - vertshift, 'Unregulated GW equation: y = '+str(m2)+'x + '+str(yint2))
-# plt.figtext(0.98, 0.35 - vertshift, 'rsq = '+ str(rsq2) +'; p-value = ' + str(pval2))
-# plt.figtext(0.95, 0.3 - vertshift, 'Mixed SW/GW equation: y = '+str(m3)+'x + '+str(yint3))
-# plt.figtext(0.98, 0.25 - vertshift, 'rsq = '+ str(rsq3) +'; p-value = ' + str(pval3))
-# plt.figtext(0.95, 0.2 - vertshift, 'Regulated GW equation: y = '+str(m4)+'x + '+str(yint4))
-# plt.figtext(0.98, 0.15 - vertshift, 'rsq = '+ str(rsq4) +'; p-value = ' + str(pval4))
-# plt.figtext(0.95, 0.1 - vertshift, 'SW equation: y = '+str(m5)+'x + '+str(yint5))
-# plt.figtext(0.98, 0.05 - vertshift, 'rsq = '+ str(rsq5) +'; p-value = ' + str(pval5))
+plt.figtext(0.95, 0.5 - vertshift, 'CAP equation: y = '+str(m1)+'x + '+str(yint1))
+plt.figtext(0.98, 0.45 - vertshift, 'rsq = '+ str(rsq1) + '; p-value = ' + str(pval1))
+plt.figtext(0.95, 0.4 - vertshift, 'Unregulated GW equation: y = '+str(m2)+'x + '+str(yint2))
+plt.figtext(0.98, 0.35 - vertshift, 'rsq = '+ str(rsq2) +'; p-value = ' + str(pval2))
+plt.figtext(0.95, 0.3 - vertshift, 'Mixed SW/GW equation: y = '+str(m3)+'x + '+str(yint3))
+plt.figtext(0.98, 0.25 - vertshift, 'rsq = '+ str(rsq3) +'; p-value = ' + str(pval3))
+plt.figtext(0.95, 0.2 - vertshift, 'Regulated GW equation: y = '+str(m4)+'x + '+str(yint4))
+plt.figtext(0.98, 0.15 - vertshift, 'rsq = '+ str(rsq4) +'; p-value = ' + str(pval4))
+plt.figtext(0.95, 0.1 - vertshift, 'SW equation: y = '+str(m5)+'x + '+str(yint5))
+plt.figtext(0.98, 0.05 - vertshift, 'rsq = '+ str(rsq5) +'; p-value = ' + str(pval5))
 
 ax.legend(
         # loc = [1.065, 0.75]
@@ -1233,7 +1253,7 @@ ax.legend(
 # stats1.to_csv(outputpath+'Stats/Water_CAT/'+Name+'_GW.csv')
 
 # %% For Depth to Water by regulation
-ds = cat_wl2
+ds = cat_wl2_reg
 data_type = "Depth to Water"
 betterlabels = ['Regulated','Unregulated'] 
 Name = str(min_yr) + " to " + str(mx_yr) + " Linear Regression for " + data_type
@@ -1317,12 +1337,13 @@ drought_indices
 
 # %% Figure out which water level database you want
 # cat_wl2 = cat_wl2_reg.copy()
-cat_wl2 = cat_wl2_SW.copy()
+# cat_wl2 = cat_wl2_SW.copy()
+cat_wl2 = cat_wl2_georeg.copy()
 # %% Water Analysis period
 wlanalysis_period = cat_wl2[cat_wl2.index>=1975]
-wlanalysis_period["UGW"]=wlanalysis_period['GW']
-del wlanalysis_period['GW']
-wlanalysis_period
+# wlanalysis_period["UGW"]=wlanalysis_period['GW']
+# del wlanalysis_period['GW']
+# wlanalysis_period
 
 # %% Checking for normality
 ds = wlanalysis_period
@@ -1340,7 +1361,8 @@ lag = 0
 # %%
 print('Kendall Correlation coefficient')
 for i in column_list:
-        print(' '+i+':')
+        # print(' '+i+':')
+        print(' '+str(i)+':')
 # To normalize the data 
         # df1 = cat_wl2[i].pct_change()
         # df2 = drought_indices.PDSI.pct_change()
@@ -1352,7 +1374,7 @@ for i in column_list:
 # %%
 print('Spearman Correlation coefficient')
 for i in column_list:
-        print(' '+i+':')
+        print(' '+str(i)+':')
         # df1 = cat_wl2[i].pct_change()
         # df2 = drought_indices.PDSI.pct_change()
         df1 = wlanalysis_period[i]
@@ -1363,7 +1385,7 @@ for i in column_list:
 # %%
 print('Pearson Correlation coefficient')
 for i in column_list:
-        print(' '+i+':')
+        print(' '+str(i)+':')
         # df1 = cat_wl2[i].pct_change()
         # df2 = drought_indices.PDSI.pct_change()
         df1 = wlanalysis_period[i]
@@ -1377,16 +1399,18 @@ ds = wlanalysis_period
 name = 'Comparing PDSI with Depth to Water readings'
 columns = ds.columns
 column_list = ds.columns.tolist()
-betterlabels = ['CAP','Regulated Groundwater','Surface Water','Mixed GW/SW','Unregulated Groundwater'] 
+# betterlabels = ['CAP','Regulated Groundwater','Surface Water','Mixed GW/SW','Unregulated Groundwater'] 
 # betterlabels = ['GW Regulated','GW Unregulated'] 
 
 fig, ax = plt.subplots(figsize = (9,6))
 x = drought_indices['PDSI']
-color_num = [2,3,4,5,7]
-for i,j,k in zip(column_list,SW_colors, betterlabels):
+for i,j in zip(column_list
+                ,georeg_colors
+                # , betterlabels
+                ):
         y = ds[i]
         ax.scatter(x,y
-                , label=k #i
+                , label=i #k
                 , color=j
                 )
         # Trendline: 1=Linear, 2=polynomial
@@ -1401,6 +1425,7 @@ for i,j,k in zip(column_list,SW_colors, betterlabels):
 ax.set_xlabel('PDSI')
 ax.set_ylabel('Depth to water (ft)')
 ax.set_title(name)
+ax.set_ylim(0,400)
 fig.set_dpi(600)
 plt.legend(loc = [1.05, 0.40])
 
