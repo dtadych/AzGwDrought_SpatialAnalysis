@@ -226,18 +226,45 @@ del cat_wl2_SW['GEOREGI_NU']
 # cat_wl2 = cat_wl2[1:]
 # del cat_wl2['GEO_Region']
 
-databases = [cat_wl2_georeg,cat_wl2_reg,cat_wl2_SW]
-for i in databases:
-        f = i.transpose()
-        # print(i)
-        f.reset_index(inplace=True)
-        f['index'] = pd.to_numeric(f['index'])
-        f['index'] = f['index'].astype(int)
-        f.set_index('index', inplace=True)
-        i = f
-        i.info()
+# databases = [cat_wl2_georeg,cat_wl2_reg,cat_wl2_SW]
+# for i in databases:
+#         # wlanalysis_period = cat_wl2[cat_wl2.index>=1975]
+#         f = i.transpose()
+#         # print(i)
+#         f.reset_index(inplace=True)
+#         f['index'] = pd.to_numeric(f['index'])
+#         f['index'] = f['index'].astype(int)
+#         f.set_index('index', inplace=True)
+#         f = f[f.index>=1975]
+#         i = f
+#         print(i.describe())
+
+i = cat_wl2_georeg
+f = i.transpose()
+f.reset_index(inplace=True)
+f['index'] = pd.to_numeric(f['index'])
+f['index'] = f['index'].astype(int)
+f.set_index('index', inplace=True)
+f.info()
+cat_wl2_georeg = f
         
-        
+i = cat_wl2_reg
+f = i.transpose()
+f.reset_index(inplace=True)
+f['index'] = pd.to_numeric(f['index'])
+f['index'] = f['index'].astype(int)
+f.set_index('index', inplace=True)
+f.info()
+cat_wl2_reg = f
+
+i = cat_wl2_SW
+f = i.transpose()
+f.reset_index(inplace=True)
+f['index'] = pd.to_numeric(f['index'])
+f['index'] = f['index'].astype(int)
+f.set_index('index', inplace=True)
+f.info()
+cat_wl2_SW = f
 # %% Going to export all these as CSV's
 # cat_wl2_georeg.to_csv('../MergedData/Output_files/Waterlevels_georegions.csv')
 # cat_wl2_reg.to_csv('../MergedData/Output_files/Waterlevels_Regulation.csv')
@@ -300,9 +327,13 @@ SW_colors = [c_2,c_3,c_4,c_5,c_7]
 ds = cat_wl2_reg
 minyear=1975
 maxyear=2020
-name = "Average Depth to Water from " + str(minyear) + " to " + str(maxyear) + ' by Groundwater Regulation'
-min_y = 0
-max_y = 300
+# name = "Average Depth to Water from " + str(minyear) + " to " + str(maxyear) + ' by Groundwater Regulation'
+name = "Average Depth to Water for Deep Wells by Groundwater Regulation" # wd1
+# name = "Average Depth to Water for Midrange Wells by Groundwater Regulation" # wd2
+# name = "Average Depth to Water for Shallow Wells by Groundwater Regulation" #wd3
+
+min_y = 150
+max_y = 450
 fsize = 14
 
 fig, ax = plt.subplots(figsize = (16,9))
@@ -311,7 +342,9 @@ ax.plot(ds['R'], label='GW Regulated', color=c_2)
 ax.plot(ds['U'], label='GW Unregulated', color=c_7) 
 ax.set_xlim(minyear,maxyear)
 ax.set_ylim(min_y,max_y)
-ax.grid(True)
+# ax.grid(True)
+ax.grid(visible=True,which='major')
+ax.grid(which='minor',color='#EEEEEE', lw=0.8)
 ax.set_title(name, fontsize=20)
 ax.set_xlabel('Year', fontsize=fsize)
 ax.set_ylabel('Depth to Water (ft)',fontsize=fsize)
@@ -335,20 +368,25 @@ plt.axvspan(e, f, color=drought_color, alpha=0.5, lw=0)
 plt.axvspan(g, h, color=drought_color, alpha=0.5, lw=0)
 plt.axvspan(i, j, color=drought_color, alpha=0.5, lw=0)
 plt.axvspan(k, l, color=drought_color, alpha=0.5, lw=0)
+ax.minorticks_on()
+
 
 fig.set_dpi(600.0)
 
 # plt.savefig(outputpath+name+'_byregulation', bbox_inches='tight')
-# plt.savefig(outputpath+name+'_byregulation_Drought', bbox_inches='tight')
+plt.savefig(outputpath+name+'_byregulation_Drought', bbox_inches='tight')
 
 
 #%% Plot by access to surfacewater
 ds = cat_wl2_SW
 minyear=1975
 maxyear=2020
-name = "Average Depth to Water from " + str(minyear) + " to " + str(maxyear) + " by Access to SW"
-min_y = 0
-max_y = 300
+# name = "Average Depth to Water from " + str(minyear) + " to " + str(maxyear) + " by Access to SW"
+# name = "Average Depth to Water for Deep Wells by Access to SW" # wd1
+# name = "Average Depth to Water for Midrange Wells by Access to SW" # wd2
+# name = "Average Depth to Water for Deep Wells by Access to SW" # wd3
+min_y = 150
+max_y = 500
 fsize = 14
 
 fig, ax = plt.subplots(figsize = (16,9))
@@ -368,24 +406,24 @@ ax.set_xlabel('Year', fontsize=fsize)
 ax.set_ylabel('Depth to Water (ft)',fontsize=fsize)
 ax.legend(loc = [1.04, 0.40], fontsize = fsize)
 # Drought Year Shading
-a = 1988.5
-b = 1990.5
-c = 1995.5
-d = 1996.5
-e = 2001.5
-f = 2003.5
-g = 2005.5
-h = 2007.5
-i = 2011.5
-j = 2014.5
-k = 2017.5
-l= 2018.5
-plt.axvspan(a, b, color=drought_color, alpha=0.5, lw=0, label="Drought")
-plt.axvspan(c, d, color=drought_color, alpha=0.5, lw=0)
-plt.axvspan(e, f, color=drought_color, alpha=0.5, lw=0)
-plt.axvspan(g, h, color=drought_color, alpha=0.5, lw=0)
-plt.axvspan(i, j, color=drought_color, alpha=0.5, lw=0)
-plt.axvspan(k, l, color=drought_color, alpha=0.5, lw=0)
+# a = 1988.5
+# b = 1990.5
+# c = 1995.5
+# d = 1996.5
+# e = 2001.5
+# f = 2003.5
+# g = 2005.5
+# h = 2007.5
+# i = 2011.5
+# j = 2014.5
+# k = 2017.5
+# l= 2018.5
+# plt.axvspan(a, b, color=drought_color, alpha=0.5, lw=0, label="Drought")
+# plt.axvspan(c, d, color=drought_color, alpha=0.5, lw=0)
+# plt.axvspan(e, f, color=drought_color, alpha=0.5, lw=0)
+# plt.axvspan(g, h, color=drought_color, alpha=0.5, lw=0)
+# plt.axvspan(i, j, color=drought_color, alpha=0.5, lw=0)
+# plt.axvspan(k, l, color=drought_color, alpha=0.5, lw=0)
 
 # # Wet years (2005 and 2010)
 # g = 2005
@@ -405,9 +443,13 @@ plt.savefig(outputpath+name+'_bySW', bbox_inches='tight')
 ds = cat_wl2_georeg
 minyear=1975
 maxyear=2020
-name = "Average Depth to Water from " + str(minyear) + " to " + str(maxyear)
-min_y = 0
-max_y = 400
+# name = "Average Depth to Water from " + str(minyear) + " to " + str(maxyear)
+name = "Average Depth to Water for Deep Wells by Georegion" # wd1
+# name = "Average Depth to Water for Midrange Wells by Georegion" # wd2
+# name = "Average Depth to Water for Deep Wells by Georegion" # wd3
+
+min_y = 150
+max_y = 600
 fsize = 14
 
 # Plot all of them on a single graph
@@ -417,7 +459,7 @@ ax.plot(ds[2.0], label='Regulated with CAP', color=c_2)
 ax.plot(ds[3.0], label='Regulated without CAP', color=c_3) 
 ax.plot(ds[4.0], color=c_4, label='Lower Colorado River - SW Dominated')
 ax.plot(ds[5.0], color=c_5, label='Upper Colorado River - Mixed')
-ax.plot(ds[10.0], color=c_10, label='North - Mixed')
+# ax.plot(ds[10.0], color=c_10, label='North - Mixed')
 ax.plot(ds[11.0], color=c_11, label='Central - Mixed')
 ax.plot(ds[7.0], color=c_7, label='Northwest - GW Dominated')
 ax.plot(ds[9.0], color=c_9, label='Northeast - GW Dominated')
@@ -533,13 +575,13 @@ ax.axvspan(g, e, color=wet_color, alpha=0.5, lw=0, label="Wet Years")
 ax.axvspan(h, a, color=wet_color, alpha=0.5, lw=0)
 
 # %% Plot in a four panel graph
-ds = cat_wl2
-minyear=1970
-maxyear=2020
-name = "Average Depth to Water for " + str(minyear) + " to " + str(maxyear)
-min_y = 0
-max_y = 400
-fsize = 14
+# ds = cat_wl2_georeg
+# minyear=1970
+# maxyear=2020
+# name = "Average Depth to Water for " + str(minyear) + " to " + str(maxyear)
+# min_y = 150
+# max_y = 400
+# fsize = 14
 ylabel = "Depth to Water (ft)"
 
 # del ds.at[2015, 10]
@@ -632,12 +674,12 @@ ax[1,1].axvspan(h, a, color=wet_color, alpha=0.5, lw=0)
 # plt.savefig(outputpath+name+'_4panel_drought')
 
 # %% Plot in a four panel 1 column graph
-ds = cat_wl2
-minyear=1975
-maxyear=2020
-name = "Average Depth to Water for " + str(minyear) + " to " + str(maxyear)
-min_y = 0
-max_y = 350
+# ds = cat_wl2_georeg
+# minyear=1975
+# maxyear=2020
+# name = "Average Depth to Water for " + str(minyear) + " to " + str(maxyear)
+min_y = 150
+max_y = 600
 fsize = 14
 ylabel = "Depth to Water (ft)"
 linewidth = 2
@@ -726,17 +768,17 @@ ax[p4].legend(loc = [1.02, 0.20], fontsize = fsize)
 
 # plt.savefig(outputpath+name+'_3panel', bbox_inches = 'tight') # bbox_inches makes sure the legend saves
 # plt.savefig(outputpath+name+'_4panel', bbox_inches = 'tight') # bbox_inches makes sure the legend saves
-plt.savefig(outputpath+name+'_4panel_1col', bbox_inches = 'tight') # bbox_inches makes sure the legend saves
+# plt.savefig(outputpath+name+'_4panel_1col', bbox_inches = 'tight') # bbox_inches makes sure the legend saves
 fig.set_dpi(600.0)
 
 # plt.savefig(outputpath+name+'_3panel_drought')
 # %% Plot in a four panel 1 column graph
-ds = cat_wl2
-minyear=2002
-maxyear=2020
-name = "Average Depth to Water for " + str(minyear) + " to " + str(maxyear)
-min_y = 0
-max_y = 350
+# ds = cat_wl2_georeg
+# minyear=2002
+# maxyear=2020
+# name = "Average Depth to Water for " + str(minyear) + " to " + str(maxyear)
+min_y = 150
+max_y = 600
 fsize = 14
 ylabel = "Depth to Water (ft)"
 linewidth = 2
@@ -823,7 +865,7 @@ ax[p4].legend(loc = [1.02, 0.20], fontsize = fsize)
 
 # plt.savefig(outputpath+name+'_3panel', bbox_inches = 'tight') # bbox_inches makes sure the legend saves
 # plt.savefig(outputpath+name+'_4panel', bbox_inches = 'tight') # bbox_inches makes sure the legend saves
-plt.savefig(outputpath+name+'_4panel_drought', bbox_inches = 'tight') # bbox_inches makes sure the legend saves
+# plt.savefig(outputpath+name+'_4panel_drought', bbox_inches = 'tight') # bbox_inches makes sure the legend saves
 
 # plt.savefig(outputpath+name+'_3panel_drought')
 
@@ -832,7 +874,7 @@ ds = cat_wl2_georeg
 minyear=1971
 maxyear=2020
 name = "Average Depth to Water for " + str(minyear) + " to " + str(maxyear)
-min_y = 0
+min_y = 150
 max_y = 350
 fsize = 14
 ylabel = "Depth to Water (ft)"
