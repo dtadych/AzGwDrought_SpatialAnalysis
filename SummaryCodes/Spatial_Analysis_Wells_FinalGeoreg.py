@@ -203,13 +203,22 @@ for i in whatever:
 
 # %% Now for aggregating by category for the timeseries
 # to narrow by depth database
-combo = wd1
+# combo = wd1
 
 cat_wl_georeg = combo.groupby(['GEOREGI_NU']).mean()
 cat_wl_reg = combo.groupby(['Regulation']).mean()
 cat_wl_SW = combo.groupby(['Water_CAT']).mean()
 
 cat_wl_georeg.info()
+
+# %%
+# wdc1 = wd1.groupby(['Regulation']).mean()
+# wdc2 = wd2.groupby(['Regulation']).mean()
+# wdc3 = wd3.groupby(['Regulation']).mean()
+
+wdc1 = wd1.groupby(['Water_CAT']).mean()
+wdc2 = wd2.groupby(['Water_CAT']).mean()
+wdc3 = wd3.groupby(['Water_CAT']).mean()
 
 # %% 
 cat_wl2_georeg = cat_wl_georeg.copy()
@@ -281,7 +290,6 @@ filepath = '../MergedData/Output_files/Waterlevels_AccesstoSW.csv'
 cat_wl2_SW = pd.read_csv(filepath, index_col=0)
 cat_wl2_SW.head()
 
-# %%
 # For georegion number
 filepath = '../MergedData/Output_files/Waterlevels_georegions.csv'
 cat_wl2_georeg = pd.read_csv(filepath, index_col=0)
@@ -323,17 +331,122 @@ reg_colors = [c_2,c_7]
 georeg_colors = [c_1,c_2,c_3,c_4,c_5,c_6,c_7,c_8,c_9,c_10,c_11]
 SW_colors = [c_2,c_3,c_4,c_5,c_7]
 
+bar_watercatc = [c_2,c_3,c_4,c_5,c_7]
+
+# %%
+# %% Below is for Water Access Category
+# ds = wdc1.copy()
+name = 'Average Depth to water for different categories'
+ds = wdc1.copy()
+columns = ds.columns
+labels = ds.columns.tolist()
+
+ds1 = pd.DataFrame()
+ds1['CAP'] = ds[labels[0]]
+ds1['SW'] = ds[labels[4]]
+ds1['Mixed'] = ds[labels[2]]
+ds1['GW Regulated'] = ds[labels[3]]
+ds1['GW'] = ds[labels[1]]
+
+dft1 = ds1.copy()
+dft1
+
+
+# ds = wdc2.copy()
+ds = wdc2.copy()
+columns = ds.columns
+labels = ds.columns.tolist()
+
+ds1 = pd.DataFrame()
+ds1['CAP'] = ds[labels[0]]
+ds1['SW'] = ds[labels[4]]
+ds1['Mixed'] = ds[labels[2]]
+ds1['GW Regulated'] = ds[labels[3]]
+ds1['GW'] = ds[labels[1]]
+
+dft2 = ds1.copy()
+dft2
+
+
+# ds = wdc3.copy()
+ds = wdc3.copy()
+columns = ds.columns
+labels = ds.columns.tolist()
+
+ds1 = pd.DataFrame()
+ds1['CAP'] = ds[labels[0]]
+ds1['SW'] = ds[labels[4]]
+ds1['Mixed'] = ds[labels[2]]
+ds1['GW Regulated'] = ds[labels[3]]
+ds1['GW'] = ds[labels[1]]
+
+dft3 = ds1.copy()
+dft3
+
+df1 = pd.DataFrame(dft1.mean())
+df1 = df1.transpose()
+df1 = df1.reset_index()
+df1['index'] = 'Deep'
+df1.set_index('index', inplace=True)
+df1
+
+df2 = pd.DataFrame(dft2.mean())
+df2 = df2.transpose()
+df2 = df2.reset_index()
+df2['index'] = 'Midrange'
+df2.set_index('index', inplace=True)
+df2
+
+df3 = pd.DataFrame(dft3.mean())
+df3 = df3.transpose()
+df3 = df3.reset_index()
+df3['index'] = 'Shallow'
+df3.set_index('index', inplace=True)
+df3
+
+df_test = df3.append([df2,df1])
+df_test = df_test.transpose()
+df_test = df_test.rename_axis(None,axis=1)
+df_test
+
+# group_colors = ['cornflowerblue','slategrey','darkblue']
+group_colors = ['lightsteelblue','cornflowerblue','darkblue']
+
+# name = 'Well Densities by Access to Surface Water'
+horlabel = 'Depth to water (ft)'
+# name = 'Number of wells by Access to Surface Water'
+# horlabel = 'Number of Wells (#)'
+fsize = 14
+
+df_test.plot(figsize = (12,7),
+        kind='bar',
+        stacked=False,
+        # title=name,
+        color = group_colors,
+        zorder = 2,
+        width = 0.85,
+        fontsize = fsize
+        )
+plt.title(name, fontsize = (fsize+2))
+plt.ylabel(horlabel, fontsize = fsize)
+plt.xticks(rotation=30)
+plt.grid(axis='y', linewidth=0.5, zorder=0)
+plt.legend(fontsize = fsize)
+
+# plt.savefig(outputpath+name+'groupedchart')
+
+
 #%% Plot by Groundwater Regulation
 ds = cat_wl2_reg
 minyear=1975
 maxyear=2020
-# name = "Average Depth to Water from " + str(minyear) + " to " + str(maxyear) + ' by Groundwater Regulation'
-name = "Average Depth to Water for Deep Wells by Groundwater Regulation" # wd1
+name = "Average Depth to Water from " + str(minyear) + " to " + str(maxyear) + ' by Groundwater Regulation'
+# name = "Average Depth to Water for Deep Wells by Groundwater Regulation" # wd1
 # name = "Average Depth to Water for Midrange Wells by Groundwater Regulation" # wd2
 # name = "Average Depth to Water for Shallow Wells by Groundwater Regulation" #wd3
 
-min_y = 150
-max_y = 450
+min_y = 75
+max_y = 300
 fsize = 14
 
 fig, ax = plt.subplots(figsize = (16,9))
@@ -350,31 +463,31 @@ ax.set_xlabel('Year', fontsize=fsize)
 ax.set_ylabel('Depth to Water (ft)',fontsize=fsize)
 ax.legend(loc = [1.04, 0.40], fontsize = fsize)
 # # Drought Year Shading
-a = 1988.5
-b = 1990.5
-c = 1995.5
-d = 1996.5
-e = 2001.5
-f = 2003.5
-g = 2005.5
-h = 2007.5
-i = 2011.5
-j = 2014.5
-k = 2017.5
-l= 2018.5
-plt.axvspan(a, b, color=drought_color, alpha=0.5, lw=0, label="Drought")
-plt.axvspan(c, d, color=drought_color, alpha=0.5, lw=0)
-plt.axvspan(e, f, color=drought_color, alpha=0.5, lw=0)
-plt.axvspan(g, h, color=drought_color, alpha=0.5, lw=0)
-plt.axvspan(i, j, color=drought_color, alpha=0.5, lw=0)
-plt.axvspan(k, l, color=drought_color, alpha=0.5, lw=0)
+# a = 1988.5
+# b = 1990.5
+# c = 1995.5
+# d = 1996.5
+# e = 2001.5
+# f = 2003.5
+# g = 2005.5
+# h = 2007.5
+# i = 2011.5
+# j = 2014.5
+# k = 2017.5
+# l= 2018.5
+# plt.axvspan(a, b, color=drought_color, alpha=0.5, lw=0, label="Drought")
+# plt.axvspan(c, d, color=drought_color, alpha=0.5, lw=0)
+# plt.axvspan(e, f, color=drought_color, alpha=0.5, lw=0)
+# plt.axvspan(g, h, color=drought_color, alpha=0.5, lw=0)
+# plt.axvspan(i, j, color=drought_color, alpha=0.5, lw=0)
+# plt.axvspan(k, l, color=drought_color, alpha=0.5, lw=0)
 ax.minorticks_on()
 
 
 fig.set_dpi(600.0)
 
-# plt.savefig(outputpath+name+'_byregulation', bbox_inches='tight')
-plt.savefig(outputpath+name+'_byregulation_Drought', bbox_inches='tight')
+plt.savefig(outputpath+name+'_byregulation', bbox_inches='tight')
+# plt.savefig(outputpath+name+'_byregulation_Drought', bbox_inches='tight')
 
 
 #%% Plot by access to surfacewater
@@ -1049,7 +1162,7 @@ georeg_area_watercat
 # Tutorial from https://mohammadimranhasan.com/linear-regression-of-time-series-data-with-pandas-library-in-python/
 
 # For Depth to Water of georegions
-ds = cat_wl2
+ds = cat_wl2_georeg
 min_yr = 2002
 mx_yr = 2020
 Name = str(min_yr) + " to " + str(mx_yr) + " Linear Regression:"
@@ -1117,7 +1230,7 @@ stats1
 
 # %%
 # For Depth to Water by SW Access
-ds = cat_wl2
+ds = cat_wl2_SW
 data_type = "Depth to Water"
 min_yr = 1975
 mx_yr = 2020
@@ -1306,6 +1419,8 @@ ax.legend(
 # %% For Depth to Water by regulation
 ds = cat_wl2_reg
 data_type = "Depth to Water"
+min_yr = 1975
+mx_yr = 2020
 betterlabels = ['Regulated','Unregulated'] 
 Name = str(min_yr) + " to " + str(mx_yr) + " Linear Regression for " + data_type
 print(Name)
@@ -1367,18 +1482,63 @@ pval2 = round(stats1.loc['p_val', 'Unregulated'], 4)
 yf1 = (m1*xf)+yint1
 yf2 = (m2*xf)+yint2
 
-fig, ax = plt.subplots(1, 1)
-ax.plot(xf1, yf1,"-.",color='grey',label='Linear Trendline', lw=1)
-ax.plot(xf1, yf2,"-.",color='grey', lw=1)
-f.plot(ax=ax,marker='o', ls='', label=betterlabels)
-ax.set_title(data_type)
+fig, ax = plt.subplots(1, 1, figsize = (12,7))
+ax.plot(xf1, yf1,"-.",color=c_2,label='Linear Trendline', lw=1)
+ax.plot(xf1, yf2,"-.",color=c_7, lw=1)
+
+ds = cat_wl2_reg
+minyear=1975
+maxyear=2020
+min_y = 75
+max_y = 300
+fsize = 14
+
+ax.plot(ds['R'], label='GW Regulated', color=c_2) 
+ax.plot(ds['U'], label='GW Unregulated', color=c_7) 
+
+ax.set_xlim(minyear,maxyear)
+ax.set_ylim(min_y,max_y)
+# ax.grid(True)
+ax.grid(visible=True,which='major')
+ax.grid(which='minor',color='#EEEEEE', lw=0.8)
+ax.set_xlabel('Year', fontsize=fsize)
+ax.set_ylabel('Depth to Water (ft)',fontsize=fsize)
+ax.legend(loc = [1.04, 0.40], fontsize = fsize)
+# # Drought Year Shading
+# a = 1988.5
+# b = 1990.5
+# c = 1995.5
+# d = 1996.5
+# e = 2001.5
+# f = 2003.5
+# g = 2005.5
+# h = 2007.5
+# i = 2011.5
+# j = 2014.5
+# k = 2017.5
+# l= 2018.5
+# plt.axvspan(a, b, color=drought_color, alpha=0.5, lw=0, label="Drought")
+# plt.axvspan(c, d, color=drought_color, alpha=0.5, lw=0)
+# plt.axvspan(e, f, color=drought_color, alpha=0.5, lw=0)
+# plt.axvspan(g, h, color=drought_color, alpha=0.5, lw=0)
+# plt.axvspan(i, j, color=drought_color, alpha=0.5, lw=0)
+# plt.axvspan(k, l, color=drought_color, alpha=0.5, lw=0)
+
+ax.minorticks_on()
+
+fig.set_dpi(600.0)
+
+# ax.set_xlim(min_yr, mx_yr)
+ax.set_ylim(75,300)
+ax.set_title(Name)
+
 plt.figtext(0.95, 0.4, 'Regulated equation: y= '+str(m1)+'x + '+str(yint1))
 plt.figtext(0.96, 0.35, 'p-value = ' + str(pval1))
 plt.figtext(0.95, 0.6, 'Unregulated equation: y= '+str(m2)+'x + '+str(yint2))
 plt.figtext(0.96, 0.55, 'p-value = ' + str(pval2))
 ax.legend()
-# plt.savefig(outputpath+'Stats/'+Name, bbox_inches = 'tight')
-# stats1.to_csv(outputpath+'Stats/'+Name+'.csv')
+plt.savefig(outputpath+'Stats/'+Name, bbox_inches = 'tight')
+stats1.to_csv(outputpath+'Stats/'+Name+'.csv')
 
 # %% ====== Going to run the Spearman's rho coeficient analysis on drought ======
 # First read in the drought indice
@@ -1387,9 +1547,9 @@ drought_indices = drought_indices.set_index('In_year')
 drought_indices
 
 # %% Figure out which water level database you want
-# cat_wl2 = cat_wl2_reg.copy()
+cat_wl2 = cat_wl2_reg.copy()
 # cat_wl2 = cat_wl2_SW.copy()
-cat_wl2 = cat_wl2_georeg.copy()
+# cat_wl2 = cat_wl2_georeg.copy()
 # %% Water Analysis period
 wlanalysis_period = cat_wl2[cat_wl2.index>=1975]
 # wlanalysis_period["UGW"]=wlanalysis_period['GW']
@@ -1447,21 +1607,21 @@ for i in column_list:
 
 # %% Scatterplot of correlation values
 ds = wlanalysis_period
-name = 'Comparing PDSI with Depth to Water readings'
+name = 'Comparing PDSI with Depth to Water readings by Regulation'
 columns = ds.columns
 column_list = ds.columns.tolist()
 # betterlabels = ['CAP','Regulated Groundwater','Surface Water','Mixed GW/SW','Unregulated Groundwater'] 
-# betterlabels = ['GW Regulated','GW Unregulated'] 
+betterlabels = ['GW Regulated','GW Unregulated'] 
 
 fig, ax = plt.subplots(figsize = (9,6))
 x = drought_indices['PDSI']
-for i,j in zip(column_list
-                ,georeg_colors
-                # , betterlabels
+for i,j,k in zip(column_list
+                ,reg_colors
+                , betterlabels
                 ):
         y = ds[i]
         ax.scatter(x,y
-                , label=i #k
+                , label=k
                 , color=j
                 )
         # Trendline: 1=Linear, 2=polynomial
@@ -1582,7 +1742,8 @@ df = severe
 df2 = other
 name = 'Severe'
 # labels = df.columns.tolist()
-betterlabels = ['CAP','Regulated Groundwater','Surface Water','Unregulated Groundwater','Mixed GW/SW'] 
+# betterlabels = ['CAP','Regulated Groundwater','Surface Water','Unregulated Groundwater','Mixed GW/SW'] 
+betterlabels = ['GW Regulated','GW Unregulated'] 
 
 fig, ax1 = plt.subplots(nrows=1, ncols=1, figsize=(8, 4))
 
@@ -1592,9 +1753,9 @@ bplot = ax1.boxplot(df,
                      labels=betterlabels
                      )
 
-# colors = reg_colors
+colors = reg_colors
 # colors = SW_colors
-colors = [c_2,c_3,c_4,c_7,c_5]
+# colors = [c_2,c_3,c_4,c_7,c_5]
 
 
 for patch, color in zip(bplot['boxes'], colors):
@@ -1607,12 +1768,14 @@ ax1.grid(visible=True)
 fig.set_dpi(600.0)
 ax1.set_ylim(0,300)
 
-plt.savefig(outputpath+'Stats/Water_CAT/'+name+"Reverse_axes", bbox_inches = 'tight')
+# plt.savefig(outputpath+'Stats/Water_CAT/'+name+"Reverse_axes", bbox_inches = 'tight')
+# plt.savefig(outputpath+'Stats/Regulation/'+name+"Reverse_axes", bbox_inches = 'tight')
+
 
 # %%
 name = 'Normal-Wet'
 # labels = df.columns.tolist()
-betterlabels = ['CAP','Regulated Groundwater','Surface Water','Unregulated Groundwater','Mixed GW/SW'] 
+# betterlabels = ['CAP','Regulated Groundwater','Surface Water','Unregulated Groundwater','Mixed GW/SW'] 
 
 fig, ax1 = plt.subplots(nrows=1, ncols=1, figsize=(8, 4))
 
@@ -1622,9 +1785,9 @@ bplot = ax1.boxplot(df2,
                      labels=betterlabels
                      )
 
-# colors = reg_colors
+colors = reg_colors
 # colors = SW_colors
-colors = [c_2,c_3,c_4,c_7,c_5]
+# colors = [c_2,c_3,c_4,c_7,c_5]
 
 
 for patch, color in zip(bplot['boxes'], colors):
@@ -1637,8 +1800,79 @@ ax1.grid(visible=True)
 fig.set_dpi(600.0)
 ax1.set_ylim(0,300)
 
-plt.savefig(outputpath+'Stats/Water_CAT/'+name, bbox_inches = 'tight')
+# plt.savefig(outputpath+'Stats/Regulation/'+name, bbox_inches = 'tight')
 # plt.savefig(outputpath+'Stats/Water_CAT/'+name+'Reverse_axes', bbox_inches = 'tight')
+
+# %% Grouped bar chart for regulation
+ds = severe.copy()
+# ds = dens_wdc1.copy()
+columns = ds.columns
+labels = ds.columns.tolist()
+
+ds1 = pd.DataFrame()
+for i in labels:
+        df = ds[i]
+        # print(df)
+        y=np.array(df.values, dtype=float)
+        print(y)
+        ds1 = ds1.append({'severe': np.mean(y)},
+                              ignore_index=True)
+ds1
+
+dft1 = ds1.copy()
+dft1.index = betterlabels
+dft1 = dft1.transpose()
+dft1
+
+ds = other.copy()
+# ds = dens_wdc2.copy()
+columns = ds.columns
+labels = ds.columns.tolist()
+
+ds1 = pd.DataFrame()
+for i in labels:
+        df = ds[i]
+        # print(df)
+        y=np.array(df.values, dtype=float)
+        print(y)
+        ds1 = ds1.append({'other': np.mean(y)},
+                              ignore_index=True)
+dft2 = ds1.copy()
+dft2
+
+dft2.index = betterlabels
+dft2 = dft2.transpose()
+
+df_test = dft1.append([dft2])
+df_test = df_test.transpose()
+
+# group_colors = ['lightsteelblue','cornflowerblue','darkblue']
+# group_colors = reg_colors
+group_colors = SW_colors
+
+# name = 'Well Densities by Groundwater Regulation'
+# horlabel = 'Well Densities (well/km^2)'
+name = 'Average Depth to water by Drought and Groundwater Regulation'
+# name = 'Average Depth to water by Drought and Access to SW'
+horlabel = 'Depth to Water (ft)'
+fsize = 14
+
+df_test.plot(figsize = (12,7),
+        kind='bar',
+        stacked=False,
+        # title=name,
+        color = group_colors,
+        zorder = 2,
+        width = 0.85,
+        fontsize = fsize
+        )
+plt.title(name, fontsize = (fsize+2))
+plt.ylabel(horlabel, fontsize = fsize)
+plt.xticks(rotation=30)
+plt.grid(axis='y', linewidth=0.5, zorder=0)
+plt.legend(fontsize = fsize)
+
+plt.savefig(outputpath+name+'groupedchart', bbox_inches = 'tight')
 
 # %% Running a regression on PDSI and access to SW because yolo
 ds = cat_wl2

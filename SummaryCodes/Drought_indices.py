@@ -393,8 +393,8 @@ fig.set_dpi(600.0)
 
 # %%
 analysis_period = yearly_pdsi[yearly_pdsi.index>=1975]
-del analysis_period['wet']
-del analysis_period['dry']
+# del analysis_period['wet']
+# del analysis_period['dry']
 
 analysis_period.to_csv('../MergedData/Output_files/Yearly_DroughtIndices.csv')
 
