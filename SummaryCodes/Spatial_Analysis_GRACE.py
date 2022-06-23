@@ -483,7 +483,7 @@ ax[0,0].legend(loc = [0.1, 0.20], fontsize=14)
 ax[0,1].legend(loc = [0.1, 0.05], fontsize=14)
 ax[1,0].legend(loc = [0.1, 0.05], fontsize=14)
 ax[1,1].legend(loc = [0.1, 0.20], fontsize=14)
-plt.savefig(outputpath+name)
+# plt.savefig(outputpath+name)
 
 # %% For plotting all the data
 ds = grace_remapped
@@ -526,7 +526,7 @@ ax[0,0].legend(loc = [0.1, 0.20], fontsize=14)
 ax[0,1].legend(loc = [0.1, 0.05], fontsize=14)
 ax[1,0].legend(loc = [0.1, 0.05], fontsize=14)
 ax[1,1].legend(loc = [0.1, 0.20], fontsize=14)
-plt.savefig(outputpath+name)
+# plt.savefig(outputpath+name)
 
 # %% Write a .csv for now for graphing later
 grace_remapped.to_csv('../MergedData/Output_files/grace_remapped.csv')
@@ -1369,7 +1369,7 @@ plt.xlabel('Year')
 plt.ylabel('LWE Change (cm)')
 fig.set_dpi(600.0)
 plt.savefig(outputpath+name)
-# %%
+# %% Subtracting off average for remapped
 remap_anom = grace_yearlyavg.copy()
 for i in remap_anom.columns:
     remap_anom[i] = remap_anom[i]-cm_df_year[0]
@@ -1405,7 +1405,7 @@ ax[1,0].plot(ds['South central - GW Dominated'], color=c_8, label='South central
 ax[1,1].plot(ds['Southeast - GW Dominated'], color=c_6, label='Southeast - GW Dominated')
 
 a = 1988.5
-b = 1989.5
+b = 1990.5
 c = 1995.5
 d = 1996.5
 e = 2001.5
@@ -1417,6 +1417,7 @@ j = 2014.5
 k = 2017.5
 l= 2018.5
 
+# Drought_years = [1989,1990,1996,2002,2003,2006,2007,2012,2014,2018]
 
 ax[0,0].axvspan(a, b, color=drought_color, alpha=0.5, lw=0, label="Drought")
 ax[0,0].axvspan(c, d, color=drought_color, alpha=0.5, lw=0)
