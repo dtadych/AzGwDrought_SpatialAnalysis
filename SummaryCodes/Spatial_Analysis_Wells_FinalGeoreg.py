@@ -1909,6 +1909,70 @@ pre_d = {1:[1988]
         ,6:[2017]}
 
 print(pre_d)
+
+#%% Print the average PDSI and PHDI values
+
+ds = drought_indices.copy()
+columns = ds.columns
+column_list = ds.columns.tolist()
+
+ds['Status'] = 'Normal-Wet'
+# wlanalysis_period
+
+for x,y in dd.items():
+        ds.loc[y, 'Status'] = 'Drought '+str(x)
+
+
+pdsi_avg = ds.groupby(['Status']).mean()
+pdsi_avg
+
+#%%
+def addlabels(x,y):
+    for i in range(len(x)):
+        plt.text(i,y[i],y[i])
+# %% Grouped bar chart of PDSI/PHDI Values
+name = 'Average PDSI and PHDI Values Per Drought'
+
+yearlabels = ["1989-1990"
+                ,'1996'
+                ,'2002-2003'
+                ,'2006-2007'
+                ,'2012-2014'
+                ,'2018'
+                ,'Normal/Wet Years']
+
+pdsi_avg.index = yearlabels
+pdsi_avg = pdsi_avg.transpose()
+# del ds['Normal/Wet Years']
+pdsi_avg
+#%%
+group_colors = [blind[5],blind[6],blind[2]
+                ,blind[12],blind[11],blind[10]
+                ,blind[0] #black
+                ]
+
+horlabel = 'Index Value'
+fsize = 14
+
+plt.rcParams["figure.dpi"] = 600
+pdsi_avg.plot(figsize = (10,7),
+        kind='bar',
+        stacked=False,
+        # title=name,
+        color = group_colors,
+        zorder = 2,
+        width = 0.85,
+        fontsize = fsize
+        )
+plt.title(name, fontsize = (fsize+2))
+# plt.ylim([0,400])
+plt.ylabel(horlabel, fontsize = fsize)
+plt.xticks(rotation=0, fontsize = fsize-2)
+plt.grid(axis='y', linewidth=0.5, zorder=0)
+plt.legend(loc=[1.01,0.3],fontsize = fsize)
+
+# plt.savefig(outputpath+name+'_groupedchart', bbox_inches = 'tight')
+
 # %% Figure out which water level database you want
 cat_wl2 = cat_wl2_reg.copy() 
 # cat_wl2 = cat_wl2_SW.copy()
