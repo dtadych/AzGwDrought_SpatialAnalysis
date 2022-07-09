@@ -35,6 +35,7 @@
 
 # %%
 from cProfile import label
+from dbm import _ValueType
 from operator import ge
 from optparse import Values
 import os
@@ -2237,14 +2238,11 @@ ds['Status'] = 'Normal-Wet'
 for x,y in dd.items():
         ds.loc[y, 'Status'] = 'Drought '+str(x)
 
-drawd_max = ds.groupby(['Status']).max()
-
-ds = wlanalysis_period.copy()
-columns = ds.columns
-column_list = ds.columns.tolist()
-ds['Status'] = 'Normal-Wet'
 for x,y in pre_d.items():
         ds.loc[y, 'pre_d'] = 'Drought '+str(x)
+# ds
+
+drawd_max = ds.groupby(['Status']).max()
 predrought = ds.groupby(['pre_d']).mean()
 
 drawdown = drawd_max - predrought
@@ -2293,6 +2291,114 @@ plt.legend(loc=[1.01,0.3],fontsize = fsize)
 
 # plt.savefig(outputpath+name+'_GWREG_groupedchart', bbox_inches = 'tight')
 plt.savefig(outputpath+name+'_anomalies_SWAccess_groupedchart', bbox_inches = 'tight')
+
+# %% Recovery 
+ds = wlanalysis_period.copy()
+columns = ds.columns
+column_list = ds.columns.tolist()
+ds['Status'] = 'Normal-Wet'
+for x,y in dd.items():
+        ds.loc[y, 'Status'] = 'Drought '+str(x)
+
+for x,y in pre_d.items():
+        ds.loc[y, 'pre_d'] = 'Drought '+str(x)
+ds
+
+
+# %% making a list of droughts for looping
+droughts = ds['Status'].unique()
+droughtslist = droughts.tolist()
+del droughtslist[0]
+droughtslist
+
+#%% Year when drought is at it's minimum (start_val)
+df = ds.copy()
+start_val = pd.DataFrame(index=droughtslist,columns=column_list)
+for i in droughtslist:
+        lol = df[(df['Status']==i)] # This narrows to the drought of interest
+        for n in column_list:
+                thing = lol[lol[n]==lol[n].max()].index.tolist() # This pulls out the year
+                start_val.loc[i,n] = thing[0]
+        # df
+start_val = start_val.astype(float) # This converts the object to float for calculations
+
+
+#%% Year when drought recovered (end_val)
+df = ds.copy()
+end_val = pd.DataFrame(index=droughtslist,columns=column_list)
+for i in droughtslist:
+        #this bit will grab the max year
+        lol = df[(df['Status']==i)] # This narrows to the drought of interest for the max year
+        lol2 = df[(df['pre_d']==i)] # This makes a dataframe of predrought values
+        for n in column_list:
+                thing = lol[lol[n]>=lol[n].max()].index.tolist() # This pulls out the year
+                year = thing[0]
+                newdata = df[df.index>=year] # now we have eliminated the prior years
+                pre_dval = lol2[n].mean()
+                rec_yeardf = newdata[newdata[n]<=pre_dval]
+                listy = rec_yeardf.index.tolist()
+                print(listy)
+                if len(listy)==0:
+                    print ("no recovery")
+                    
+                else:
+                  print ("yay recovery")
+                  end_val.loc[i,n] = listy[0]
+        # df
+end_val = end_val.astype(float)
+end_val
+
+# %%
+recoverytime = end_val - start_val
+recoverytime
+
+# name = 'Max Drawdown by Drought Period and Groundwater Regulation'
+name = 'Recovery Time by Drought Period and Access to SW'
+
+yearlabels = ["1989-1990",'1996','2002-2003','2006-2007','2012-2014','2018']
+
+recoverytime.index = yearlabels
+recoverytime = recoverytime.transpose()
+recoverytime.index = betterlabels
+# del recoverytime['Normal/Wet Years']
+recoverytime
+
+# %%
+recoverytime = recoverytime.transpose()
+
+#%% 
+# group_colors = ['lightsalmon','tomato','orangered','r','brown','indianred','steelblue']
+
+group_colors = [blind[5],blind[6],blind[2]
+                ,blind[12],blind[11],blind[10]
+                ,blind[0] #black
+                ]
+
+horlabel = 'Time (years)'
+fsize = 14
+
+plt.rcParams["figure.dpi"] = 600
+recoverytime.plot(figsize = (10,7),
+        kind='bar',
+        stacked=False,
+        # title=name,
+        # color = group_colors,
+        color = SW_colors,
+        zorder = 2,
+        width = 0.85,
+        fontsize = fsize
+        )
+plt.title(name, fontsize = (fsize+2))
+# plt.ylim([0,400])
+plt.ylabel(horlabel, fontsize = fsize)
+plt.xticks(rotation=0, fontsize = fsize-2)
+plt.grid(axis='y', linewidth=0.5, zorder=0)
+plt.legend(loc=[1.01,0.3],fontsize = fsize)
+# plt.set_dpi(600)
+
+# plt.savefig(outputpath+name+'_GWREG_groupedchart', bbox_inches = 'tight')
+# plt.savefig(outputpath+name+'_anomalies_SWAccess_groupedchart', bbox_inches = 'tight')
+
 
 # %% Now to do a box plot or bar plot
 # Assign severe values based on years
