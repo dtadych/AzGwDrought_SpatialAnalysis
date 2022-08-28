@@ -40,33 +40,75 @@ import cartopy.feature as cfeature
 import netCDF4
 import rasterio
 from rasterstats import zonal_stats
+from scipy.stats import kendalltau, pearsonr, spearmanr
 #import rasterstats as rstats
 #from xrspatial import zonal_stats
 import easymore
 import glob
+import scipy.stats as sp
+import pymannkendall as mk
+
+
+# %%
+# Some functions for analysis
+def kendall_pval(x,y):
+        return kendalltau(x,y)[1]
+    
+def pearsonr_pval(x,y):
+        return pearsonr(x,y)[1]
+    
+def spearmanr_pval(x,y):
+        return spearmanr(x,y)[1]
+
+def display_correlation(df):
+    r = df.corr(method="spearman")
+    plt.figure(figsize=(10,6))
+    heatmap = sns.heatmap(df.corr(method='spearman'), vmin=-1, 
+                      vmax=1, annot=True)
+    plt.title("Spearman Correlation")
+    return(r)
+
+def display_corr_pairs(df,color="cyan"):
+    s = set_title = np.vectorize(lambda ax,r,rho: ax.title.set_text("r = " + 
+                                        "{:.2f}".format(r) + 
+                                        '\n $\\rho$ = ' + 
+                                        "{:.2f}".format(rho)) if ax!=None else None
+                            )      
+
+    rho = display_correlation(df)
+    r = df.corr(method="pearson")
+    g = sns.PairGrid(df,corner=True)
+    g.map_diag(plt.hist,color="yellow")
+    g.map_lower(sns.scatterplot,color="magenta")
+    set_title(g.axes,r,rho)
+    plt.subplots_adjust(hspace = 0.6)
+    plt.show()  
+
 # %% Read in the file
 filename = 'CSR_GRACE_GRACE-FO_RL06_Mascons_all-corrections_v02.nc'
-datapath = '../../GRACE'
+# datapath = '../../GRACE'
+datapath = '../../../RNR590'
 print(datapath)
 outputpath = '../MergedData/Output_files/'
 
+# %%
 grace_dataset = xr.open_dataset(datapath+'/'+filename)
 
 grace_dataset
 
 # %% Read in the mask shapefile
 filename = "Final_Georegions.shp"
-filepath = os.path.join('/Users/danielletadych/Documents/PhD_Materials/github_repos/AzGwDrought_SpatialAnalysis/MergedData/Shapefiles/Final_Georegions/', filename)
+filepath = os.path.join('../MergedData/Shapefiles/Final_Georegions/', filename)
 georeg = gp.read_file(filepath)
 
 # %%
 filename = "AZ_counties.shp"
-filepath = os.path.join('/Users/danielletadych/Documents/PhD_Materials/github_repos/AzGwDrought_SpatialAnalysis/MergedData/Shapefiles', filename)
+filepath = os.path.join('../MergedData/Shapefiles', filename)
 counties = gp.read_file(filepath)
 
 # %% Read in the mask shapefile
 filename = "Ag_NonAG.shp"
-filepath = os.path.join('/Users/danielletadych/Documents/PhD_Materials/github_repos/AzGwDrought_SpatialAnalysis/MergedData/Shapefiles/Final_Georegions/', filename)
+filepath = os.path.join('../MergedData/Shapefiles/Final_Georegions/', filename)
 agreg = gp.read_file(filepath)
 
 # %% Look at that sweet sweet data
@@ -392,6 +434,21 @@ c_8 = '#229ce8'
 c_9 = '#1f78b4'
 c_10 = '#41bf9e'
 c_11 = '#7adec4'
+
+drought_color = '#ffa6b8'
+wet_color = '#b8d3f2'
+
+reg_colors = [c_2,c_7]
+georeg_colors = [c_1,c_2,c_3,c_4,c_5,c_6,c_7,c_8,c_9,c_10,c_11]
+SW_colors = [c_2,c_3,c_4,c_5,c_7]
+
+bar_watercatc = [c_2,c_3,c_4,c_5,c_7]
+
+# Color blind palette
+# https://jacksonlab.agronomy.wisc.edu/2016/05/23/15-level-colorblind-friendly-palette/
+blind =["#000000","#004949","#009292","#ff6db6","#ffb6db",
+ "#490092","#006ddb","#b66dff","#6db6ff","#b6dbff",
+ "#920000","#924900","#db6d00","#24ff24","#ffff6d"]
 
 # %% For plotting the Monthly Average
 ds = grace_monthlyavg
@@ -1039,22 +1096,23 @@ cm_df_year.plot(label="AZ mean (not weighted)")
 plt.legend()
 
 # %% Plotting single points with the state average
-f, ax = plt.subplots(figsize=(12, 6))
+f, ax = plt.subplots(figsize=(12, 8))
 
 ax.plot(cm_df_year, color='#2F2F2F', label='Arizona Average')
-ax.plot(phoenix_df_year, color='red', label = 'Phoenix AMA - GW Regulated')
-ax.plot(yuma_df_year, color='green', label = 'Yuma Area - Colorado River Water')
-ax.plot(wilcox_df_year, color='orange', label = 'Wilcox Area - GW Unregulated')
-ax.plot(upperco_df_year, color='teal', label = 'Upper CO River Area - Mixed SW and GW')
-ax.plot(north_df_year, color=c_10, label = 'North - Mixed SW and GW')
+# ax.plot(phoenix_df_year, color='red', label = 'Phoenix AMA - GW Regulated')
+# ax.plot(yuma_df_year, color='green', label = 'Yuma Area - Colorado River Water')
+# ax.plot(wilcox_df_year, color='orange', label = 'Wilcox Area - GW Unregulated')
+# ax.plot(upperco_df_year, color='teal', label = 'Upper CO River Area - Mixed SW and GW')
+# ax.plot(north_df_year, color=c_10, label = 'North - Mixed SW and GW')
 
 
-ax.set(title="Individual GRACE Pixels - Change in Liquid Water Equivalent from the 2004-2009 Baseline")
-ax.legend()
+# ax.set(title="Individual GRACE Pixels - Change in Liquid Water Equivalent from the 2004-2009 Baseline")
+ax.set(title='Arizona Average')
+# ax.legend()
 ax.set_xlim(2002,2020)
 ax.grid(zorder = 0)
-plt.xlabel('Year')
-plt.ylabel('LWE Change (cm)')
+# plt.xlabel('Year')
+plt.ylabel('LWE (cm)')
 
 # %%
 f, ax = plt.subplots(figsize=(12,6))
@@ -1419,33 +1477,33 @@ l= 2018.5
 
 # Drought_years = [1989,1990,1996,2002,2003,2006,2007,2012,2014,2018]
 
-ax[0,0].axvspan(a, b, color=drought_color, alpha=0.5, lw=0, label="Drought")
-ax[0,0].axvspan(c, d, color=drought_color, alpha=0.5, lw=0)
-ax[0,0].axvspan(e, f, color=drought_color, alpha=0.5, lw=0)
-ax[0,0].axvspan(g, h, color=drought_color, alpha=0.5, lw=0)
-ax[0,0].axvspan(i, j, color=drought_color, alpha=0.5, lw=0)
-ax[0,0].axvspan(k, l, color=drought_color, alpha=0.5, lw=0)
+# ax[0,0].axvspan(a, b, color=drought_color, alpha=0.5, lw=0, label="Severe Drought")
+# ax[0,0].axvspan(c, d, color=drought_color, alpha=0.5, lw=0)
+# ax[0,0].axvspan(e, f, color=drought_color, alpha=0.5, lw=0)
+# ax[0,0].axvspan(g, h, color=drought_color, alpha=0.5, lw=0)
+# ax[0,0].axvspan(i, j, color=drought_color, alpha=0.5, lw=0)
+# ax[0,0].axvspan(k, l, color=drought_color, alpha=0.5, lw=0)
 
-ax[1,0].axvspan(a, b, color=drought_color, alpha=0.5, lw=0, label="Drought")
-ax[1,0].axvspan(c, d, color=drought_color, alpha=0.5, lw=0)
-ax[1,0].axvspan(e, f, color=drought_color, alpha=0.5, lw=0)
-ax[1,0].axvspan(g, h, color=drought_color, alpha=0.5, lw=0)
-ax[1,0].axvspan(i, j, color=drought_color, alpha=0.5, lw=0)
-ax[1,0].axvspan(k, l, color=drought_color, alpha=0.5, lw=0)
+# ax[1,0].axvspan(a, b, color=drought_color, alpha=0.5, lw=0)
+# ax[1,0].axvspan(c, d, color=drought_color, alpha=0.5, lw=0)
+# ax[1,0].axvspan(e, f, color=drought_color, alpha=0.5, lw=0)
+# ax[1,0].axvspan(g, h, color=drought_color, alpha=0.5, lw=0)
+# ax[1,0].axvspan(i, j, color=drought_color, alpha=0.5, lw=0)
+# ax[1,0].axvspan(k, l, color=drought_color, alpha=0.5, lw=0)
 
-ax[0,1].axvspan(a, b, color=drought_color, alpha=0.5, lw=0, label="Drought")
-ax[0,1].axvspan(c, d, color=drought_color, alpha=0.5, lw=0)
-ax[0,1].axvspan(e, f, color=drought_color, alpha=0.5, lw=0)
-ax[0,1].axvspan(g, h, color=drought_color, alpha=0.5, lw=0)
-ax[0,1].axvspan(i, j, color=drought_color, alpha=0.5, lw=0)
-ax[0,1].axvspan(k, l, color=drought_color, alpha=0.5, lw=0)
+# ax[0,1].axvspan(a, b, color=drought_color, alpha=0.5, lw=0)
+# ax[0,1].axvspan(c, d, color=drought_color, alpha=0.5, lw=0)
+# ax[0,1].axvspan(e, f, color=drought_color, alpha=0.5, lw=0)
+# ax[0,1].axvspan(g, h, color=drought_color, alpha=0.5, lw=0)
+# ax[0,1].axvspan(i, j, color=drought_color, alpha=0.5, lw=0)
+# ax[0,1].axvspan(k, l, color=drought_color, alpha=0.5, lw=0)
 
-ax[1,1].axvspan(a, b, color=drought_color, alpha=0.5, lw=0, label="Drought")
-ax[1,1].axvspan(c, d, color=drought_color, alpha=0.5, lw=0)
-ax[1,1].axvspan(e, f, color=drought_color, alpha=0.5, lw=0)
-ax[1,1].axvspan(g, h, color=drought_color, alpha=0.5, lw=0)
-ax[1,1].axvspan(i, j, color=drought_color, alpha=0.5, lw=0)
-ax[1,1].axvspan(k, l, color=drought_color, alpha=0.5, lw=0)
+# ax[1,1].axvspan(a, b, color=drought_color, alpha=0.5, lw=0)
+# ax[1,1].axvspan(c, d, color=drought_color, alpha=0.5, lw=0)
+# ax[1,1].axvspan(e, f, color=drought_color, alpha=0.5, lw=0)
+# ax[1,1].axvspan(g, h, color=drought_color, alpha=0.5, lw=0)
+# ax[1,1].axvspan(i, j, color=drought_color, alpha=0.5, lw=0)
+# ax[1,1].axvspan(k, l, color=drought_color, alpha=0.5, lw=0)
 
 ax[0,0].set_xlim(minyear,maxyear)
 ax[0,1].set_xlim(minyear,maxyear)
@@ -1469,6 +1527,578 @@ fig.set_dpi(600)
 
 # fig.legend(loc = [0.5, 0.4], fontsize = 12)
 
-plt.savefig(outputpath+name)
+plt.savefig(outputpath+name+'non_drought')
+
+# %%
+ds = remap_anom
+name = "Arizona Specific Anomalies (Changes from Arizona Average)"
+ylabel = "lwe (cm)"
+minyear=2002
+maxyear=2020
+min_y = -5
+max_y = 3
+fsize = 14
+
+# For the actual figure
+fig, ax = plt.subplots(figsize=(12,8))
+#fig.tight_layout()
+fig.suptitle(name, y=0.91)
+fig.supylabel(ylabel, fontsize = 14, x=0.09)
+#ax[1,1].plot(ds['Reservation'], label='Reservation', color='#8d5a99')
+ax.plot(ds['Regulated with CAP'], label='Regulated with CAP', color=c_2) 
+# ax.plot(ds['Regulated without CAP'], label='Regulated without CAP', color=c_3) 
+ax.plot(ds['Lower Colorado River - SW Dominated'], color=c_4, label='Lower Colorado River - SW Dominated')
+ax.plot(ds['Upper Colorado River - Mixed'], color=c_5, label='Upper Colorado River - Mixed')
+ax.plot(ds['Norh - Mixed'], color=c_10, label='North - Mixed')
+# ax.plot(ds['Central - Mixed'], color=c_11, label='Central - Mixed')
+# ax.plot(ds['Northwest - GW Dominated'], color=c_7, label='Northwest - GW Dominated')
+ax.plot(ds['Northeast - GW Dominated'], color=c_9, label='Northeast - GW Dominated')
+ax.plot(ds['South central - GW Dominated'], color=c_8, label='South central - GW Dominated')
+ax.plot(ds['Southeast - GW Dominated'], color=c_6, label='Southeast - GW Dominated')
+
+a = 1988.5
+b = 1990.5
+c = 1995.5
+d = 1996.5
+e = 2001.5
+f = 2003.5
+g = 2005.5
+h = 2007.5
+i = 2011.5
+j = 2014.5
+k = 2017.5
+l= 2018.5
+
+# Drought_years = [1989,1990,1996,2002,2003,2006,2007,2012,2014,2018]
+
+# ax.axvspan(a, b, color=drought_color, alpha=0.5, lw=0, label="Severe Drought")
+# ax.axvspan(c, d, color=drought_color, alpha=0.5, lw=0)
+# ax.axvspan(e, f, color=drought_color, alpha=0.5, lw=0)
+# ax.axvspan(g, h, color=drought_color, alpha=0.5, lw=0)
+# ax.axvspan(i, j, color=drought_color, alpha=0.5, lw=0)
+# ax.axvspan(k, l, color=drought_color, alpha=0.5, lw=0)
+
+ax.set_xlim(minyear,maxyear)
+ax.set_ylim(min_y,max_y)
+ax.grid(True)
+
+ax.legend(loc = [0.05, 0.04]
+            # , fontsize = fsize
+            )
+
+fig.set_dpi(600)
+
+# fig.legend(loc = [0.5, 0.4], fontsize = 12)
+
+# %% ====== Specialized Drought Analysis ======
+# Wanting to look at 1) Drawdown 2) Anomaly's 3) Recovery
+#   Decided from the drought indices analysis that the cutoff value is -3 for severe droughts
+
+# First read in the drought indice
+drought_indices = pd.read_csv('../MergedData/Output_files/Yearly_DroughtIndices.csv')
+drought_indices = drought_indices.set_index('In_year')
+drought_indices
+
+# %% Drought dictionary
+dd = {4:[2006,2007]
+        ,5:[2012,2013,2014]
+        ,6:[2018]}
+
+print(dd)
+
+#%% Pre-drought
+pre_d = {4:[2005]
+        ,5:[2011]
+        ,6:[2017]}
+
+print(pre_d)
+
+#%% Print the average PDSI and PHDI values
+
+ds = drought_indices.copy()
+columns = ds.columns
+column_list = ds.columns.tolist()
+
+ds['Status'] = 'Normal-Wet'
+# wlanalysis_period
+
+for x,y in dd.items():
+        ds.loc[y, 'Status'] = 'Drought '+str(x)
+
+
+pdsi_avg = ds.groupby(['Status']).mean()
+pdsi_avg
+
+#%%
+def addlabels(x,y):
+    for i in range(len(x)):
+        plt.text(i,y[i],y[i])
+# %% Grouped bar chart of PDSI/PHDI Values
+name = 'Average PDSI and PHDI Values Per Drought'
+
+yearlabels = ["1989-1990"
+                ,'1996'
+                ,'2002-2003'
+                ,'2006-2007'
+                ,'2012-2014'
+                ,'2018'
+                ,'Normal/Wet Years']
+
+pdsi_avg.index = yearlabels
+pdsi_avg = pdsi_avg.transpose()
+# del ds['Normal/Wet Years']
+pdsi_avg
+#%%
+group_colors = [blind[5],blind[6],blind[2]
+                ,blind[12],blind[11],blind[10]
+                ,blind[0] #black
+                ]
+
+horlabel = 'Index Value'
+fsize = 14
+
+plt.rcParams["figure.dpi"] = 600
+pdsi_avg.plot(figsize = (10,7),
+        kind='bar',
+        stacked=False,
+        # title=name,
+        color = group_colors,
+        zorder = 2,
+        width = 0.85,
+        fontsize = fsize
+        )
+plt.title(name, fontsize = (fsize+2))
+# plt.ylim([0,400])
+plt.ylabel(horlabel, fontsize = fsize)
+plt.xticks(rotation=0, fontsize = fsize-2)
+plt.grid(axis='y', linewidth=0.5, zorder=0)
+plt.legend(loc=[1.01,0.3],fontsize = fsize)
+
+# plt.savefig(outputpath+name+'_groupedchart', bbox_inches = 'tight')
+
+# %% Figure out which water level database you want
+
+
+# Water Analysis period
+# wlanalysis_period = remap_anom
+wlanalysis_period = grace_yearlyavg
+
+
+# %% Drawdown
+ds = wlanalysis_period.copy()
+columns = ds.columns
+column_list = ds.columns.tolist()
+
+ds['Status'] = 'Normal-Wet'
+# wlanalysis_period
+
+for x,y in dd.items():
+        ds.loc[y, 'Status'] = 'Drought '+str(x)
+
+
+drawd_max = ds.groupby(['Status']).max()
+drawd_max
+#%%
+ds = wlanalysis_period.copy()
+columns = ds.columns
+column_list = ds.columns.tolist()
+
+ds['Status'] = 'Normal-Wet'
+
+for x,y in pre_d.items():
+        ds.loc[y, 'pre_d'] = 'Drought '+str(x)
+
+predrought = ds.groupby(['pre_d']).mean()
+predrought
+
+# %% Drawdown
+drawdown = drawd_max - predrought
+drawdown
+
+# %% Checking for normality
+ds = wlanalysis_period
+columns = ds.columns
+column_list = ds.columns.tolist()
+
+for i in column_list:
+ fig, ax = plt.subplots(1,1)
+ ax.hist(wlanalysis_period[i], bins=30)
+ ax.set_title(i)
+
+# %% If running a shifted correlation analysis,
+#    change this to however many # years; 0 is no lag
+lag = 0
+
+print('Kendall Correlation coefficient')
+for i in column_list:
+        # print(' '+i+':')
+        print(' '+str(i)+':')
+# To normalize the data 
+        # df1 = ds[i].pct_change()
+        # df2 = drought_indices.PDSI.pct_change()
+        df1 = ds[i]
+        df2 = drought_indices.PDSI.shift(lag)
+        print('  tau = ',round(df1.corr(df2, method='kendall'),3))
+        print('  pval = ',round(df1.corr(df2, method=kendall_pval),4))
+
+# %%
+print('Spearman Correlation coefficient')
+for i in column_list:
+        print(' '+str(i)+':')
+        # df1 = ds[i].pct_change()
+        # df2 = drought_indices.PDSI.pct_change()
+        df1 = ds[i]
+        df2 = drought_indices.PDSI.shift(lag)
+        print('  rho = ',round(df1.corr(df2, method='spearman'),3))
+        print('  pval = ',round(df1.corr(df2, method=spearmanr_pval),4))
+
+# %%
+print('Pearson Correlation coefficient')
+for i in column_list:
+        print(' '+str(i)+':')
+        # df1 = ds[i].pct_change()
+        # df2 = drought_indices.PDSI.pct_change()
+        df1 = ds[i]
+        df2 = drought_indices.PDSI.shift(lag)
+        r = df1.corr(df2, method='pearson')
+        print('  rsq = ',round(r*r,3))
+        print('  pval = ',round(df1.corr(df2, method=pearsonr_pval),4))
+
+
+# %% Scatterplot of correlation values
+df = remap_anom.copy()
+# name = 'Comparing PDSI with Depth to Water Anomalys by Regulation'
+name = 'Comparing PDSI with Arizona Anomalies'
+
+columns = ds.columns
+column_list = ds.columns.tolist()
+# betterlabels = ['CAP','Regulated Groundwater','Surface Water','Mixed GW/SW','Unregulated Groundwater'] 
+# betterlabels = ['GW Regulated','GW Unregulated'] 
+
+ds['CAP'] = df['Regulated with CAP']
+
+
+ds = ds[ds.index < 2021]
+
+fig, ax = plt.subplots(figsize = (9,6))
+huh = drought_indices['PDSI']
+x = huh[(huh.index >= 2002) & (huh.index <= 2020)]
+
+for i in column_list:
+                # ,reg_colors
+                # , SW_colors
+                # , betterlabels
+                
+        y = ds[i]
+        ax.scatter(x,y
+                , label=i
+                # , color=j
+                )
+        # Trendline: 1=Linear, 2=polynomial
+        z = np.polyfit(x, y, 1)
+        p = np.poly1d(z)
+        plt.plot(x, p(x),'-'
+                # , color=j
+                # ,label=(k+' Trendline')
+                )
+
+
+ax.set_xlabel('PDSI')
+ax.set_ylabel('lwe (cm)')
+ax.set_title(name)
+# ax.set_ylim(0,400)
+fig.set_dpi(600)
+plt.legend(loc = [1.05, 0.40])
+
+# plt.savefig(outputpath+name, bbox_inches='tight') 
+
+# %% Grouped bar chart of individual drought anomlies
+
+yearlabels = ['2006-2007','2012-2014','2018','Normal/Wet Years']
+
+# %%
+ds = remap_anom.copy()
+# ds = drought_indices
+
+ds['Status'] = 'Normal-Wet'
+# wlanalysis_period
+
+for x,y in dd.items():
+        ds.loc[y, 'Status'] = 'Drought '+str(x)
+
+ds
+
+ds_indd = ds.groupby(['Status']).mean()
+ds_indd.index = yearlabels
+ds_indd = ds_indd.transpose()
+# ds_indd.index = betterlabels
+ds_indd
+
+#%%
+# group_colors = ['lightsalmon','tomato','orangered','r','brown','indianred','steelblue']
+
+group_colors = [blind[5],blind[6],blind[2]
+                ,blind[12],blind[11],blind[10]
+                ,blind[0] #black
+                ]
+
+horlabel = 'DTW Anomaly (ft)'
+fsize = 14
+
+ds_indd.plot(figsize = (10,7),
+        kind='bar',
+        stacked=False,
+        # title=name,
+        color = group_colors,
+        zorder = 2,
+        width = 0.85,
+        fontsize = fsize
+        )
+plt.title(name, fontsize = (fsize+2))
+# plt.ylim([0,400])
+plt.ylabel(horlabel, fontsize = fsize)
+plt.xticks(rotation=0, fontsize = fsize-2)
+plt.grid(axis='y', linewidth=0.5, zorder=0)
+plt.legend(loc=[1.01,0.3],fontsize = fsize)
+# plt.figure(dpi=600)
+
+# plt.savefig(outputpath+name+'_anomalies_GWREG_groupedchart', bbox_inches = 'tight')
+# plt.savefig(outputpath+name+'_anomalies_SWAccess_groupedchart', bbox_inches = 'tight')
+
+#%% Drawdown quick analysis
+
+ds = wlanalysis_period.copy()
+columns = ds.columns
+column_list = ds.columns.tolist()
+ds['Status'] = 'Normal-Wet'
+for x,y in dd.items():
+        ds.loc[y, 'Status'] = 'Drought '+str(x)
+
+for x,y in pre_d.items():
+        ds.loc[y, 'pre_d'] = 'Drought '+str(x)
+# ds
+
+drawd_max = ds.groupby(['Status']).max()
+predrought = ds.groupby(['pre_d']).mean()
+
+drawdown = drawd_max - predrought
+drawdown
+
+#%% Grouped Bar chart for drawdown (ft)
+# name = 'Max Drawdown by Drought Period and Groundwater Regulation'
+name = 'Max Drawdown by Drought Period and GRACE Divisions'
+
+yearlabels = ['2006-2007','2012-2014','2018','Normal/Wet Years']
+
+drawdown.index = yearlabels
+drawdown = drawdown.transpose()
+# drawdown.index = betterlabels
+del drawdown['Normal/Wet Years']
+drawdown
+
+#%% 
+# group_colors = ['lightsalmon','tomato','orangered','r','brown','indianred','steelblue']
+
+group_colors = [blind[5],blind[6],blind[2]
+                ,blind[12],blind[11],blind[10]
+                ,blind[0] #black
+                ]
+
+horlabel = 'Drawdown (ft)'
+fsize = 14
+
+plt.rcParams["figure.dpi"] = 600
+drawdown.plot(figsize = (10,7),
+        kind='bar',
+        stacked=False,
+        # title=name,
+        color = group_colors,
+        zorder = 2,
+        width = 0.85,
+        fontsize = fsize
+        )
+plt.title(name, fontsize = (fsize+2))
+# plt.ylim([0,400])
+plt.ylabel(horlabel, fontsize = fsize)
+plt.xticks(rotation=0, fontsize = fsize-2)
+plt.grid(axis='y', linewidth=0.5, zorder=0)
+plt.legend(loc=[1.01,0.3],fontsize = fsize)
+# plt.set_dpi(600)
+
+# plt.savefig(outputpath+name+'_GWREG_groupedchart', bbox_inches = 'tight')
+# plt.savefig(outputpath+name+'_anomalies_SWAccess_groupedchart', bbox_inches = 'tight')
+
+# %% --- Recovery ---
+ds = wlanalysis_period.copy()
+columns = ds.columns
+column_list = ds.columns.tolist()
+ds['Status'] = 'Normal-Wet'
+for x,y in dd.items():
+        ds.loc[y, 'Status'] = 'Drought '+str(x)
+
+for x,y in pre_d.items():
+        ds.loc[y, 'pre_d'] = 'Drought '+str(x)
+ds
+
+
+# %% making a list of droughts for looping
+droughts = ds['Status'].unique()
+droughtslist = droughts.tolist()
+del droughtslist[0]
+droughtslist
+
+#%% Year when drought is at it's minimum (start_val)
+df = ds.copy()
+start_val = pd.DataFrame(index=droughtslist,columns=column_list)
+for i in droughtslist:
+        lol = df[(df['Status']==i)] # This narrows to the drought of interest
+        for n in column_list:
+                thing = lol[lol[n]==lol[n].max()].index.tolist() # This pulls out the year
+                start_val.loc[i,n] = thing[0]
+        # df
+start_val = start_val.astype(float) # This converts the object to float for calculations
+
+
+#%% Year when drought recovered (end_val)
+df = ds.copy()
+end_val = pd.DataFrame(index=droughtslist,columns=column_list)
+for i in droughtslist:
+        #this bit will grab the max year
+        lol = df[(df['Status']==i)] # This narrows to the drought of interest for the max year
+        lol2 = df[(df['pre_d']==i)] # This makes a dataframe of predrought values
+        for n in column_list:
+                thing = lol[lol[n]>=lol[n].max()].index.tolist() # This pulls out the year
+                year = thing[0]
+                newdata = df[df.index>=year] # now we have eliminated the prior years
+                pre_dval = lol2[n].mean()
+                rec_yeardf = newdata[newdata[n]<=pre_dval]
+                listy = rec_yeardf.index.tolist()
+                print(listy)
+                if len(listy)==0:
+                    print ("no recovery")
+                    
+                else:
+                  print ("yay recovery")
+                  end_val.loc[i,n] = listy[0]
+        # df
+end_val = end_val.astype(float)
+end_val
+
+# %%
+recoverytime = end_val - start_val
+recoverytime
+
+#%%
+name = 'Recovery Time by Drought Period and GRACE Divisions'
+
+yearlabels = ['2006-2007','2012-2014','2018']
+
+recoverytime.index = yearlabels
+recoverytime = recoverytime.transpose()
+# recoverytime.index = betterlabels
+# del recoverytime['Normal/Wet Years']
+recoverytime
+
+# %%
+recoverytime = recoverytime.transpose()
+
+#%% 
+# group_colors = ['lightsalmon','tomato','orangered','r','brown','indianred','steelblue']
+
+group_colors = [blind[5],blind[6],blind[2]
+                ,blind[12],blind[11],blind[10]
+                ,blind[0] #black
+                ]
+
+horlabel = 'Time (years)'
+fsize = 14
+
+plt.rcParams["figure.dpi"] = 600
+recoverytime.plot(figsize = (10,7),
+        kind='bar',
+        stacked=False,
+        # title=name,
+        color = group_colors,
+        # color = reg_colors,
+        zorder = 2,
+        width = 0.85,
+        fontsize = fsize
+        )
+plt.title(name, fontsize = (fsize+2))
+# plt.ylim([0,400])
+plt.ylabel(horlabel, fontsize = fsize)
+plt.xticks(rotation=30, fontsize = fsize-2)
+plt.grid(axis='y', linewidth=0.5, zorder=0)
+plt.legend(loc=[1.01,0.3],fontsize = fsize)
+# plt.set_dpi(600)
+
+plt.savefig(outputpath+name+'_groupedchart', bbox_inches = 'tight')
+# plt.savefig(outputpath+name+'_groupedchart', bbox_inches = 'tight')
+
+# plt.savefig(outputpath+name+'_anomalies_SWAccess_groupedchart', bbox_inches = 'tight')
+
+# %%
+# %% Linear Regression
+# For Depth to Water by SW Access
+ds = remap_anom
+data_type = "LWE (cm)"
+min_yr = 2002
+mx_yr = 2020
+betterlabels = ['CAP','Regulated Groundwater','Surface Water','Unregulated Groundwater','Mixed GW/SW'] 
+Name = str(min_yr) + " to " + str(mx_yr) + " Linear Regression for " + data_type
+print(Name)
+
+f = ds[(ds.index >= min_yr) & (ds.index <= mx_yr)]
+columns = ds.columns
+column_list = ds.columns.tolist()
+# -- For Multiple years --
+# Name = "Linear Regression during Wet and Normal years for " + data_type
+# wetyrs = [2005, 2008, 2009, 2010, 2016, 2017, 2019]
+# dryyrs = [2002, 2003, 2004, 2006, 2007, 2011, 2012, 2013, 2014, 2015, 2018]
+# dryyrs = [1975,1976,1977
+#           ,1981,1989,1990
+#           ,1996,1997,
+#           1999,2000,2001,2002,2003,2004
+#           ,2006,2007,2008,2009
+#           ,2011, 2012, 2013, 2014, 2015,2017,2018]
+# wetyrs = [1978,1979,1980,1982,1983,1984,1984,1986,1987,1988
+#           , 1991,1992,1993,1994,1995,
+#           1998,2005,2010,2019]
+
+#f = ds[(ds.index == wetyrs)]
+
+# f = pd.DataFrame()
+# for i in wetyrs:
+#         wut = ds[(ds.index == i)]
+#         f = f.append(wut)
+# print(f)
+columns = ds.columns
+column_list = ds.columns.tolist()
+# ------------------------
+
+stats = pd.DataFrame()
+for i in column_list:
+        df = f[i]
+        # df = f[i].pct_change()
+        #print(df)
+        y=np.array(df.values, dtype=float)
+        x=np.array(pd.to_datetime(df).index.values, dtype=float)
+        slope, intercept, r_value, p_value, std_err =sp.linregress(x,y)
+        stats = stats.append({'slope': slope, 
+                              'int':intercept, 
+                              'rsq':r_value*r_value, 
+                              'p_val':p_value, 
+                              'std_err':std_err, 
+                              'mean': np.mean(y),
+                              'var': np.var(y),
+                              'sum': np.sum(y)
+                              },
+                              ignore_index=True)
+
+
+stats.index = column_list
+# stats1 = stats.transpose()
+stats
+# stats1.to_csv(outputpath+'Stats/'+Name+'.csv')
 
 # %%

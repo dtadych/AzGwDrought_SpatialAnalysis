@@ -35,7 +35,7 @@
 
 # %%
 from cProfile import label
-from dbm import _ValueType
+# from dbm import _ValueType
 from operator import ge
 from optparse import Values
 import os
@@ -2133,18 +2133,18 @@ plt.savefig(outputpath+name, bbox_inches='tight')
 # cat_wl2 = wdc1_SW.copy()
 # cat_wl2 = wdc2_SW.copy()
 # cat_wl2 = wdc3_SW.copy()
-# cat_wl2 = cat_wl2_SW
-cat_wl2 = cat_wl2_reg
+cat_wl2 = cat_wl2_SW
+# cat_wl2 = cat_wl2_reg
 
-name = 'Average DTW Anomalies by Drought Period and Groundwater Regulation'
+# name = 'Average DTW Anomalies by Drought Period and Groundwater Regulation'
 # name = 'Average DTW Anomalies by Drought Period and Access to SW'
 
 # name = 'Deep Wells'
 # name = 'Midrange Wells'
 # name = 'Shallow Wells'
 
-# betterlabels = ['CAP','Regulated \n Groundwater','Surface \n Water','Unregulated \n Groundwater','Mixed \n GW/SW'] 
-betterlabels = ['GW Regulated','GW Unregulated'] 
+betterlabels = ['CAP','Regulated \n Groundwater','Surface \n Water','Unregulated \n Groundwater','Mixed \n GW/SW'] 
+# betterlabels = ['GW Regulated','GW Unregulated'] 
 
 yearlabels = ["1989-1990",'1996','2002-2003','2006-2007','2012-2014','2018','Normal/Wet Years']
 
@@ -2185,7 +2185,8 @@ ds_indd
 #%%
 # group_colors = ['lightsalmon','tomato','orangered','r','brown','indianred','steelblue']
 
-group_colors = [blind[5],blind[6],blind[2]
+group_colors = [
+                blind[5],blind[6],blind[2]
                 ,blind[12],blind[11],blind[10]
                 ,blind[0] #black
                 ]
@@ -2292,7 +2293,24 @@ plt.legend(loc=[1.01,0.3],fontsize = fsize)
 # plt.savefig(outputpath+name+'_GWREG_groupedchart', bbox_inches = 'tight')
 plt.savefig(outputpath+name+'_anomalies_SWAccess_groupedchart', bbox_inches = 'tight')
 
-# %% Recovery 
+# %% --- Recovery ---
+cat_wl2 = cat_wl2_reg.copy() 
+# cat_wl2 = cat_wl2_SW.copy()
+# cat_wl2 = cat_wl2_georeg.copy()
+
+# cat_wl2 = wdc1_reg.copy()
+# cat_wl2 = wdc2_reg.copy()
+# cat_wl2 = wdc3_reg.copy()
+# cat_wl2 = wdc1_SW.copy()
+# cat_wl2 = wdc2_SW.copy()
+# cat_wl2 = wdc3_SW.copy()
+
+# betterlabels = ['CAP','Regulated \n Groundwater','Surface \n Water','Unregulated \n Groundwater','Mixed \n GW/SW'] 
+betterlabels = ['GW Regulated','GW Unregulated'] 
+
+# ---
+wlanalysis_period = cat_wl2[cat_wl2.index>=1975]
+
 ds = wlanalysis_period.copy()
 columns = ds.columns
 column_list = ds.columns.tolist()
@@ -2352,8 +2370,8 @@ end_val
 recoverytime = end_val - start_val
 recoverytime
 
-# name = 'Max Drawdown by Drought Period and Groundwater Regulation'
-name = 'Recovery Time by Drought Period and Access to SW'
+# name = 'Recovery Time by Drought Period and Groundwater Regulation'
+name = ' by Drought Period and Access to SW'
 
 yearlabels = ["1989-1990",'1996','2002-2003','2006-2007','2012-2014','2018']
 
@@ -2382,8 +2400,8 @@ recoverytime.plot(figsize = (10,7),
         kind='bar',
         stacked=False,
         # title=name,
-        # color = group_colors,
-        color = SW_colors,
+        color = group_colors,
+        # color = reg_colors,
         zorder = 2,
         width = 0.85,
         fontsize = fsize
@@ -2396,7 +2414,9 @@ plt.grid(axis='y', linewidth=0.5, zorder=0)
 plt.legend(loc=[1.01,0.3],fontsize = fsize)
 # plt.set_dpi(600)
 
-# plt.savefig(outputpath+name+'_GWREG_groupedchart', bbox_inches = 'tight')
+plt.savefig(outputpath+name+'_groupedchart', bbox_inches = 'tight')
+# plt.savefig(outputpath+name+'_groupedchart', bbox_inches = 'tight')
+
 # plt.savefig(outputpath+name+'_anomalies_SWAccess_groupedchart', bbox_inches = 'tight')
 
 
