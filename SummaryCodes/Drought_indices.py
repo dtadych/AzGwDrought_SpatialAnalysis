@@ -159,6 +159,7 @@ pdsi = pdsi.reset_index()
 pdsi['In_year'] = pdsi['date'].dt.year
 pdsi
 
+
 # %%
 yearly_pdsi = pd.pivot_table(pdsi, index=["In_year"], values=["PDSI", 'PHDI'], dropna=False, aggfunc=np.mean)
 yearly_pdsi
@@ -176,9 +177,10 @@ yearly_pdsi['dry'] = -value
 yearly_pdsi
 #  PDSI
 ds = yearly_pdsi
-minyear=1999
-maxyear=2019
-name = "Average PDSI and PHDI for AZ from " + str(minyear) + " to " + str(maxyear)
+minyear=1975
+maxyear=2020
+# name = "Average PDSI and PHDI for AZ from " + str(minyear) + " to " + str(maxyear)
+name = "Average PDSI for AZ from " + str(minyear) + " to " + str(maxyear)
 min_y = -6
 max_y = 6
 fsize = 12
@@ -186,17 +188,19 @@ fsize = 12
 fig, ax = plt.subplots(figsize = (9,5))
 #ax.plot(ds[1.0], label='Reservation', color=c_1)
 # ax.plot(ds['CAP'], label='CAP', color=c_2)
+ax.plot(ds['PHDI'], label='PHDI'
+        # , color='blue'
+        , lw=3
+        ) 
 ax.plot(ds['PDSI']
+        # ,'-.'
         , label='PDSI'
-        , color='#e77a47'
+        # , color='default'
         , lw=2
         ) 
-ax.plot(ds['PHDI'], label='PHDI'
-        # , color=''
-        , lw=1
-        ) 
+
 # ax.plot(ds['wet'],label='wet',color='black',zorder = 5)
-ax.plot(ds['dry'],label='Cutoff Value',color='black', zorder=5)
+ax.plot(ds['dry'],'-.',label='Cutoff Value',color='black', zorder=5)
 # a = 1975
 # b = 1977.5
 # c = 1980.5
@@ -220,7 +224,7 @@ ax.plot(ds['dry'],label='Cutoff Value',color='black', zorder=5)
 # plt.axvspan(m, n, color=drought_color, alpha=0.5, lw=0)
 
 a = 1988.5
-b = 1989.5
+b = 1990.5
 c = 1995.5
 d = 1996.5
 # e = 1999.5
@@ -246,12 +250,12 @@ ax.set_ylim(min_y,max_y)
 ax.minorticks_on()
 ax.grid(visible=True,which='major')
 ax.grid(which='minor',color='#EEEEEE', lw=0.8)
-ax.set_title(name, fontsize=14)
+# ax.set_title(name, fontsize=14)
 ax.set_xlabel('Year', fontsize=fsize)
 ax.set_ylabel('Index Values',fontsize=fsize)
 ax.legend(loc = [1.04, 0.40], fontsize = fsize)
 fig.set_dpi(600.0)
-plt.savefig(outputpath+name+'cutoffval_'+str(value))
+# plt.savefig(outputpath+name+'cutoffval_'+str(value), bbox_inches = 'tight')
 
 
 # %%
@@ -306,12 +310,12 @@ ax.set_ylim(min_y,max_y)
 ax.minorticks_on()
 ax.grid(visible=True,which='major')
 ax.grid(which='minor',color='#EEEEEE', lw=0.8)
-ax.set_title(name, fontsize=14)
+# ax.set_title(name, fontsize=14)
 ax.set_xlabel('Year', fontsize=fsize)
 ax.set_ylabel('Index Values',fontsize=fsize)
 # ax.legend(loc = [1.04, 0.40], fontsize = fsize)
 fig.set_dpi(600.0)
-plt.savefig(outputpath+name+'cutoffval_'+str(value))
+# plt.savefig(outputpath+name+'cutoffval_'+str(value))
 
 #%%
 # value = 1.5
