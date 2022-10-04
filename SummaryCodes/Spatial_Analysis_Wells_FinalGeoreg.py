@@ -35,6 +35,7 @@
 
 # %%
 from cProfile import label
+from curses import nocbreak
 # from dbm import _ValueType
 from operator import ge
 from optparse import Values
@@ -116,7 +117,8 @@ print(masterdb_water.info())
 # %%
 # Reading in the shapefile
 # GEOREG.to_file('../MergedData/Output_files/Georegions_3col.shp')
-filename_georeg = "Final_Georegions.shp"
+# filename_georeg = "Final_Georegions.shp"
+filename_georeg = 'georeg_reproject_fixed.shp'
 filepath = os.path.join(shapepath, filename_georeg)
 georeg = gp.read_file(filepath)
 # %%
@@ -398,6 +400,15 @@ blind =["#000000","#004949","#009292","#ff6db6","#ffb6db",
  "#490092","#006ddb","#b66dff","#6db6ff","#b6dbff",
  "#920000","#924900","#db6d00","#24ff24","#ffff6d"]
 
+# Matching new map
+
+cap = '#C6652B'
+noCAP = '#EDE461'
+GWdom = '#3B76AF'
+mixed = '#6EB2E4'
+swdom = '#469B76'
+
+
 # %% DTW by well depths and Access to SW
 # ds = wdc1.copy()
 name = 'Average Depth to water for Access to SW Categories'
@@ -553,7 +564,7 @@ ax.minorticks_on()
 fig.set_dpi(600.0)
 
 # plt.savefig(outputpath+name+'_byregulation', bbox_inches='tight')
-plt.savefig(outputpath+name+'_timeseries_Drought', bbox_inches='tight')
+# plt.savefig(outputpath+name+'_timeseries_Drought', bbox_inches='tight')
 
 
 #%% Plot by access to surfacewater
@@ -1160,8 +1171,8 @@ static_geo2 = pd.read_csv(filepath
 static_geo2
 
 # %% 
-#static_geo2 = static_geo
-#static_geo2.info()
+static_geo2 = static_geo
+static_geo2.info()
 
 # %%
 #static_geo2['APPROVED'] = pd.to_datetime(static_geo2['APPROVED'])
@@ -1209,12 +1220,12 @@ georeg_area
 
 # %% Area for other categories
 georeg_area_reg = pd.pivot_table(georeg, columns=["Regulation"], values=["area"], dropna=False, aggfunc=np.sum)
-del georeg_area_reg['NA']
+# del georeg_area_reg['NA']
 georeg_area_reg
 
 # %%
 georeg_area_watercat = pd.pivot_table(georeg, columns=["Water_CAT"], values=["area"], dropna=False, aggfunc=np.sum)
-del georeg_area_watercat['NA']
+# del georeg_area_watercat['NA']
 georeg_area_watercat
 
 # %% -- Linear regression --
@@ -1300,7 +1311,11 @@ ds = cat_wl2_SW
 data_type = "Depth to Water"
 min_yr = 1975
 mx_yr = 2020
-betterlabels = ['CAP','Regulated Groundwater','Surface Water','Unregulated Groundwater','Mixed GW/SW'] 
+betterlabels = ['Res','Recieves CAP (Regulated)'
+                ,'GW Dominated (Regulated)'
+                ,'Surface Water Dominated'
+                ,'GW Dominated'
+                ,'Mixed Source'] 
 Name = str(min_yr) + " to " + str(mx_yr) + " Linear Regression for " + data_type
 print(Name)
 
@@ -1358,40 +1373,40 @@ print(stats1)
 # -- Data visualization --
 xf = np.linspace(min(x),max(x),100)
 xf1 = xf.copy()
-m1 = round(stats1.loc['slope','CAP'], 2)
-m2 = round(stats1.loc['slope','Unregulated Groundwater'], 2)
-m3 = round(stats1.loc['slope','Mixed GW/SW'], 2)
-m4 = round(stats1.loc['slope','Regulated Groundwater'], 2)
-m5 = round(stats1.loc['slope','Surface Water'], 2)
-yint1 = round(stats1.loc['int','CAP'], 2)
-yint2 = round(stats1.loc['int','Unregulated Groundwater'], 2)
-yint3 = round(stats1.loc['int','Mixed GW/SW'], 2)
-yint4 = round(stats1.loc['int','Regulated Groundwater'], 2)
-yint5 = round(stats1.loc['int','Surface Water'], 2)
-rsq1 = round(stats1.loc['rsq', 'CAP'], 4)
-rsq2 = round(stats1.loc['rsq', 'Unregulated Groundwater'], 4)
-rsq3 = round(stats1.loc['rsq', 'Mixed GW/SW'], 4)
-rsq4 = round(stats1.loc['rsq', 'Regulated Groundwater'], 4)
-rsq5 = round(stats1.loc['rsq', 'Surface Water'], 4)
-pval1 = round(stats1.loc['p_val', 'CAP'], 4)
-pval2 = round(stats1.loc['p_val', 'Unregulated Groundwater'], 4)
-pval3 = round(stats1.loc['p_val', 'Mixed GW/SW'], 4)
-pval4 = round(stats1.loc['p_val', 'Regulated Groundwater'], 4)
-pval5 = round(stats1.loc['p_val', 'Surface Water'], 4)
+m1 = round(stats1.loc['slope',betterlabels[1]], 2)
+m2 = round(stats1.loc['slope',betterlabels[4]], 2)
+m3 = round(stats1.loc['slope',betterlabels[5]], 2)
+m4 = round(stats1.loc['slope',betterlabels[2]], 2)
+m5 = round(stats1.loc['slope',betterlabels[3]], 2)
+yint1 = round(stats1.loc['int',betterlabels[1]], 2)
+yint2 = round(stats1.loc['int',betterlabels[4]], 2)
+yint3 = round(stats1.loc['int',betterlabels[5]], 2)
+yint4 = round(stats1.loc['int',betterlabels[2]], 2)
+yint5 = round(stats1.loc['int',betterlabels[3]], 2)
+rsq1 = round(stats1.loc['rsq',betterlabels[1]], 4)
+rsq2 = round(stats1.loc['rsq',betterlabels[4]], 4)
+rsq3 = round(stats1.loc['rsq',betterlabels[5]], 4)
+rsq4 = round(stats1.loc['rsq',betterlabels[2]], 4)
+rsq5 = round(stats1.loc['rsq',betterlabels[3]], 4)
+pval1 = round(stats1.loc['p_val',betterlabels[1]], 4)
+pval2 = round(stats1.loc['p_val',betterlabels[4]], 4)
+pval3 = round(stats1.loc['p_val',betterlabels[5]], 4)
+pval4 = round(stats1.loc['p_val',betterlabels[2]], 4)
+pval5 = round(stats1.loc['p_val',betterlabels[3]], 4)
 yf1 = (m1*xf)+yint1
 yf2 = (m2*xf)+yint2
 yf3 = (m3*xf)+yint3
 yf4 = (m4*xf)+yint4
 yf5 = (m5*xf)+yint5
 
-fig, ax = plt.subplots(1, 1, figsize = (12,7))
+fig, ax = plt.subplots(1, 1, figsize = (7,4.5))
 # fig, ax = plt.subplots(figsize = (16,9))
 
-# ax.plot(xf1, yf1,"-.",color=c_2,label='Linear Trendline', lw=1)
-ax.plot(xf1, yf2,"-.",color=c_7, lw=1)
-ax.plot(xf1, yf3,"-.",color=c_5, lw=1)
-ax.plot(xf1, yf4,"-.",color=c_3, lw=1)
-# ax.plot(xf1, yf5,"-.",color=c_4, lw=1)
+ax.plot(xf1, yf1,"-.",color=cap,label='Linear Trendline', lw=1)
+ax.plot(xf1, yf2,"-.",color=GWdom, lw=1)
+ax.plot(xf1, yf3,"-.",color=mixed, lw=1)
+ax.plot(xf1, yf4,"-.",color='#CCC339', lw=1)
+ax.plot(xf1, yf5,"-.",color=swdom, lw=1)
 
 # f.plot(ax=ax,marker='o', ls='', label=betterlabels)
 # Trying to draw lines with better shit 
@@ -1401,23 +1416,23 @@ minyear=1975
 maxyear=2020
 min_y = 75
 max_y = 300
-fsize = 14
+fsize = 12
 
-# ax.plot(ds['CAP'], label='CAP', color=c_2)
-ax.plot(ds['No_CAP'], label='Regulated GW', color=c_3) 
-# ax.plot(ds['SW'], label='Surface Water', color=c_4) 
-ax.plot(ds['Mix'], label='Mixed SW/GW', color=c_5)
-ax.plot(ds['GW'], label='Unregulated GW', color=c_7)  
+ax.plot(ds['CAP'], label=betterlabels[1], color=cap)
+ax.plot(ds['No_CAP'], label=betterlabels[2], color='#CCC339') 
+ax.plot(ds['SW'], label=betterlabels[3], color=swdom) 
+ax.plot(ds['Mix'], label=betterlabels[5], color=mixed)
+ax.plot(ds['GW'], label=betterlabels[4], color=GWdom)  
 
 ax.set_xlim(minyear,maxyear)
 ax.set_ylim(min_y,max_y)
 # ax.grid(True)
 ax.grid(visible=True,which='major')
 ax.grid(which='minor',color='#EEEEEE', lw=0.8)
-ax.set_title(name, fontsize=20)
+# ax.set_title(name, fontsize=20)
 ax.set_xlabel('Year', fontsize=fsize)
 ax.set_ylabel('Depth to Water (ft)',fontsize=fsize)
-ax.legend(loc = [1.04, 0.40], fontsize = fsize)
+ax.legend(loc = [1.04, 0.40], fontsize = 10)
 # # Drought Year Shading
 # a = 1988.5
 # b = 1990.5
@@ -1444,25 +1459,25 @@ fig.set_dpi(600.0)
 
 # ax.set_xlim(min_yr, mx_yr)
 ax.set_ylim(75,300)
-ax.set_title(Name)
-vertshift = -0.1
-# plt.figtext(0.95, 0.5 - vertshift, 'CAP equation: y = '+str(m1)+'x + '+str(yint1))
-# plt.figtext(0.98, 0.45 - vertshift, 'rsq = '+ str(rsq1) + '; p-value = ' + str(pval1))
+# ax.set_title(Name)
+vertshift = 0
+plt.figtext(0.95, 0.5 - vertshift, 'CAP equation: y = '+str(m1)+'x + '+str(yint1))
+plt.figtext(0.98, 0.45 - vertshift, 'rsq = '+ str(rsq1) + '; p-value = ' + str(pval1))
 plt.figtext(0.95, 0.4 - vertshift, 'Unregulated GW equation: y = '+str(m2)+'x + '+str(yint2))
 plt.figtext(0.98, 0.35 - vertshift, 'rsq = '+ str(rsq2) +'; p-value = ' + str(pval2))
 plt.figtext(0.95, 0.3 - vertshift, 'Mixed SW/GW equation: y = '+str(m3)+'x + '+str(yint3))
 plt.figtext(0.98, 0.25 - vertshift, 'rsq = '+ str(rsq3) +'; p-value = ' + str(pval3))
 plt.figtext(0.95, 0.2 - vertshift, 'Regulated GW equation: y = '+str(m4)+'x + '+str(yint4))
 plt.figtext(0.98, 0.15 - vertshift, 'rsq = '+ str(rsq4) +'; p-value = ' + str(pval4))
-# plt.figtext(0.95, 0.1 - vertshift, 'SW equation: y = '+str(m5)+'x + '+str(yint5))
-# plt.figtext(0.98, 0.05 - vertshift, 'rsq = '+ str(rsq5) +'; p-value = ' + str(pval5))
+plt.figtext(0.95, 0.1 - vertshift, 'SW equation: y = '+str(m5)+'x + '+str(yint5))
+plt.figtext(0.98, 0.05 - vertshift, 'rsq = '+ str(rsq5) +'; p-value = ' + str(pval5))
 
 ax.legend(
-        # loc = [1.065, 0.75]
+        loc = [1.065, 0.65]
         )
-# plt.savefig(outputpath+'Stats/Water_CAT/'+Name, bbox_inches = 'tight')
-plt.savefig(outputpath+'Stats/Water_CAT/'+Name+'_GW', bbox_inches = 'tight')
-# stats1.to_csv(outputpath+'Stats/Water_CAT/'+Name+'_GW.csv')
+plt.savefig(outputpath+'Stats/Water_CAT/'+Name, bbox_inches = 'tight')
+plt.savefig(outputpath+'Stats/Water_CAT/'+Name, bbox_inches = 'tight')
+stats1.to_csv(outputpath+'Stats/Water_CAT/'+Name+'.csv')
 
 # %% Piecewise Linear Regression
 # For Depth to Water by SW Access
@@ -1471,7 +1486,11 @@ data_type = "Depth to Water"
 # -- Piece 1 --
 min_yr = 1975
 mx_yr = 1985
-betterlabels = ['CAP','Regulated Groundwater','Surface Water','Unregulated Groundwater','Mixed GW/SW'] 
+betterlabels = ['Res','Recieves CAP (Regulated)'
+                ,'GW Dominated (Regulated)'
+                ,'Surface Water Dominated'
+                ,'GW Dominated'
+                ,'Mixed Source'] 
 Name1 = str(min_yr) + " to " + str(mx_yr) + " Linear Regression for " + data_type
 print(Name1)
 
@@ -1763,7 +1782,7 @@ ds = cat_wl2_reg
 data_type = "Depth to Water"
 min_yr = 1975
 mx_yr = 2020
-betterlabels = ['Regulated','Unregulated'] 
+betterlabels = ['Regulated','Reservation','Unregulated'] 
 Name = str(min_yr) + " to " + str(mx_yr) + " Linear Regression for " + data_type
 print(Name)
 
@@ -1809,7 +1828,7 @@ for i in column_list:
 stats.index = betterlabels
 stats1 = stats.transpose()
 print(stats1)
-
+#%%
 # -- Data visualization --
 xf = np.linspace(min(x),max(x),100)
 xf1 = xf.copy()
@@ -1824,7 +1843,7 @@ pval2 = round(stats1.loc['p_val', 'Unregulated'], 4)
 yf1 = (m1*xf)+yint1
 yf2 = (m2*xf)+yint2
 
-fig, ax = plt.subplots(1, 1, figsize = (12,7))
+fig, ax = plt.subplots(1, 1, figsize = (7,4.5))
 ax.plot(xf1, yf1,"-.",color=c_2,label='Linear Trendline', lw=1)
 ax.plot(xf1, yf2,"-.",color=c_7, lw=1)
 
@@ -1833,10 +1852,10 @@ minyear=1975
 maxyear=2020
 min_y = 75
 max_y = 300
-fsize = 14
+fsize = 12
 
-ax.plot(ds['R'], label='GW Regulated', color=c_2) 
-ax.plot(ds['U'], label='GW Unregulated', color=c_7) 
+ax.plot(ds['R'], label='Regulated', color=cap) 
+ax.plot(ds['U'], label='Unregulated', color=GWdom) 
 
 ax.set_xlim(minyear,maxyear)
 ax.set_ylim(min_y,max_y)
@@ -1872,7 +1891,7 @@ fig.set_dpi(600.0)
 
 # ax.set_xlim(min_yr, mx_yr)
 ax.set_ylim(75,300)
-ax.set_title(Name)
+# ax.set_title(Name)
 
 plt.figtext(0.95, 0.4, 'Regulated equation: y= '+str(m1)+'x + '+str(yint1))
 plt.figtext(0.96, 0.35, 'p-value = ' + str(pval1))
@@ -1880,7 +1899,7 @@ plt.figtext(0.95, 0.6, 'Unregulated equation: y= '+str(m2)+'x + '+str(yint2))
 plt.figtext(0.96, 0.55, 'p-value = ' + str(pval2))
 ax.legend()
 plt.savefig(outputpath+'Stats/'+Name, bbox_inches = 'tight')
-stats1.to_csv(outputpath+'Stats/'+Name+'.csv')
+# stats1.to_csv(outputpath+'Stats/'+Name+'.csv')
 
 # %% ====== Specialized Drought Analysis ======
 # Wanting to look at 1) Drawdown 2) Anomaly's 3) Recovery
