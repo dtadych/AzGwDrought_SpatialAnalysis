@@ -182,14 +182,27 @@ lwe2
 # %% Plot the new dataset
 lwe2[2,:,:].plot()
 
+#%%
+latitude = lwe2['lat'].values[300]
+longitude = lwe2['lon'].values[460]
+
+print("The current latitude is ", latitude, 'and longitude is', longitude)
+
+
+# %% Plot the new dataset
+lwe2[8,50:300,460:500].plot(figsize=(2,8))
+# -17 latitude -56 longitude
+#-76 latitude -64 longitude
 # %% Plot the new geotif
 da = xr.open_rasterio("testGRACE_time.tif")
 #transform = cartopy.Affine.from_gdal(*da.attrs["transform"]) # this is important to retain the geographic attributes from the file
 #da = lwe2
 # %%
+da = lwe2
 fig = plt.figure(figsize=(16,8))
 ax = fig.add_subplot(111)
-ax.imshow(da.variable.data[1])
+ax.imshow(da.variable.data[1,17:76,56:64])
+ax.legend()
 plt.show()
 # %%
 lon_min = da.y.min
@@ -449,6 +462,14 @@ bar_watercatc = [c_2,c_3,c_4,c_5,c_7]
 blind =["#000000","#004949","#009292","#ff6db6","#ffb6db",
  "#490092","#006ddb","#b66dff","#6db6ff","#b6dbff",
  "#920000","#924900","#db6d00","#24ff24","#ffff6d"]
+
+# Matching new map
+
+cap = '#C6652B'
+noCAP = '#EDE461'
+GWdom = '#3B76AF'
+mixed = '#6EB2E4'
+swdom = '#469B76'
 
 # %% For plotting the Monthly Average
 ds = grace_monthlyavg
@@ -1096,7 +1117,7 @@ cm_df_year.plot(label="AZ mean (not weighted)")
 plt.legend()
 
 # %% Plotting single points with the state average
-f, ax = plt.subplots(figsize=(12, 8))
+f, ax = plt.subplots(figsize=(8, 5))
 
 ax.plot(cm_df_year, color='#2F2F2F', label='Arizona Average')
 # ax.plot(phoenix_df_year, color='red', label = 'Phoenix AMA - GW Regulated')
@@ -1108,11 +1129,14 @@ ax.plot(cm_df_year, color='#2F2F2F', label='Arizona Average')
 
 # ax.set(title="Individual GRACE Pixels - Change in Liquid Water Equivalent from the 2004-2009 Baseline")
 ax.set(title='Arizona Average')
-# ax.legend()
+ax.legend(fontsize = 12)
 ax.set_xlim(2002,2020)
 ax.grid(zorder = 0)
 # plt.xlabel('Year')
-plt.ylabel('LWE (cm)')
+plt.ylabel('Liquid Water Equivalent (cm)', fontsize = 12)
+fig.set_dpi(600)
+s
+plt.savefig(outputpath+'Arizona_Average')
 
 # %%
 f, ax = plt.subplots(figsize=(12,6))
@@ -1444,7 +1468,7 @@ max_y = 3
 fsize = 14
 
 # For the actual figure
-fig, ax = plt.subplots(2,2,figsize=(20,12))
+fig, ax = plt.subplots(2,2,figsize=(12,8))
 #fig.tight_layout()
 fig.suptitle(name, fontsize=20, y=0.91)
 fig.supylabel(ylabel, fontsize = 14, x=0.09)
@@ -1532,7 +1556,7 @@ plt.savefig(outputpath+name+'non_drought')
 # %%
 ds = remap_anom
 name = "Arizona Specific Anomalies (Changes from Arizona Average)"
-ylabel = "lwe (cm)"
+ylabel = "Liquid Water Equivalent (cm)"
 minyear=2002
 maxyear=2020
 min_y = -5
@@ -1540,21 +1564,21 @@ max_y = 3
 fsize = 14
 
 # For the actual figure
-fig, ax = plt.subplots(figsize=(12,8))
+fig, ax = plt.subplots(figsize=(8,5))
 #fig.tight_layout()
-fig.suptitle(name, y=0.91)
-fig.supylabel(ylabel, fontsize = 14, x=0.09)
+fig.suptitle(name, y=0.93)
+fig.supylabel(ylabel, fontsize = 12, x=0.055)
 #ax[1,1].plot(ds['Reservation'], label='Reservation', color='#8d5a99')
-ax.plot(ds['Regulated with CAP'], label='Regulated with CAP', color=c_2) 
+ax.plot(ds['Regulated with CAP'], label='Receives CAP (Regulated)', color=cap) 
 # ax.plot(ds['Regulated without CAP'], label='Regulated without CAP', color=c_3) 
-ax.plot(ds['Lower Colorado River - SW Dominated'], color=c_4, label='Lower Colorado River - SW Dominated')
-ax.plot(ds['Upper Colorado River - Mixed'], color=c_5, label='Upper Colorado River - Mixed')
-ax.plot(ds['Norh - Mixed'], color=c_10, label='North - Mixed')
+ax.plot(ds['Lower Colorado River - SW Dominated'], color=swdom, label='SW Dominated')
+ax.plot(ds['Upper Colorado River - Mixed'], color=mixed, label='Upper Colorado - Mixed')
+ax.plot(ds['Norh - Mixed'], '-.',color=mixed, label='North - Mixed')
 # ax.plot(ds['Central - Mixed'], color=c_11, label='Central - Mixed')
 # ax.plot(ds['Northwest - GW Dominated'], color=c_7, label='Northwest - GW Dominated')
-ax.plot(ds['Northeast - GW Dominated'], color=c_9, label='Northeast - GW Dominated')
-ax.plot(ds['South central - GW Dominated'], color=c_8, label='South central - GW Dominated')
-ax.plot(ds['Southeast - GW Dominated'], color=c_6, label='Southeast - GW Dominated')
+ax.plot(ds['Northeast - GW Dominated'], '-.',color=GWdom, label='Northeast - GW Dominated')
+ax.plot(ds['South central - GW Dominated'], '.-',color=GWdom, label='South central - GW Dominated')
+ax.plot(ds['Southeast - GW Dominated'], color=GWdom, label='Southeast - GW Dominated')
 
 a = 1988.5
 b = 1990.5
@@ -1583,12 +1607,14 @@ ax.set_ylim(min_y,max_y)
 ax.grid(True)
 
 ax.legend(loc = [0.05, 0.04]
-            # , fontsize = fsize
+        #     , fontsize = 12
             )
 
 fig.set_dpi(600)
 
 # fig.legend(loc = [0.5, 0.4], fontsize = 12)
+
+plt.savefig(outputpath+name+'non_drought')
 
 # %% ====== Specialized Drought Analysis ======
 # Wanting to look at 1) Drawdown 2) Anomaly's 3) Recovery
