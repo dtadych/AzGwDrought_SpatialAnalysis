@@ -1,5 +1,5 @@
 # Need to ingore the .csv's and database files
-
+*.DS_Store
 *.tif
 *.xlsx
 *.dbf
