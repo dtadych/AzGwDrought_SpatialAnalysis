@@ -86,8 +86,8 @@ def display_corr_pairs(df,color="cyan"):
 
 # %% Read in the file
 filename = 'CSR_GRACE_GRACE-FO_RL06_Mascons_all-corrections_v02.nc'
-# datapath = '../../GRACE'
-datapath = '../../../RNR590'
+datapath = '../../GRACE'
+# datapath = '../../../RNR590'
 print(datapath)
 outputpath = '../MergedData/Output_files/'
 
@@ -138,15 +138,15 @@ lat = grace_dataset.variables['lat'][:]
 lon = grace_dataset.variables['lon'][:]
 time = grace_dataset.variables['time'][:]
 lwe = grace_dataset['lwe_thickness']
-print(lwe)
+lwe
 
 # %% Now I need to assign a coordinate system to lwe
 lwe.coords['lon'] = (lwe.coords['lon'] + 180) % 360 - 180
-#print(lwe['lon'])
-
+lwe
+#%%
 lwe2 = lwe.sortby(lwe.lon)
-#print(lwe2['lon'])
-
+lwe2['lon']
+# %%
 lwe2 = lwe2.rio.set_spatial_dims('lon', 'lat')
 lwe2.rio.crs
 
@@ -464,9 +464,9 @@ blind =["#000000","#004949","#009292","#ff6db6","#ffb6db",
  "#920000","#924900","#db6d00","#24ff24","#ffff6d"]
 
 # Matching new map
-
 cap = '#C6652B'
-noCAP = '#EDE461'
+# noCAP = '#EDE461' # This is one from the map
+noCAP = '#CCC339' # This color but darker for lines
 GWdom = '#3B76AF'
 mixed = '#6EB2E4'
 swdom = '#469B76'
@@ -1135,7 +1135,7 @@ ax.grid(zorder = 0)
 # plt.xlabel('Year')
 plt.ylabel('Liquid Water Equivalent (cm)', fontsize = 12)
 fig.set_dpi(600)
-s
+
 plt.savefig(outputpath+'Arizona_Average')
 
 # %%

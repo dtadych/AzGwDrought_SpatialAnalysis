@@ -403,7 +403,8 @@ blind =["#000000","#004949","#009292","#ff6db6","#ffb6db",
 # Matching new map
 
 cap = '#C6652B'
-noCAP = '#EDE461'
+# noCAP = '#EDE461' # This is one from the map
+noCAP = '#CCC339' # This color but darker for lines
 GWdom = '#3B76AF'
 mixed = '#6EB2E4'
 swdom = '#469B76'
@@ -1844,8 +1845,8 @@ yf1 = (m1*xf)+yint1
 yf2 = (m2*xf)+yint2
 
 fig, ax = plt.subplots(1, 1, figsize = (7,4.5))
-ax.plot(xf1, yf1,"-.",color=c_2,label='Linear Trendline', lw=1)
-ax.plot(xf1, yf2,"-.",color=c_7, lw=1)
+ax.plot(xf1, yf1,"-.",color=cap,label='Linear Trendline', lw=1)
+ax.plot(xf1, yf2,"-.",color=GWdom, lw=1)
 
 ds = cat_wl2_reg
 minyear=1975
@@ -2107,19 +2108,22 @@ for i in column_list:
 
 # %% Scatterplot of correlation values
 ds = dtw_anomalys
-# name = 'Comparing PDSI with Depth to Water Anomalys by Regulation'
-name = 'Comparing PDSI with Depth to Water Anomalys by Access to SW'
-
+# name = 'Comparing PDSI with Depth to Water Anomalies by Access to SW'
+name = 'Comparing PDSI with Depth to Water Anomalies by Regulation'
+# del ds['Res']
 columns = ds.columns
 column_list = ds.columns.tolist()
-betterlabels = ['CAP','Regulated Groundwater','Surface Water','Mixed GW/SW','Unregulated Groundwater'] 
-# betterlabels = ['GW Regulated','GW Unregulated'] 
+# betterlabels = ['Receives CAP (Regulated)','GW Dominated (Regulated)','Surface Water Dominated','GW Dominated','Mixed Source'] 
+betterlabels = ['Regulated','Unregulated'] 
+colors=[cap, GWdom]
+# colors=[cap,noCAP, swdom, mixed, GWdom]
 
-fig, ax = plt.subplots(figsize = (9,6))
+fig, ax = plt.subplots(figsize = (7,5))
 x = drought_indices['PDSI']
 for i,j,k in zip(column_list
                 # ,reg_colors
-                , SW_colors
+                # , SW_colors
+                , colors
                 , betterlabels
                 ):
         y = ds[i]
@@ -2137,8 +2141,8 @@ for i,j,k in zip(column_list
 
 
 ax.set_xlabel('PDSI')
-ax.set_ylabel('Depth to water (ft)')
-ax.set_title(name)
+ax.set_ylabel('Depth to Water Anomalies (ft)')
+ax.set_title(name,loc='center')
 # ax.set_ylim(0,400)
 fig.set_dpi(600)
 plt.legend(loc = [1.05, 0.40])

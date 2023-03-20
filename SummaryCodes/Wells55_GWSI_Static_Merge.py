@@ -18,7 +18,8 @@ import geopandas as gp
 # %% 
 # ----- Import the Data and Shapefiles with Geometries -----
 shapedir = '../MergedData/Shapefiles'
-#wellfilename = "Well_Registry__Wells55_.shp"
+outputpath = '../MergedData/Output_files/'
+
 wellfilename = "Well_Registry__Wells55_.shp"
 Wellfp = os.path.join(shapedir, wellfilename)
 wells55shape = gp.read_file(Wellfp)
@@ -169,4 +170,11 @@ print(Wells55_GWSI_MasterDB.info())
 # %%
 Wells55_GWSI_MasterDB.to_csv('../MergedData/Output_files/Master_ADWR_database_water.csv')
 Wells55_GWSI_MasterDB.to_file('../MergedData/Output_files/Master_ADWR_database_water.shp')
-# %%
+# %% Follow up change to add year to the end
+filename_mdb_w = 'Master_ADWR_database_water.shp'
+filepath = os.path.join(outputpath, filename_mdb_w)
+print(filepath)
+
+masterdb_water = gp.read_file(filepath)
+pd.options.display.float_format = '{:.2f}'.format
+print(masterdb_water.info())

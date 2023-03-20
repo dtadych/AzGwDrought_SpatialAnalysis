@@ -49,6 +49,28 @@ c_10 = '#41bf9e' # N - Mixed
 c_11 = '#7adec4' # C - Mixed
 drought_color = '#ffa6b8'
 wet_color = '#b8d3f2'
+
+
+reg_colors = [c_2,c_7]
+georeg_colors = [c_1,c_2,c_3,c_4,c_5,c_6,c_7,c_8,c_9,c_10,c_11]
+SW_colors = [c_2,c_3,c_4,c_5,c_7]
+
+bar_watercatc = [c_2,c_3,c_4,c_5,c_7]
+
+# Color blind palette
+# https://jacksonlab.agronomy.wisc.edu/2016/05/23/15-level-colorblind-friendly-palette/
+blind =["#000000","#004949","#009292","#ff6db6","#ffb6db",
+ "#490092","#006ddb","#b66dff","#6db6ff","#b6dbff",
+ "#920000","#924900","#db6d00","#24ff24","#ffff6d"]
+
+# Matching new map
+
+cap = '#C6652B'
+# noCAP = '#EDE461'
+noCAP = '#CCC339'
+GWdom = '#3B76AF'
+mixed = '#6EB2E4'
+swdom = '#469B76'
 # %% --- Now making graphs for other things
 # Re-read in after proper install date formatting, also had to fix NaN values in Regulation column
 #       Note: had to go into excel and change the date from mm/dd/yy to mm/dd/yyyy
@@ -123,13 +145,13 @@ wd3 = wd3.sort_values(by=['GEOREGI_NU'])
 # wdc2 = pd.pivot_table(wd2, index=["In_year"], columns=["GEO_Region"], values=['WELL_DEPTH'], dropna=False, aggfunc=len)
 # wdc3 = pd.pivot_table(wd3, index=["In_year"], columns=["GEO_Region"], values=['WELL_DEPTH'], dropna=False, aggfunc=len)
 
-wdc1 = pd.pivot_table(wd1, index=["In_year"], columns=["Regulation"], values=['WELL_DEPTH'], dropna=False, aggfunc=len)
-wdc2 = pd.pivot_table(wd2, index=["In_year"], columns=["Regulation"], values=['WELL_DEPTH'], dropna=False, aggfunc=len)
-wdc3 = pd.pivot_table(wd3, index=["In_year"], columns=["Regulation"], values=['WELL_DEPTH'], dropna=False, aggfunc=len)
+wdc1_reg = pd.pivot_table(wd1, index=["In_year"], columns=["Regulation"], values=['WELL_DEPTH'], dropna=False, aggfunc=len)
+wdc2_reg = pd.pivot_table(wd2, index=["In_year"], columns=["Regulation"], values=['WELL_DEPTH'], dropna=False, aggfunc=len)
+wdc3_reg = pd.pivot_table(wd3, index=["In_year"], columns=["Regulation"], values=['WELL_DEPTH'], dropna=False, aggfunc=len)
 
-# wdc1 = pd.pivot_table(wd1, index=["In_year"], columns=["Water_CAT"], values=['WELL_DEPTH'], dropna=False, aggfunc=len)
-# wdc2 = pd.pivot_table(wd2, index=["In_year"], columns=["Water_CAT"], values=['WELL_DEPTH'], dropna=False, aggfunc=len)
-# wdc3 = pd.pivot_table(wd3, index=["In_year"], columns=["Water_CAT"], values=['WELL_DEPTH'], dropna=False, aggfunc=len)
+wdc1_wc = pd.pivot_table(wd1, index=["In_year"], columns=["Water_CAT"], values=['WELL_DEPTH'], dropna=False, aggfunc=len)
+wdc2_wc = pd.pivot_table(wd2, index=["In_year"], columns=["Water_CAT"], values=['WELL_DEPTH'], dropna=False, aggfunc=len)
+wdc3_wc = pd.pivot_table(wd3, index=["In_year"], columns=["Water_CAT"], values=['WELL_DEPTH'], dropna=False, aggfunc=len)
 
 # %%
 st_wdc1 = pd.pivot_table(wd1, index=["In_year"], values=['WELL_DEPTH'], dropna=False, aggfunc=len)
@@ -143,11 +165,11 @@ st_wdc1
 # wdc3.to_csv('../MergedData/Output_files/Final_Welldepth' + str(shallow) + 'minus.csv')
 
 # %% Plotting fun
-wdc1.plot()
-wdc2.plot()
-wdc3.plot()
+wdc1_wc.plot()
+wdc2_wc.plot()
+wdc3_wc.plot()
 # %% Plots for Water Source Lumping
-ds = wdc3
+ds = wdc3_wc
 name = 'Number of Shallow Wells (less than '+ str(shallow) +' ft)'
 ylabel = "Well Count (#)"
 minyear=1980
@@ -176,9 +198,9 @@ ax.set_xlim(minyear,maxyear)
 ax.grid(True)
 ax.legend(fontsize = fsize)
 
-plt.savefig(outputpath+name+'_WaterSource')
+# plt.savefig(outputpath+name+'_WaterSource')
 # %% Plots for Water Source Lumping
-ds = wdc2
+ds = wdc2_wc
 name = 'Number of Mid-range Wells (between '+ str(shallow) +' and '+ str(deep) +' ft)'
 ylabel = "Well Count (#)"
 minyear=1980
@@ -209,7 +231,7 @@ ax.legend(fontsize = fsize)
 
 plt.savefig(outputpath+name+'_WaterSource')
 # %% Plots for Water Source Lumping
-ds = wdc1
+ds = wdc1_wc
 name = 'Number of Deep Wells (greater than '+ str(deep) +' ft)'
 ylabel = "Well Count (#)"
 minyear=1980
@@ -242,9 +264,9 @@ plt.savefig(outputpath+name+'_WaterSource')
 
 # %%
 # Plot all of the different depths 3 in a line
-ds1 = wdc1
-ds2 = wdc2
-ds3 = wdc3
+ds1 = wdc1_wc
+ds2 = wdc2_wc
+ds3 = wdc3_wc
 
 name = 'New Wells by Drilling Depths over Time'
 ylabel = "Well Count (#)"
@@ -264,23 +286,24 @@ fig, ax = plt.subplots(1,3,figsize=(15,5))
 fig.suptitle(name, fontsize=18, y=1.00)
 fig.supylabel(ylabel, fontsize = 14, x=0.08)
 
-ax[0].plot(ds3[labels[0]], label='CAP', color=c_2)
-ax[0].plot(ds3[labels[3]], label='GW Regulated', color=c_3)
-ax[0].plot(ds3[labels[1]], label='GW Unregulated', color=c_7)
-ax[0].plot(ds3[labels[4]], label='Surface Water', color=c_4)
-ax[0].plot(ds3[labels[2]], label='Mixed GW/SW', color=c_5)
+ax[0].plot(ds3[labels[0]], label='Receives CAP (Regulated)', color=cap)
+ax[0].plot(ds3[labels[3]], label='GW Dominated (Regulated)', color=noCAP)
+ax[0].plot(ds3[labels[4]], label='Surface Water Dominated', color=swdom)
+ax[0].plot(ds3[labels[2]], label='Mixed Source', color=mixed)
+ax[0].plot(ds3[labels[1]], label='GW Dominated', color=GWdom)
 
-ax[1].plot(ds2[labels[0]], label='CAP', color=c_2)
-ax[1].plot(ds2[labels[3]], label='GW Regulated', color=c_3)
-ax[1].plot(ds2[labels[1]], label='GW Unregulated', color=c_7)
-ax[1].plot(ds2[labels[4]], label='Surface Water', color=c_4)
-ax[1].plot(ds2[labels[2]], label='Mixed GW/SW', color=c_5)
+ax[1].plot(ds2[labels[0]], label='Receives CAP (Regulated)', color=cap)
+ax[1].plot(ds2[labels[3]], label='GW Dominated (Regulated)', color=noCAP)
+ax[1].plot(ds2[labels[4]], label='Surface Water Dominated', color=swdom)
+ax[1].plot(ds2[labels[2]], label='Mixed Source', color=mixed)
+ax[1].plot(ds2[labels[1]], label='GW Dominated', color=GWdom)
 
-ax[2].plot(ds1[labels[0]], label='CAP', color=c_2)
-ax[2].plot(ds1[labels[3]], label='GW Regulated', color=c_3)
-ax[2].plot(ds1[labels[1]], label='GW Unregulated', color=c_7)
-ax[2].plot(ds1[labels[4]], label='Surface Water', color=c_4)
-ax[2].plot(ds1[labels[2]], label='Mixed GW/SW', color=c_5)
+ax[2].plot(ds1[labels[0]], label='Receives CAP (Regulated)', color=cap)
+ax[2].plot(ds1[labels[3]], label='GW Dominated (Regulated)', color=noCAP)
+ax[2].plot(ds1[labels[4]], label='Surface Water Dominated', color=swdom)
+ax[2].plot(ds1[labels[2]], label='Mixed Source', color=mixed)
+ax[2].plot(ds1[labels[1]], label='GW Dominated', color=GWdom)
+
 
 ax[0].set_xlim(minyear,maxyear)
 ax[1].set_xlim(minyear,maxyear)
@@ -306,7 +329,7 @@ ax[2].legend(loc = [1.05, 0.3], fontsize = fsize)
 
 fig.set_dpi(600.0)
 
-plt.savefig(outputpath+name+'_watercat_3horizontalpanel', bbox_inches='tight')
+# plt.savefig(outputpath+name+'_watercat_3horizontalpanel', bbox_inches='tight')
 
 # %% Plots for Regulated vs. Unregulated Lumping
 ds = wdc1
@@ -412,12 +435,12 @@ fig, ax = plt.subplots(1,3,figsize=(15,5))
 #fig.tight_layout()
 fig.suptitle(name, fontsize=18, y=1.00)
 fig.supylabel(ylabel, fontsize = 14, x=0.08)
-ax[0].plot(ds3[labels[0]], label='GW Regulated', color=c_2)
-ax[0].plot(ds3[labels[1]], label='GW Unregulated', color=c_7)
-ax[1].plot(ds2[labels[0]], label='GW Regulated', color=c_2)
-ax[1].plot(ds2[labels[1]], label='GW Unregulated', color=c_7)
-ax[2].plot(ds1[labels[0]], label='GW Regulated', color=c_2)
-ax[2].plot(ds1[labels[1]], label='GW Unregulated', color=c_7)
+ax[0].plot(ds3[labels[0]],'--', label='Regulated', color='black')
+ax[0].plot(ds3[labels[1]], label='Unregulated', color='black')
+ax[1].plot(ds2[labels[0]],'--', label='Regulated', color='black')
+ax[1].plot(ds2[labels[1]], label='Unregulated', color='black')
+ax[2].plot(ds1[labels[0]],'--', label='Regulated', color='black')
+ax[2].plot(ds1[labels[1]], label='Unregulated', color='black')
 
 ax[0].set_xlim(minyear,maxyear)
 ax[1].set_xlim(minyear,maxyear)
@@ -844,7 +867,7 @@ ax[2].legend(loc = [1.05, 0.3], fontsize = fsize)
 
 plt.savefig(outputpath+name)
 
-# %%
+ # %%
 ds = new_wells_watercat
 name = 'New Wells over Time'
 ylabel = "Well Count (#)"
@@ -893,6 +916,7 @@ plt.savefig(outputpath+name+"Timeseries", bbox_inches='tight')
 new_wells2 = pd.read_csv('../MergedData/Output_files/Final_NewWells.csv',
                         header=1, index_col=0)
 new_wells2
+#%%
 new_wells2 = new_wells2.reset_index()
 new_wells2 = new_wells2.iloc[1:, :]
 #new_wells2 = new_wells2.rename(columns = {'GEOREGI_NU':'Year'})
@@ -920,17 +944,34 @@ new_wells_watercat2 = new_wells_watercat2.iloc[1:, :]
 new_wells_watercat2
 
 # %%
+# Reading in the shapefile
+# GEOREG.to_file('../MergedData/Output_files/Georegions_3col.shp')
+# filename_georeg = "Final_Georegions.shp"
+# filepath = os.path.join(shapepath, filename_georeg)
 
+filename_georeg = 'georeg_reproject_fixed.shp'
+filepath = os.path.join(filename_georeg)
+georeg = gp.read_file(filepath)
 # %% Calculate the region area
 # to double check the coordinate system is in meters, georeg.crs
 # 
 # https://gis.stackexchange.com/questions/218450/getting-polygon-areas-using-geopandas
 # tost["area"] = tost['geometry'].area/ 10**6
-georeg['area'] = georeg.geometry.area/10**6
-georeg
+# georeg['area'] = georeg.geometry.area/10**6
+# georeg
+# # %%
+# tost = georeg.copy()
+# tost= tost.to_crs({'init': 'epsg:3857'})
+# print(tost.crs)
+# tost.head(2)
+# # %%
+# tost["area"] = tost['geometry'].area/ 10**6
+# tost.head(2)
 # %%
+# georeg2 = pd.DataFrame(tost)
 georeg2 = pd.DataFrame(georeg)
-georeg2
+
+georeg2['area'] = georeg2['Area']
 
 # %%
 #del georeg2['geometry']
@@ -948,17 +989,18 @@ georeg_area = georeg_area.transpose()
 georeg_area
 
 # %% Area for other categories
-georeg_area_reg = pd.pivot_table(georeg, columns=["Regulation"], values=["area"], dropna=False, aggfunc=np.sum)
-del georeg_area_reg['NA']
+georeg_area_reg = pd.pivot_table(georeg2, columns=["Regulation"], values=["area"], dropna=False, aggfunc=np.sum)
+del georeg_area_reg['Res']
 georeg_area_reg
 
 # %%
-georeg_area_watercat = pd.pivot_table(georeg, columns=["Water_CAT"], values=["area"], dropna=False, aggfunc=np.sum)
-del georeg_area_watercat['NA']
+georeg_area_watercat = pd.pivot_table(georeg2, columns=["Water_CAT"], values=["area"], dropna=False, aggfunc=np.sum)
+del georeg_area_watercat['Res']
 georeg_area_watercat
 # %% Densities for new wells
 # df1/df2.values[0,:]
 well_densities = new_wells2/georeg_area.values[0,:]
+# well_densities = new_wells/georeg_area.values[0,:]
 well_densities
 
 # %% Densities for regulated regions
@@ -967,19 +1009,19 @@ well_densities_reg
 
 # %% Densities for SW
 well_densities_watercat = new_wells_watercat2/georeg_area_watercat.values[0,:]
-well_densities_watercat
+well_densities_watercat.sum()
 
 # %% By depth for regulated or water category, depending on what I turned on above
-dens_wdc1= wdc1/georeg_area_reg.values[0,:]
-dens_wdc2= wdc2/georeg_area_reg.values[0,:]
-dens_wdc3= wdc3/georeg_area_reg.values[0,:]
+dens_wdc1_reg= wdc1_reg/georeg_area_reg.values[0,:]
+dens_wdc2_reg= wdc2_reg/georeg_area_reg.values[0,:]
+dens_wdc3_reg= wdc3_reg/georeg_area_reg.values[0,:]
 
-# dens_wdc1= wdc1/georeg_area_watercat.values[0,:]
-# dens_wdc2= wdc2/georeg_area_watercat.values[0,:]
-# dens_wdc3= wdc3/georeg_area_watercat.values[0,:]
+dens_wdc1_wc= wdc1_wc/georeg_area_watercat.values[0,:]
+dens_wdc2_wc= wdc2_wc/georeg_area_watercat.values[0,:]
+dens_wdc3_wc= wdc3_wc/georeg_area_watercat.values[0,:]
 
-dens_wdc1
-print(dens_wdc1.sum())
+dens_wdc1_wc
+print(dens_wdc1_wc.sum())
 
 # %% ------------------------------------------------------------------------
 # This whole thing was to double check if my numbers were correct, skip this.
@@ -1069,7 +1111,7 @@ ax[0].legend(loc = [1.05, 0.40], fontsize = fsize)
 ax[1].legend(loc = [1.05, 0.3], fontsize = fsize)
 ax[2].legend(loc = [1.05, 0.3], fontsize = fsize)
 
-plt.savefig(outputpath+name+"fixed_axes")
+# plt.savefig(outputpath+name+"fixed_axes")
 
 # %% Trying to different types of charts
 # Labels for reference and different color orders
@@ -1126,7 +1168,7 @@ plt.xticks()
 plt.grid(axis='x', linewidth=0.5, zorder=0)
 
 # %% Normal Bar Chart for Deep wells with regulation lumping
-ds = wdc1
+ds = wdc1_reg
 columns = ds.columns
 labels = ds.columns.tolist()
 
@@ -1146,7 +1188,7 @@ plt.xticks(rotation=30)
 plt.grid(axis='y', linewidth=0.5, zorder=0)
 
 # %%
-ds = wdc2
+ds = wdc2_reg
 columns = ds.columns
 labels = ds.columns.tolist()
 
@@ -1166,7 +1208,7 @@ plt.xticks(rotation=30)
 plt.grid(axis='y', linewidth=0.5, zorder=0)
 
 # %%
-ds = wdc3
+ds = wdc3_reg
 columns = ds.columns
 labels = ds.columns.tolist()
 
@@ -1193,8 +1235,8 @@ plt.grid(axis='y', linewidth=0.5, zorder=0)
 #     wdc3 = shallow
 
 # Below is for Groundwater Regulation
-ds = wdc1.copy()
-# ds = dens_wdc1.copy()
+# ds = wdc1_reg.copy()
+ds = dens_wdc1_reg.copy()
 columns = ds.columns
 labels = ds.columns.tolist()
 
@@ -1206,8 +1248,8 @@ dft1 = ds1.copy()
 dft1
 
 
-ds = wdc2.copy()
-# ds = dens_wdc2.copy()
+# ds = wdc2_reg.copy()
+ds = dens_wdc2_reg.copy()
 columns = ds.columns
 labels = ds.columns.tolist()
 
@@ -1219,8 +1261,8 @@ dft2 = ds1.copy()
 dft2
 
 
-ds = wdc3.copy()
-# ds = dens_wdc3.copy()
+# ds = wdc3_reg.copy()
+ds = dens_wdc3_reg.copy()
 columns = ds.columns
 labels = ds.columns.tolist()
 
@@ -1260,13 +1302,13 @@ df_test
 # group_colors = ['cornflowerblue','slategrey','darkblue']
 group_colors = ['lightsteelblue','cornflowerblue','darkblue']
 
-# name = 'Well Densities by Groundwater Regulation'
-# horlabel = 'Well Densities (well/km^2)'
-name = 'Number of wells by Groundwater Regulation'
-horlabel = 'Number of Wells (#)'
+name = 'Well Densities by Groundwater Regulation'
+horlabel = 'Well Densities (well/km^2)'
+# name = 'Number of wells by Groundwater Regulation'
+# horlabel = 'Number of Wells (#)'
 fsize = 14
 
-df_test.plot(figsize = (12,7),
+df_test.plot(figsize = (9,6),
         kind='bar',
         stacked=False,
         # title=name,
@@ -1275,59 +1317,60 @@ df_test.plot(figsize = (12,7),
         width = 0.85,
         fontsize = fsize
         )
-plt.title(name, fontsize = (fsize+2))
+# plt.title(name, fontsize = (fsize+2))
 plt.ylabel(horlabel, fontsize = fsize)
 plt.xticks(rotation=0)
 plt.grid(axis='y', linewidth=0.5, zorder=0)
 plt.legend(fontsize = fsize)
 
-plt.savefig(outputpath+name+'groupedchart')
+
+plt.savefig(outputpath+name+'groupedchart', dpi=600)
 
 
 # %% Below is for Water Access Category
-# ds = wdc1.copy()
-ds = dens_wdc1.copy()
+# ds = wdc1_wc.copy()
+ds = dens_wdc1_wc.copy()
 columns = ds.columns
 labels = ds.columns.tolist()
 
 ds1 = pd.DataFrame()
-ds1['CAP'] = ds[labels[0]]
-ds1['SW'] = ds[labels[4]]
-ds1['Mixed'] = ds[labels[2]]
-ds1['GW Regulated'] = ds[labels[3]]
-ds1['GW'] = ds[labels[1]]
+ds1['Receives \nCAP \n(Regulated)'] = ds[labels[0]]
+ds1['GW \nDominated \n(Regulated)'] = ds[labels[3]]
+ds1['Surface \nWater \nDominated'] = ds[labels[4]]
+ds1['Mixed Source'] = ds[labels[2]]
+ds1['GW \nDominated'] = ds[labels[1]]
 
 dft1 = ds1.copy()
 dft1
 
 
-# ds = wdc2.copy()
-ds = dens_wdc2.copy()
+# ds = wdc2_wc.copy()
+ds = dens_wdc2_wc.copy()
 columns = ds.columns
 labels = ds.columns.tolist()
 
 ds1 = pd.DataFrame()
-ds1['CAP'] = ds[labels[0]]
-ds1['SW'] = ds[labels[4]]
-ds1['Mixed'] = ds[labels[2]]
-ds1['GW Regulated'] = ds[labels[3]]
-ds1['GW'] = ds[labels[1]]
+ds1['Receives \nCAP \n(Regulated)'] = ds[labels[0]]
+ds1['GW \nDominated \n(Regulated)'] = ds[labels[3]]
+ds1['Surface \nWater \nDominated'] = ds[labels[4]]
+ds1['Mixed Source'] = ds[labels[2]]
+ds1['GW \nDominated'] = ds[labels[1]]
 
 dft2 = ds1.copy()
 dft2
 
 
-# ds = wdc3.copy()
-ds = dens_wdc3.copy()
+# ds = wdc3_wc.copy()
+ds = dens_wdc3_wc.copy()
 columns = ds.columns
 labels = ds.columns.tolist()
 
 ds1 = pd.DataFrame()
-ds1['CAP'] = ds[labels[0]]
-ds1['SW'] = ds[labels[4]]
-ds1['Mixed'] = ds[labels[2]]
-ds1['GW Regulated'] = ds[labels[3]]
-ds1['GW'] = ds[labels[1]]
+ds1['Receives \nCAP \n(Regulated)'] = ds[labels[0]]
+ds1['GW \nDominated \n(Regulated)'] = ds[labels[3]]
+ds1['Surface \nWater \nDominated'] = ds[labels[4]]
+ds1['Mixed Source'] = ds[labels[2]]
+ds1['GW \nDominated'] = ds[labels[1]]
 
 dft3 = ds1.copy()
 dft3
@@ -1361,13 +1404,13 @@ df_test
 # group_colors = ['cornflowerblue','slategrey','darkblue']
 group_colors = ['lightsteelblue','cornflowerblue','darkblue']
 
-# name = 'Well Densities by Access to Surface Water'
+name = 'Well Densities by Access to Surface Water'
 horlabel = 'Well Densities (well/km^2)'
 # name = 'Number of wells by Access to Surface Water'
 # horlabel = 'Number of Wells (#)'
 fsize = 14
 
-df_test.plot(figsize = (12,7),
+df_test.plot(figsize = (9,6),
         kind='bar',
         stacked=False,
         # title=name,
@@ -1376,17 +1419,17 @@ df_test.plot(figsize = (12,7),
         width = 0.85,
         fontsize = fsize
         )
-plt.title(name, fontsize = (fsize+2))
+# plt.title(name, fontsize = (fsize+2))
 plt.ylabel(horlabel, fontsize = fsize)
 plt.xticks(rotation=0)
 plt.grid(axis='y', linewidth=0.5, zorder=0)
 plt.legend(fontsize = fsize)
 
-# plt.savefig(outputpath+name+'groupedchart')
+plt.savefig(outputpath+name+'groupedchart_version2',dpi=600)
 
 
 # %% Normal Bar Chart for Deep wells with Water Category lumping
-ds = wdc3
+ds = wdc3_wc
 columns = ds.columns
 labels = ds.columns.tolist()
 name = 'Shallow Wells (less than 200ft)'
@@ -1409,7 +1452,7 @@ plt.ylabel('Number of Wells (#)')
 plt.xticks(rotation=30)
 plt.grid(axis='y', linewidth=0.5, zorder=0)
 
-plt.savefig(outputpath+name+'barchart_watercat')
+# plt.savefig(outputpath+name+'barchart_watercat')
 
 # %%
 ds = wdc2
